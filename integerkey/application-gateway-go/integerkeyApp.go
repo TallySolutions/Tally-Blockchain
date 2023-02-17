@@ -7,20 +7,15 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 	"strconv"
+	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-
-
-//	"net/http"
-//	"github.com/gin-gonic/gin"
-
-
+	//	"net/http"
+	//	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -33,17 +28,11 @@ const (
 	gatewayPeer  = "peer0.org1.example.com"
 )
 
+// type message_confirm struct{
 
+// 	status string `json:"status"
 
-type message_confirm struct{
-
-	status string `json:"status"`
-
-}
-
-
-
-
+// }
 
 func main() {
 	// gRPC client conn- shared by all gateway connections to this endpoint
@@ -78,10 +67,6 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract := network.GetContract(chaincodeName)
 
-
-	
-
-
 	createAsset(contract, "key1")
 	increaseValue(contract, "key1", 5) // we want to increase the value of the asset by 5
 	decreaseValue(contract, "key1", 2)
@@ -89,19 +74,14 @@ func main() {
 	readAsset(contract, "key2")
 	fmt.Print("TESTING DONE")
 
+	//	router := gin.Default()
+	//	router.POST("/createAsset", createAsset(contract))
 
+	//	router.GET("/albums/:name", readAsset)
 
-
-//	router := gin.Default()
-//	router.POST("/createAsset", createAsset(contract))
-
-//	router.GET("/albums/:name", readAsset)
-
-//	router.Run("localhost:8080")
-
+	//	router.Run("localhost:8080")
 
 }
-
 
 func newGrpcConnection() *grpc.ClientConn {
 	certificate, err := loadCertificate(tlsCertPath)
@@ -172,37 +152,29 @@ func newSign() identity.Sign {
 func createAsset(contract *client.Contract, name string) {
 	fmt.Printf("\n--> Submit Transaction: CreateAsset, creates new asset with name and default value set to 0 \n")
 
-//	c.BindJSON(&name)
+	//	c.BindJSON(&name)
 
 	_, err := contract.SubmitTransaction("CreateAsset", name)
 	if err != nil {
 
-
-	//	transaction_confirm.status="error in submitting create asset transaction"
-//		c.IndentedJSON(http.StatusCreated, transaction_confirm)
+		//	transaction_confirm.status="error in submitting create asset transaction"
+		//		c.IndentedJSON(http.StatusCreated, transaction_confirm)
 
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
-
 
 	}
 
 	fmt.Printf("*** Transaction committed successfully\n")
 
-
-
-
-
-//	transaction_confirm.status="asset created"
-//	c.IndentedJSON(http.StatusCreated, transaction_confirm)
-
-
+	//	transaction_confirm.status="asset created"
+	//	c.IndentedJSON(http.StatusCreated, transaction_confirm)
 
 }
 
 func increaseValue(contract *client.Contract, name string, incVal uint) {
 	fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", incVal)
 
-	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal),10))
+	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
@@ -212,7 +184,7 @@ func increaseValue(contract *client.Contract, name string, incVal uint) {
 func decreaseValue(contract *client.Contract, name string, decVal uint) {
 	fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", decVal)
 
-	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(decVal),10))
+	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
@@ -223,21 +195,20 @@ func decreaseValue(contract *client.Contract, name string, decVal uint) {
 func readAsset(contract *client.Contract, name string) {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
-//	name := c.Param("name")
-	
+	//	name := c.Param("name")
+
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
-		 panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
-
-	//	c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
+		//	c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
 	}
 	result := formatJSON(evaluateResult)
 
-//	c.IndentedJSON(http.StatusOK, result)
+	//	c.IndentedJSON(http.StatusOK, result)
 
-	 fmt.Printf("*** Result:%s\n", result)
+	fmt.Printf("*** Result:%s\n", result)
 }
 
 func formatJSON(data []byte) string {
