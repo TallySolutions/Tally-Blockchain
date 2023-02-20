@@ -73,11 +73,11 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("/integerKey/createAsset/:name", createAsset)
+	router.GET("/integerKey/createAsset/:name", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 
-	router.POST("/integerKey/increaseValue/:name/:value")
-	router.POST("/integerKey/decreaseValue/:name/:value")
+	router.POST("/integerKey/increaseValue/:name/:value", increaseValue)
+	router.POST("/integerKey/decreaseValue/:name/:value", decreaseValue)
 
 	router.Run("localhost:8080")
 
@@ -150,9 +150,8 @@ func newSign() identity.Sign {
 }
 
 func createAsset(c *gin.Context) {
-
+	
 	name := c.Param("name")
-
 	evaluateResult, err := contract.EvaluateTransaction("CreateAsset", name)
 	if err != nil {
 		// panic(fmt.Errorf("failed to evaluate transaction: %w", err))
