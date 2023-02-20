@@ -85,7 +85,7 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("integerkey/createAsset/:name", createAsset)
+	router.POST("/integerkey/createAsset/:name", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 
 	router.Run("localhost:8080")
@@ -164,7 +164,7 @@ func createAsset(c *gin.Context) {
 
 	evaluateResult, err := contract.EvaluateTransaction("CreateAsset", name)
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		// panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
 		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
@@ -176,7 +176,7 @@ func createAsset(c *gin.Context) {
 }
 
 func increaseValue(contract *client.Contract, name string, incVal uint) {
-	fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", incVal)
+	// fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", incVal)
 
 	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
 	if err != nil {
@@ -186,7 +186,7 @@ func increaseValue(contract *client.Contract, name string, incVal uint) {
 	fmt.Printf("*** Transaction committed successfully\n")
 }
 func decreaseValue(contract *client.Contract, name string, decVal uint) {
-	fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", decVal)
+	// fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", decVal)
 
 	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
 	if err != nil {
