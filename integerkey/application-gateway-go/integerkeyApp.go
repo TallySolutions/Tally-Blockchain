@@ -18,7 +18,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	//	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
 const (
@@ -30,16 +29,6 @@ const (
 	peerEndpoint = "localhost:7051"
 	gatewayPeer  = "peer0.org1.example.com"
 )
-
-// type message_confirm struct{
-
-// 	status string `json:"status"
-
-// }
-
-//type SmartContract struct {
-//	contractapi.Contract
-//}
 
 var contract *client.Contract
 
@@ -85,8 +74,11 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("/integerkey/createAsset/:name", createAsset)
+	router.POST("/integerKey/createAsset/:name", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
+
+	router.POST("/integerKey/increaseValue/:name/:value")
+	router.POST("/integerKey/decreaseValue/:name/:value")
 
 	router.Run("localhost:8080")
 
@@ -175,25 +167,35 @@ func createAsset(c *gin.Context) {
 
 }
 
-func increaseValue(contract *client.Contract, name string, incVal uint) {
+func increaseValue(c *gin.Context) {
 	// fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", incVal)
+	name := c.Param("name")
+	incVal := c.Param("value")
 
-	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
+	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	fmt.Printf("*** Transaction committed successfully\n")
+	result := formatJSON(evaulateResult)
+
+	c.IndentedJSON(http.StatusOK, result)
+	//fmt.Printf("*** Transaction committed successfully\n")
 }
-func decreaseValue(contract *client.Contract, name string, decVal uint) {
-	// fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", decVal)
+func decreaseValue(c *gin.Context) {
+	// fmt.Printf("\n--> Submit Transaction: Decrease Asset Value (by %v) \n", incVal)
+	name := c.Param("name")
+	decVal := c.Param("value")
 
-	_, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
+	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	fmt.Printf("*** Transaction committed successfully\n")
+	result := formatJSON(evaulateResult)
+
+	c.IndentedJSON(http.StatusOK, result)
+	//fmt.Printf("*** Transaction committed successfully\n")
 }
 
 func readAsset(c *gin.Context) {
