@@ -36,6 +36,8 @@ const (
 
 // }
 
+var Contract contract
+
 func main() {
 	// gRPC client conn- shared by all gateway connections to this endpoint
 	clientConnection := newGrpcConnection()
@@ -79,7 +81,7 @@ func main() {
 	router := gin.Default()
 	//router.POST("/createAsset", createAsset(contract))
 
-	router.GET("/albums/:name", readAsset(contract))
+	router.GET("/albums/:name", readAsset)
 
 	router.Run("localhost:8080")
 
