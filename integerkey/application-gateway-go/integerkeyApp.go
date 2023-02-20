@@ -195,7 +195,7 @@ func decreaseValue(contract *client.Contract, name string, decVal uint) {
 }
 
 func readAsset(c *gin.Context, contract *client.Contract) {
-	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
+	// fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
 	name := c.Param("name")
 
@@ -208,9 +208,9 @@ func readAsset(c *gin.Context, contract *client.Contract) {
 	}
 	result := formatJSON(evaluateResult)
 
-	//	c.IndentedJSON(http.StatusOK, result)
+	c.IndentedJSON(http.StatusOK, result)
 
-	fmt.Printf("*** Result:%s\n", result)
+	// fmt.Printf("*** Result:%s\n", result)
 }
 
 func formatJSON(data []byte) string {
