@@ -172,7 +172,8 @@ func increaseValue(c *gin.Context) {
 
 	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		// panic(fmt.Errorf("failed to submit transaction: %w", err))
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
@@ -188,7 +189,8 @@ func decreaseValue(c *gin.Context) {
 	// evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
 	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		// panic(fmt.Errorf("failed to submit transaction: %w", err))
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
@@ -204,7 +206,7 @@ func readAsset(c *gin.Context) {
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
-		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
+		// panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
 		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
