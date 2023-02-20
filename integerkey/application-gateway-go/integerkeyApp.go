@@ -18,10 +18,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-//	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	//	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
-
 
 const (
 	mspID        = "Org1MSP"
@@ -38,8 +36,6 @@ const (
 // 	status string `json:"status"
 
 // }
-
-
 
 //type SmartContract struct {
 //	contractapi.Contract
@@ -88,9 +84,9 @@ func main() {
 	// fmt.Print("TESTING DONE")
 
 	router := gin.Default()
-	//router.POST("/createAsset", createAsset(contract)
 
-	router.GET("/integerKey/:name", readAsset)
+	router.POST("integerkey/createAsset/:name", createAsset)
+	router.GET("/integerKey/readAsset/:name", readAsset)
 
 	router.Run("localhost:8080")
 
@@ -162,25 +158,20 @@ func newSign() identity.Sign {
 	return sign
 }
 
-func createAsset(contract *client.Contract, name string) {
-	fmt.Printf("\n--> Submit Transaction: CreateAsset, creates new asset with name and default value set to 0 \n")
+func createAsset(c *gin.Context) {
 
-	//	c.BindJSON(&name)
+	name := c.Param("name")
 
-	_, err := contract.SubmitTransaction("CreateAsset", name)
+	evaluateResult, err := contract.EvaluateTransaction("CreateAsset", name)
 	if err != nil {
+		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
-		//	transaction_confirm.status="error in submitting create asset transaction"
-		//		c.IndentedJSON(http.StatusCreated, transaction_confirm)
-
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
 	}
+	result := formatJSON(evaluateResult)
 
-	fmt.Printf("*** Transaction committed successfully\n")
-
-	//	transaction_confirm.status="asset created"
-	//	c.IndentedJSON(http.StatusCreated, transaction_confirm)
+	c.IndentedJSON(http.StatusOK, result)
 
 }
 
@@ -231,4 +222,3 @@ func formatJSON(data []byte) string {
 	}
 	return prettyJSON.String()
 }
-
