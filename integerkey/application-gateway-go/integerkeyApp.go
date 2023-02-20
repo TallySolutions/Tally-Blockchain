@@ -16,6 +16,8 @@ import (
 
 	"net/http"
 
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -171,8 +173,7 @@ func increaseValue(c *gin.Context) {
 	name := c.Param("name")
 	incVal := c.Param("value")
 
-	// evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
-	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, uint64(incVal), 10)
+	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, strconv.FormatUint(uint64(incVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
@@ -187,8 +188,7 @@ func decreaseValue(c *gin.Context) {
 	name := c.Param("name")
 	decVal := c.Param("value")
 
-	// evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
-	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, uint64(decVal), 10)
+	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
