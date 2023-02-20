@@ -18,7 +18,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+//	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
+
 
 const (
 	mspID        = "Org1MSP"
@@ -36,7 +39,13 @@ const (
 
 // }
 
-var Contract contract
+
+
+//type SmartContract struct {
+//	contractapi.Contract
+//}
+
+var contract *client.Contract
 
 func main() {
 	// gRPC client conn- shared by all gateway connections to this endpoint
@@ -69,7 +78,7 @@ func main() {
 	}
 
 	network := gw.GetNetwork(channelName)
-	contract := network.GetContract(chaincodeName)
+	contract = network.GetContract(chaincodeName)
 
 	// createAsset(contract, "key1")
 	// increaseValue(contract, "key1", 5) // we want to increase the value of the asset by 5
@@ -79,9 +88,9 @@ func main() {
 	// fmt.Print("TESTING DONE")
 
 	router := gin.Default()
-	//router.POST("/createAsset", createAsset(contract))
+	//router.POST("/createAsset", createAsset(contract)
 
-	router.GET("/albums/:name", readAsset)
+	router.GET("/integerKey/:name", readAsset)
 
 	router.Run("localhost:8080")
 
@@ -196,7 +205,7 @@ func decreaseValue(contract *client.Contract, name string, decVal uint) {
 	fmt.Printf("*** Transaction committed successfully\n")
 }
 
-func readAsset(c *gin.Context, contract *client.Contract) {
+func readAsset(c *gin.Context) {
 	// fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
 	name := c.Param("name")
@@ -222,3 +231,4 @@ func formatJSON(data []byte) string {
 	}
 	return prettyJSON.String()
 }
+
