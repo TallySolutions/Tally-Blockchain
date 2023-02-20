@@ -171,7 +171,7 @@ func increaseValue(c *gin.Context) {
 	name := c.Param("name")
 	incVal := c.Param("value")
 
-	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal, 10)
+	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
@@ -187,7 +187,7 @@ func decreaseValue(c *gin.Context) {
 	decVal := c.Param("value")
 
 	// evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
-	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal, 10)
+	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
