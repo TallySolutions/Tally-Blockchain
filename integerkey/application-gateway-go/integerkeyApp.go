@@ -14,8 +14,10 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	//	"net/http"
-	//	"github.com/gin-gonic/gin"
+
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -67,19 +69,19 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract := network.GetContract(chaincodeName)
 
-	createAsset(contract, "key1")
-	increaseValue(contract, "key1", 5) // we want to increase the value of the asset by 5
-	decreaseValue(contract, "key1", 2)
-	readAsset(contract, "key1")
-	readAsset(contract, "key2")
-	fmt.Print("TESTING DONE")
+	// createAsset(contract, "key1")
+	// increaseValue(contract, "key1", 5) // we want to increase the value of the asset by 5
+	// decreaseValue(contract, "key1", 2)
+	// readAsset(contract, "key1")
+	// readAsset(contract, "key2")
+	// fmt.Print("TESTING DONE")
 
-	//	router := gin.Default()
-	//	router.POST("/createAsset", createAsset(contract))
+	router := gin.Default()
+	//router.POST("/createAsset", createAsset(contract))
 
-	//	router.GET("/albums/:name", readAsset)
+	router.GET("/albums/:name", readAsset(contract))
 
-	//	router.Run("localhost:8080")
+	router.Run("localhost:8080")
 
 }
 
@@ -192,16 +194,16 @@ func decreaseValue(contract *client.Contract, name string, decVal uint) {
 	fmt.Printf("*** Transaction committed successfully\n")
 }
 
-func readAsset(contract *client.Contract, name string) {
+func readAsset(c *gin.Context, contract *client.Contract) {
 	fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
-	//	name := c.Param("name")
+	name := c.Param("name")
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
-		//	c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
 	}
 	result := formatJSON(evaluateResult)
