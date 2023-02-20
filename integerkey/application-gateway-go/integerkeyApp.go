@@ -150,7 +150,7 @@ func newSign() identity.Sign {
 }
 
 func createAsset(c *gin.Context) {
-	
+
 	name := c.Param("name")
 	evaluateResult, err := contract.EvaluateTransaction("CreateAsset", name)
 	if err != nil {
@@ -219,7 +219,8 @@ func readAsset(c *gin.Context) {
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, data, "", "  "); err != nil {
-		panic(fmt.Errorf("failed to parse JSON: %w", err))
+		return "error in parsing JSON"
+
 	}
 	return prettyJSON.String()
 }
