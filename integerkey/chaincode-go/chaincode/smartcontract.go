@@ -78,16 +78,17 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
+	// NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
 	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
 	if err != nil {
 		return nil, err
 	}
 
-	intermediateval, err := strconv.ParseUint(incrementValue, 10, 32)
+	intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)  
 	if err !=nil{
 			fmt.Println(err)
 	}
-	incrementValueuInt := uint(intermediateval)
+	incrementValueuInt := uint(intermediateUpdateval)
 	newValue := uint(asset_read.Value) + incrementValueuInt
 
 	if newValue > 20 {
@@ -105,7 +106,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 	updatestate_err := ctx.GetStub().PutState(Name, assetJSON)
-	fmt.Printf("Increasing asset value returned the following:", updatestate_err)
+	fmt.Printf("Increasing asset value returned the following: %s ", updatestate_err)
 
 	return &asset, nil
 }

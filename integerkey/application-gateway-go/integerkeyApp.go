@@ -192,17 +192,14 @@ func increaseValue(c *gin.Context) {
 	name := request.Name
 	incVal := request.changeAmount
 
-	// evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
-	// fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
-	evaluatedAsset, err := contract.EvaluateTransaction("IncreaseAsset", name, incVal)
-	fmt.Printf("\n------> After EvaluateTransaction:%s , %s \n", string(evaluatedAsset), err)
+	 evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	 fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 
-	fmt.Printf("\n------> After EvaluateTransaction:%s , %s \n", string(evaluatedAsset), err)
 	// updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
 	// if readerr != nil {
 
