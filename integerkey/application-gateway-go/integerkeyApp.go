@@ -85,7 +85,7 @@ func main() {
 	router.PUT("/integerKey/createAsset", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 
-	router.POST("/integerKey/increaseValue/:name/:value", increaseValue)
+	router.PUT("/integerKey/increaseValue/:name/:value", increaseValue)
 	router.POST("/integerKey/decreaseValue/:name/:value", decreaseValue)
 
 	router.Run("localhost:8080")
