@@ -75,6 +75,7 @@ func main() {
 
 	router := gin.Default()
 
+	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.PUT("/integerKey/createAsset", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 	router.POST("/integerKey/increaseValue", increaseValue)
