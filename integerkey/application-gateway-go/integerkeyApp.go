@@ -35,7 +35,7 @@ type CreateAssetRequest struct {
 
 type Asset struct {
 	Name  string `json:"name" binding:"required"`
-	Value string `json:"value" binding:"required"`
+	Value uint `json:"value" binding:"required"`
 }
 
 var contract *client.Contract
