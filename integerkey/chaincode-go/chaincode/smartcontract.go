@@ -42,7 +42,11 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	return ctx.GetStub().PutState(Name, assetJSON)
+	err := ctx.GetStub().PutState(Name, assetJSON)
+
+	fmt.Println("Asset creation returnde : %s", err)
+
+	return err
 }
 
 // ReadAsset returns the asset stored in the world state with given Name.
