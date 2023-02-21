@@ -3,6 +3,7 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -76,12 +77,18 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 }
 
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
-func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue uint) error {
+func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) error {
 	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
 	if err != nil {
 		return err
 	}
-	newValue := uint(asset_read.Value) + incrementValue
+
+	intermediateval, err := strconv.ParseUint(incrementValue, 10, 32)
+	if err !=nil{
+			fmt.Println(err)
+	}
+	incrementValueuInt := uint(intermediateval)
+	newValue := uint(asset_read.Value) + incrementValueuInt
 
 	if newValue > 20 {
 		return fmt.Errorf("You cannot have a value more than 20.")

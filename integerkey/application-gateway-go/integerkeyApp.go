@@ -35,7 +35,7 @@ type CreateAssetRequest struct {
 
 type UpdateValueRequest struct {
 	Name         string `json:"name" binding:"required"`
-	changeAmount uint   `json:"changeAmount" binding:"required"`
+	changeAmount string   `json:"changeAmount" binding:"required"`
 }
 
 var contract *client.Contract
