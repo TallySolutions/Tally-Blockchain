@@ -182,7 +182,7 @@ func increaseValue(c *gin.Context) {
 	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	if err != nil {
 		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.String(http.StatusInternalServerError, gin.H{"message": "failed to evaluate transaction"})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
@@ -199,7 +199,7 @@ func decreaseValue(c *gin.Context) {
 	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	if err != nil {
 		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.String(http.StatusInternalServerError, gin.H{"message": "failed to evaluate transaction"})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
