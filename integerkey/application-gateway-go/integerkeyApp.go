@@ -35,7 +35,7 @@ type CreateAssetRequest struct {
 
 type UpdateValueRequest struct {
 	Name         string `json:"name" binding:"required"`
-	changeAmount string   `json:"changeAmount" binding:"required"`
+	changeAmount string `json:"changeAmount" binding:"required"`
 }
 
 var contract *client.Contract
@@ -73,21 +73,12 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(chaincodeName)
 
-	// createAsset(contract, "key1")
-	// increaseValue(contract, "key1", 5) // we want to increase the value of the asset by 5
-	// decreaseValue(contract, "key1", 2)
-	// readAsset(contract, "key1")
-	// readAsset(contract, "key2")
-	// fmt.Print("TESTING DONE")
-
 	router := gin.Default()
 
 	router.PUT("/integerKey/createAsset", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
-
 	router.POST("/integerKey/increaseValue", increaseValue)
 	router.POST("/integerKey/decreaseValue", decreaseValue)
-
 	router.Run("localhost:8080")
 
 }
@@ -201,20 +192,23 @@ func increaseValue(c *gin.Context) {
 	name := request.Name
 	incVal := request.changeAmount
 
-	evaluateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
-	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluateResult), err)
+	// evaluateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 
-	updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
-	if readerr != nil {
+	// updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
+	// if readerr != nil {
 
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
+	// 	c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
 
-	}
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
+	// }
+	// c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
+	// c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"%s\"}\n", name, value))
 
 }
 
