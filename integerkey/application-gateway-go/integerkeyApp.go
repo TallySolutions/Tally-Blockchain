@@ -228,6 +228,10 @@ func decreaseValue(c *gin.Context) {
 func getAllAssets(c *gin.Context) {
 
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
+
+	if err != nil {
+		return nil, err
+	}
 	c.IndentedJSON(http.StatusOK, transactionResult)
 
 }
