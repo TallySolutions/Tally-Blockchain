@@ -166,11 +166,11 @@ func createAsset(c *gin.Context) {
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n",string(result), err)
 
 	if err != nil {
-		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return 
 	}
 
-	c.IndentedJSON(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
+	c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
 
 }
 
@@ -182,12 +182,12 @@ func increaseValue(c *gin.Context) {
 	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	if err != nil {
 		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
+		c.String(http.StatusInternalServerError, gin.H{"message": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
 
-	c.IndentedJSON(http.StatusOK, result)
+	c.String(http.StatusOK, result)
 	//fmt.Printf("*** Transaction committed successfully\n")
 }
 func decreaseValue(c *gin.Context) {
@@ -199,12 +199,12 @@ func decreaseValue(c *gin.Context) {
 	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	if err != nil {
 		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
+		c.String(http.StatusInternalServerError, gin.H{"message": "failed to evaluate transaction"})
 	}
 
 	result := formatJSON(evaulateResult)
 
-	c.IndentedJSON(http.StatusOK, result)
+	c.String(http.StatusOK, result)
 	//fmt.Printf("*** Transaction committed successfully\n")
 }
 
@@ -215,11 +215,11 @@ func readAsset(c *gin.Context) {
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
 
-		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 
 	}
 
-	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
 }
 
 func formatJSON(data []byte) string {
