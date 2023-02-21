@@ -16,6 +16,7 @@ type Asset struct {
 	Value uint   `json:"Value"`
 }
 
+// function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
 	assetJSON, err := ctx.GetStub().GetState(Name)
 	if err != nil {
@@ -24,11 +25,13 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 	return assetJSON != nil, nil
 }
+
+// function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string) error {
-	exists, err := s.AssetExists(ctx, Name)
+
+	exists, err := s.AssetExists(ctx, Name) // exists-> boolean value, err-> can be nil or the error, if present
 
 	fmt.Printf("Asset exists returned : %t, %s\n", exists, err)
-
 
 	if err != nil {
 		return err
@@ -37,7 +40,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("the asset %s already exists", Name)
 	}
 
-	asset := Asset{
+	asset := Asset{ //creation of asset
 		Name:  Name,
 		Value: 0,
 	}
@@ -46,7 +49,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	state_err := ctx.GetStub().PutState(Name, assetJSON)
+	state_err := ctx.GetStub().PutState(Name, assetJSON) // new state added
 
 	fmt.Printf("Asset creation returned : %s\n", state_err)
 
@@ -71,14 +74,13 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 	return &asset, nil
 }
-func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue uint) error {
-	// exists, err := s.AssetExists(ctx, Name)
 
-	asset_read, err := s.ReadAsset(ctx, Name)
+// IncreaseAsset increases the value of the asset by the specified value- with certain limits
+func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue uint) error {
+	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
 	if err != nil {
 		return err
 	}
-	// use GetState()
 	newValue := uint(asset_read.Value) + incrementValue
 
 	if newValue > 20 {
@@ -95,9 +97,13 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 		return err
 	}
 
-	return ctx.GetStub().PutState(Name, assetJSON)
+	updatestate_err := ctx.GetStub().PutState(Name, assetJSON)
+	fmt.Printf("Increasing asset value returned the following:", updatestate_err)
+
+	return updatestate_err
 }
 
+// DecreaseAsset decreases the value of the asset by the specified value
 func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue uint) error {
 	asset_read, err := s.ReadAsset(ctx, Name)
 	if err != nil {
@@ -115,7 +121,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 		return err
 	}
 
-	return ctx.GetStub().PutState(Name, assetJSON)
+	updatestate_Err := ctx.GetStub().PutState(Name, assetJSON)
+	fmt.Printf("After decreasing asset value:", updatestate_Err)
+	return updatestate_Err
 }
-
-

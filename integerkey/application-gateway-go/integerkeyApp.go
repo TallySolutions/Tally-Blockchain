@@ -153,6 +153,23 @@ func newSign() identity.Sign {
 	return sign
 }
 
+
+// function to call the ReadAsset function present in smartcontract.go
+func readAsset(c *gin.Context) {
+
+	name := c.Param("name")
+
+	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
+	if err != nil {
+
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+
+	}
+
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
+}
+
+
 func createAsset(c *gin.Context) {
 
 	var request CreateAssetRequest
@@ -208,19 +225,7 @@ func decreaseValue(c *gin.Context) {
 	//fmt.Printf("*** Transaction committed successfully\n")
 }
 
-func readAsset(c *gin.Context) {
 
-	name := c.Param("name")
-
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
-	if err != nil {
-
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
-
-	}
-
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
-}
 
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
