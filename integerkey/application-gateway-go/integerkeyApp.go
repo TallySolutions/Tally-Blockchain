@@ -166,9 +166,13 @@ func createAsset(c *gin.Context) {
 
 	fmt.Printf("\n--> Creating Asset : %s\n", name)
 
-	_, err := contract.SubmitTransaction("CreateAsset", name)
+	result, err := contract.SubmitTransaction("CreateAsset", name)
+
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n",string(result), err)
+	
 	if err != nil {
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": err})
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": "Failed to submit transaction."})
+		return 
 	}
 
 	var asset Asset
@@ -179,6 +183,7 @@ func createAsset(c *gin.Context) {
 	json, err := json.Marshal(asset)
     if err != nil {
 		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": err})
+		return 
     }
 
 	c.IndentedJSON(http.StatusOK, json)
