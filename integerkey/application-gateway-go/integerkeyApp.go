@@ -33,11 +33,6 @@ type CreateAssetRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type Asset struct {
-	Name  string `json:"name" binding:"required"`
-	Value uint `json:"value" binding:"required"`
-}
-
 var contract *client.Contract
 
 func main() {
@@ -169,24 +164,13 @@ func createAsset(c *gin.Context) {
 	result, err := contract.SubmitTransaction("CreateAsset", name)
 
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n",string(result), err)
-	
+
 	if err != nil {
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": "Failed to submit transaction."})
+		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintfln("{\"error\":\"%s\"}", err))
 		return 
 	}
 
-	var asset Asset
-
-	asset.Name = name
-	asset.Value = 0
-
-	json, err := json.Marshal(asset)
-    if err != nil {
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": err})
-		return 
-    }
-
-	c.IndentedJSON(http.StatusOK, json)
+	c.IndentedJSON(http.StatusOK, fmt.Sprintfln("{\"name\":\"%s\",\"value\":\"0\"}", name))
 
 }
 
@@ -225,22 +209,17 @@ func decreaseValue(c *gin.Context) {
 }
 
 func readAsset(c *gin.Context) {
-	// fmt.Printf("\n--> Evaluate Transaction: ReadAsset, function returns asset attributes\n")
 
 	name := c.Param("name")
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
-		// panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 
-		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": err})
+		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintfln("{\"error\":\"%s\"}", err))
 
 	}
-	result := formatJSON(evaluateResult)
 
-	c.IndentedJSON(http.StatusOK, result)
-
-	// fmt.Printf("*** Result:%s\n", result)
+	c.IndentedJSON(http.StatusOK, fmt.Sprintfln("%s", string(evaluateResult)))
 }
 
 func formatJSON(data []byte) string {
