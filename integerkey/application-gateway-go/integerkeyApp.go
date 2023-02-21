@@ -29,6 +29,9 @@ const (
 	gatewayPeer  = "peer0.org1.example.com"
 )
 
+type CreateAssetRequest struct {
+	Name string `json:"name" binding:"required"`
+}
 var contract *client.Contract
 
 func main() {
@@ -73,7 +76,7 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/integerKey/createAsset/:name", createAsset)
+	router.PUT("/integerKey/createAsset/:name", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 
 	router.POST("/integerKey/increaseValue/:name/:value", increaseValue)
@@ -151,7 +154,12 @@ func newSign() identity.Sign {
 
 func createAsset(c *gin.Context) {
 
-	name := c.Param("name")
+	var request CreateAssetRequest
+    c.BindJSON(&request)
+	name := request.Name
+
+	fmt.Printf("\n--> Creating Asset : %s\n", name)
+
 	evaluateResult, err := contract.EvaluateTransaction("CreateAsset", name)
 	if err != nil {
 		// panic(fmt.Errorf("failed to evaluate transaction: %w", err))
@@ -159,6 +167,9 @@ func createAsset(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotImplemented, gin.H{"message": "failed to evaluate transaction"})
 
 	}
+
+	fmt.Printf("\n--> Result: %s\n", evaluateResult)
+
 	result := formatJSON(evaluateResult)
 
 	c.IndentedJSON(http.StatusOK, result)
