@@ -171,7 +171,7 @@ func createAsset(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotImplemented, gin.H{"error": err})
 	}
 
-	asset Asset
+	var asset Asset
 
 	asset.Name = name
 	asset.Value = 0
