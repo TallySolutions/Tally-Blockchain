@@ -33,6 +33,11 @@ type CreateAssetRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
+type UpdateValueRequest struct {
+	Name         string `json:"name" binding:"required"`
+	changeAmount uint   `json:"changeAmount" binding:"required"`
+}
+
 var contract *client.Contract
 
 func main() {
@@ -153,7 +158,6 @@ func newSign() identity.Sign {
 	return sign
 }
 
-
 // function to call the ReadAsset function present in smartcontract.go
 func readAsset(c *gin.Context) {
 
@@ -169,22 +173,21 @@ func readAsset(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
 }
 
-
 func createAsset(c *gin.Context) {
 
 	var request CreateAssetRequest
-    c.BindJSON(&request)
+	c.BindJSON(&request)
 	name := request.Name
 
 	fmt.Printf("\n--> Creating Asset : %s\n", name)
 
 	result, err := contract.SubmitTransaction("CreateAsset", name)
 
-	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n",string(result), err)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
-		return 
+		return
 	}
 
 	c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
@@ -192,40 +195,51 @@ func createAsset(c *gin.Context) {
 }
 
 func increaseValue(c *gin.Context) {
-	// fmt.Printf("\n--> Submit Transaction: Increase Asset Value (by %v) \n", incVal)
-	name := c.Param("name")
-	incVal := c.Param("value")
 
-	evaulateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	var request UpdateValueRequest
+	c.BindJSON(&request)
+	name := request.Name
+	incVal := request.changeAmount
+
+	evaluateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluateResult), err)
 	if err != nil {
-		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "failed to evaluate transaction"})
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		return
 	}
 
-	result := formatJSON(evaulateResult)
+	updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
+	if readerr != nil {
 
-	c.String(http.StatusOK, result)
-	//fmt.Printf("*** Transaction committed successfully\n")
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
+
+	}
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
+
 }
+
 func decreaseValue(c *gin.Context) {
-	// fmt.Printf("\n--> Submit Transaction: Decrease Asset Value (by %v) \n", incVal)
-	name := c.Param("name")
-	decVal := c.Param("value")
 
-	// evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, strconv.FormatUint(uint64(decVal), 10))
-	evaulateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
+	var request UpdateValueRequest
+	c.BindJSON(&request)
+	name := request.Name
+	decVal := request.changeAmount
+
+	evaluateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluateResult), err)
 	if err != nil {
-		// panic(fmt.Errorf("failed to submit transaction: %w", err))
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "failed to evaluate transaction"})
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		return
 	}
 
-	result := formatJSON(evaulateResult)
+	updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
+	if readerr != nil {
 
-	c.String(http.StatusOK, result)
-	//fmt.Printf("*** Transaction committed successfully\n")
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
+
+	}
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
 }
-
-
 
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
