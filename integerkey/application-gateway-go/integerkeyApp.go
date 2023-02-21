@@ -34,7 +34,7 @@ type CreateAssetRequest struct {
 }
 
 type UpdateValueRequest struct {
-	Name         string `json:"name" binding:"required"`
+	Name         string `json:"Name" binding:"required"`
 	changeAmount string `json:"changeAmount" binding:"required"`
 }
 
@@ -154,7 +154,7 @@ func readAsset(c *gin.Context) {
 
 	name := c.Param("name")
 
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
+	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
 
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
@@ -172,7 +172,7 @@ func createAsset(c *gin.Context) {
 
 	fmt.Printf("\n--> Creating Asset : %s\n", name)
 
-	result, err := contract.SubmitTransaction("CreateAsset", name)
+	result, err := contract.SubmitTransaction("CreateAsset", name) // SubmitTransaction returns results of a transaction only after its commited
 
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
@@ -192,15 +192,17 @@ func increaseValue(c *gin.Context) {
 	name := request.Name
 	incVal := request.changeAmount
 
-	// evaluateResult, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
-	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
-	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+	// evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	// fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+	evaluatedAsset, err := contract.EvaluateTransaction("IncreaseAsset", name, incVal)
+	fmt.Printf("\n------> After EvaluateTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 
+	fmt.Printf("\n------> After EvaluateTransaction:%s , %s \n", string(evaluatedAsset), err)
 	// updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
 	// if readerr != nil {
 
