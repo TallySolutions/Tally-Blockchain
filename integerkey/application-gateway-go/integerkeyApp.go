@@ -192,22 +192,13 @@ func increaseValue(c *gin.Context) {
 	name := request.Name
 	incVal := request.changeAmount
 
-	 evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
-	 fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
-
-	// updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
-	// if readerr != nil {
-
-	// 	c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
-
-	// }
-	// c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
-	// c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"%s\"}\n", name, value))
 
 }
 
@@ -232,6 +223,13 @@ func decreaseValue(c *gin.Context) {
 
 	}
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
+}
+
+func getAllAssets(c *gin.Context) {
+
+	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
+	c.IndentedJSON(http.StatusOK, transactionResult)
+
 }
 
 func formatJSON(data []byte) string {

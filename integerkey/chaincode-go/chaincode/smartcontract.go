@@ -76,6 +76,37 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 	return &asset, nil
 }
 
+func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error){
+
+	iteratorVar, err := ctx.GetStub().GetStateByRange("","")
+	if err !=nil{
+		return nil, err
+	}
+	defer iteratorVar.Close()
+
+
+	var assets []*Asset
+
+	for iteratorVar.HasNext() {
+		queryResponse, err := iteratorVar.Next()
+		if err != nil {
+		  return nil, err
+		}
+	
+		var asset Asset
+		err = json.Unmarshal(queryResponse.Value, &asset)
+		if err != nil {
+		  return nil, err
+		}
+		assets = append(assets, &asset)
+	  }
+	
+	  return assets, nil
+
+}
+
+
+
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
 	// NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
