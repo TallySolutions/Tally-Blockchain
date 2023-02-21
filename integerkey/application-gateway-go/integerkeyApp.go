@@ -166,11 +166,11 @@ func createAsset(c *gin.Context) {
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n",string(result), err)
 
 	if err != nil {
-		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintln("{\"error\":\"%s\"}", err))
+		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return 
 	}
 
-	c.IndentedJSON(http.StatusOK, fmt.Sprintln("{\"name\":\"%s\",\"value\":\"0\"}", name))
+	c.IndentedJSON(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
 
 }
 
@@ -215,11 +215,11 @@ func readAsset(c *gin.Context) {
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name)
 	if err != nil {
 
-		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintln("{\"error\":\"%s\"}", err))
+		c.IndentedJSON(http.StatusNotImplemented, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 
 	}
 
-	c.IndentedJSON(http.StatusOK, fmt.Sprintln("%s", string(evaluateResult)))
+	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
 }
 
 func formatJSON(data []byte) string {
