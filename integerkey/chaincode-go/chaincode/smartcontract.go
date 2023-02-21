@@ -26,6 +26,10 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 }
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string) error {
 	exists, err := s.AssetExists(ctx, Name)
+
+	fmt.Printf("Asset exists returned : %t, %s\n", exists, err)
+
+
 	if err != nil {
 		return err
 	}
@@ -44,7 +48,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 	state_err := ctx.GetStub().PutState(Name, assetJSON)
 
-	fmt.Println("Asset creation returned : %s", state_err)
+	fmt.Printf("Asset creation returned : %s\n", state_err)
 
 	return state_err
 }
