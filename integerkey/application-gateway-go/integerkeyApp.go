@@ -212,7 +212,7 @@ func decreaseValue(c *gin.Context) {
 	name := request.Name
 	decVal := request.Value
 
-	fmt.Printf("Name : %s , Value: %s ", name, incVal)
+	fmt.Printf("Name : %s , Value: %s ", name, decVal)
 
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, decVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
