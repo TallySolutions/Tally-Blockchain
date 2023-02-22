@@ -143,7 +143,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 }
 
 // DecreaseAsset decreases the value of the asset by the specified value
-func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) error {
+func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) (*Asset, error) {
 	asset_read, err := s.ReadAsset(ctx, Name)
 	if err != nil {
 		return err
@@ -168,5 +168,5 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	updatestate_Err := ctx.GetStub().PutState(Name, assetJSON)
 	fmt.Printf("After decreasing asset value:", updatestate_Err)
-	return updatestate_Err
+	return &asset , nil
 }
