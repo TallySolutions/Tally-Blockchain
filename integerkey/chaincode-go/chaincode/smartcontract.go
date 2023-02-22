@@ -146,7 +146,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) (*Asset, error) {
 	asset_read, err := s.ReadAsset(ctx, Name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
