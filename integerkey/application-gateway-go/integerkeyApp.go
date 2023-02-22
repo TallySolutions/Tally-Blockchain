@@ -75,11 +75,11 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.PUT("/integerKey/createAsset", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
 	router.POST("/integerKey/increaseValue", increaseValue)
 	router.POST("/integerKey/decreaseValue", decreaseValue)
+	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.Run("localhost:8080")
 
 }
@@ -223,6 +223,11 @@ func decreaseValue(c *gin.Context) {
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 }
 
+
+
+
+
+
 func getAllAssets(c *gin.Context) {
 
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
@@ -234,11 +239,14 @@ func getAllAssets(c *gin.Context) {
 
 }
 
+
+
+
+
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, data, "", "  "); err != nil {
 		return "error in parsing JSON"
-
 	}
 	return prettyJSON.String()
 }
