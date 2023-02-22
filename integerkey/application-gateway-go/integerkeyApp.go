@@ -214,7 +214,7 @@ func decreaseValue(c *gin.Context) {
 
 	fmt.Printf("Name : %s , Value: %s ", name, decVal)
 
-	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, decVal)
+	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
