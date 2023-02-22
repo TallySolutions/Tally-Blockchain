@@ -188,7 +188,7 @@ func createAsset(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
+	c.JSON(http.StatusOK, fmt.Sprintf("{\"Name\":\"%s\",\"value\":\"0\"}\n", name))
 
 }
 
@@ -204,10 +204,11 @@ func increaseValue(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
+	// c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
+	c.JSON(http.StatusOK, evaluatedAsset)
 
 }
 
