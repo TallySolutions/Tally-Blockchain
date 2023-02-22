@@ -235,7 +235,7 @@ func getAllAssets(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	c.IndentedJSON(http.StatusOK, transactionResult)
+	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 
 }
 
