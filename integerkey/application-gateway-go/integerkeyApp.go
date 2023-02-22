@@ -35,7 +35,7 @@ type CreateAssetRequest struct {
 
 type UpdateValueRequest struct {
 	Name         string `json:"Name" binding:"required"`
-	changeAmount string `json:"changeAmount" binding:"required"`
+	Value string `json:"Value" binding:"required"`
 }
 
 var contract *client.Contract
@@ -191,7 +191,9 @@ func increaseValue(c *gin.Context) {
 	var request UpdateValueRequest
 	c.BindJSON(&request)
 	name := request.Name
-	incVal := request.changeAmount
+	incVal := request.Value
+
+	fmt.Printf("Name : %s , Value: %s ", name, incVal)
 
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
@@ -208,7 +210,7 @@ func decreaseValue(c *gin.Context) {
 	var request UpdateValueRequest
 	c.BindJSON(&request)
 	name := request.Name
-	decVal := request.changeAmount
+	decVal := request.Value
 
 	evaluateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluateResult), err)

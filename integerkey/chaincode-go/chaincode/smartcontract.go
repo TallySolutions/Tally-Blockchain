@@ -78,7 +78,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error){
 
-	iteratorVar, err := ctx.GetStub().GetStateByRange("","")
+	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
 	if err !=nil{
 		return nil, err
 	}
