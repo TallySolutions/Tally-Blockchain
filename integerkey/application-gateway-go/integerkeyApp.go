@@ -162,8 +162,14 @@ func readAsset(c *gin.Context) {
 
 	}
 
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
+	var v interface{}
+	json.Unmarshal(evaluateResult, &v)
+    data := v.(map[string]interface{})
+
+	// c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
+    c.JSON(http.StatusOK,data)
 }
+
 
 func createAsset(c *gin.Context) {
 
