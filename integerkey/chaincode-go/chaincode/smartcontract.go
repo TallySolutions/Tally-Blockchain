@@ -163,10 +163,11 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	updatestate_Err := ctx.GetStub().PutState(Name, assetJSON)
-	fmt.Printf("After decreasing asset value:", updatestate_Err)
+	fmt.Printf("After decreasing asset value: %s", updatestate_Err)
+
 	return &asset , nil
 }
