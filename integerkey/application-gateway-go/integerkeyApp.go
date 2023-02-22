@@ -212,20 +212,15 @@ func decreaseValue(c *gin.Context) {
 	name := request.Name
 	decVal := request.Value
 
-	evaluateResult, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
-	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluateResult), err)
+	fmt.Printf("Name : %s , Value: %s ", name, incVal)
+
+	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, decVal)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
-
-	updatedAsset, readerr := contract.EvaluateTransaction("ReadAsset", name)
-	if readerr != nil {
-
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", readerr))
-
-	}
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(updatedAsset)))
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 }
 
 func getAllAssets(c *gin.Context) {
