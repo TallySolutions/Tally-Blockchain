@@ -183,5 +183,5 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	  return fmt.Errorf("the asset %s does not exist", name)
 	}
   
-	return ctx.GetStub().DelState(id), nil
+	 ctx.GetStub().DelState(id), nil
   }
