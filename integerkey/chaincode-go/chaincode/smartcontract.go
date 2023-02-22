@@ -171,3 +171,17 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	return &asset , nil
 }
+
+
+// DeleteAsset deletes the state from the ledger
+func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, name string) error {
+	exists, err := s.AssetExists(ctx, name)
+	if err != nil {
+	  return err
+	}
+	if !exists {
+	  return fmt.Errorf("the asset %s does not exist", name)
+	}
+  
+	return ctx.GetStub().DelState(id), nil
+  }

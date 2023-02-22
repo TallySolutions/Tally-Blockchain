@@ -29,9 +29,10 @@ const (
 	gatewayPeer  = "peer0.org1.example.com"
 )
 
-type CreateAssetRequest struct {
+type CreateAssetRequest struct {                         // for create operations
 	Name string `json:"name" binding:"required"`
 }
+
 
 type UpdateValueRequest struct {
 	Name         string `json:"Name" binding:"required"`
@@ -80,6 +81,7 @@ func main() {
 	router.POST("/integerKey/increaseValue", increaseValue)
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
+	router.GET("/integerKey/deleteAsset/:name", deleteAsset)
 	router.Run("localhost:8080")
 
 }
@@ -224,10 +226,6 @@ func decreaseValue(c *gin.Context) {
 }
 
 
-
-
-
-
 func getAllAssets(c *gin.Context) {
 
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
@@ -240,7 +238,18 @@ func getAllAssets(c *gin.Context) {
 }
 
 
+func deleteAsset(c *gin.Context){
 
+	name := c.Param("name")
+
+	_, err := contract.EvaluateTransaction("DeleteAsset", name) 
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+	}
+	//c.String(http.StatusOK, fmt.Sprintf("%s\n", string(deleteAssetResult)))
+	//c.String(http.StatusOK, deleteAssetResult)
+	c.JSON(http.StatusOK, gin.H{name:"has been deleted"})
+}
 
 
 func formatJSON(data []byte) string {
