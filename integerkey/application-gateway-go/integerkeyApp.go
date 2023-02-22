@@ -158,18 +158,12 @@ func readAsset(c *gin.Context) {
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
 
-		c.JSON(http.StatusInternalServerError, err)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 
 	}
 
-	var v interface{}
-	json.Unmarshal(evaluateResult, &v)
-    data := v.(map[string]interface{})
-
-	// c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
-    c.JSON(http.StatusOK,data)
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
 }
-
 
 func createAsset(c *gin.Context) {
 
@@ -184,11 +178,11 @@ func createAsset(c *gin.Context) {
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, fmt.Sprintf("{\"Name\":\"%s\",\"value\":\"0\"}\n", name))
+	c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
 
 }
 
@@ -204,11 +198,10 @@ func increaseValue(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
-	// c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
-	c.JSON(http.StatusOK, evaluatedAsset)
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 
 }
 
