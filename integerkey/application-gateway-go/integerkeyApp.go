@@ -158,7 +158,7 @@ func readAsset(c *gin.Context) {
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
 
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 
 	}
 
