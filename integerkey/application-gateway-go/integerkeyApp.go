@@ -242,7 +242,7 @@ func deleteAsset(c *gin.Context){
 
 	name := c.Param("name")
 
-	_, err := contract.EvaluateTransaction("DeleteAsset", name) 
+	_, err := contract.SubmitTransaction("DeleteAsset", name) 
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 	}
