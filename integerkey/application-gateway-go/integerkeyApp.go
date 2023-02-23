@@ -82,7 +82,7 @@ func main() {
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
-	router.GET("integerKey/getPagination/:startName/:endName/:pageSize", getPagination)
+	router.GET("integerKey/getPagination/:startName/:endName", getPagination)
 	router.Run("localhost:8080")
 
 }
@@ -243,8 +243,8 @@ func getPagination(c *gin.Context){
 
 	startname := c.Param("startname")
 	endname := c.Param("endname")
-	pageSize := c.Param("pageSize")
-	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startName, endName, pageSize, "")
+	// pageSize := c.Param("pageSize")
+	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startName, endName, 5, "")
 	if err != nil{
 		return
 	}
