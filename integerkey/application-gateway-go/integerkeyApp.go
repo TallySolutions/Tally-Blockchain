@@ -82,6 +82,7 @@ func main() {
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
+	router.GET("integerKey/getPagination/:startName/:endName/")
 	router.Run("localhost:8080")
 
 }

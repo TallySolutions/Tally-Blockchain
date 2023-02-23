@@ -76,6 +76,39 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 	return &asset, nil
 }
 
+
+
+
+func (s *SmartContract )getAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, pageSize int, bookmark string) ([] *Asset, error){
+
+	// NOTE: BOOKMARK HAS TO BE SENT AS AN EMPTY STRING WHEN SENT AS A PARAMETER
+	iteratorVar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname,pageSize)
+	if err !=nil{
+		return nil, err
+	}
+	defer iteratorVar.Close()
+
+
+	var assets []*Asset
+
+	for iteratorVar.HasNext() {
+		queryResponse, err := iteratorVar.Next()
+		if err != nil {
+		  return nil, err
+		}
+	
+		var asset Asset
+		err = json.Unmarshal(queryResponse.Value, &asset)
+		if err != nil {
+		  return nil, err
+		}
+		assets = append(assets, &asset)
+	  }
+	
+	  return assets, nil
+
+}
+
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error){
 
 	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
