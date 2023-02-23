@@ -239,6 +239,7 @@ func getAllAssets(c *gin.Context) {
 }
 
 
+// gets the assets between a specified range 
 func getPagination(c *gin.Context){
 
 	startname := c.Param("startname")
