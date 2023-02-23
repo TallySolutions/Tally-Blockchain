@@ -82,7 +82,7 @@ func main() {
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
-	router.GET("integerKey/getPagination/:startName/:endName/")
+	router.GET("integerKey/getPagination/:startName/:endName/:pageSize", getPagination)
 	router.Run("localhost:8080")
 
 }
@@ -237,6 +237,22 @@ func getAllAssets(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 
 }
+
+
+func getPagination(c *gin.Context){
+
+	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination")
+	if err != nil{
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s \n", string(transactionResult)))
+
+}
+
+
+
+
 
 
 func deleteAsset(c *gin.Context){
