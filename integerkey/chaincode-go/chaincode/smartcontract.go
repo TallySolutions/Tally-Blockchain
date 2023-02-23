@@ -79,10 +79,10 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 
 
-func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, pageSize int32, bookmark string) ([] *Asset, error){
+func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, pageSize string, bookmark string) ([] *Asset, error){
 
 	// NOTE: BOOKMARK HAS TO BE SENT AS AN EMPTY STRING WHEN SENT AS A PARAMETER
-	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname,pageSize, bookmark)
+	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname, int32(pageSize), bookmark)
 	if err !=nil && midvar!=nil{
 		return nil, err
 	}
