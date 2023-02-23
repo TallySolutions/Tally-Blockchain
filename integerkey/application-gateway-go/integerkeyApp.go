@@ -244,7 +244,7 @@ func getPagination(c *gin.Context){
 	startname := c.Param("startname")
 	endname := c.Param("endname")
 	// pageSize := c.Param("pageSize")
-	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startName, endName, int32(5), string(""))
+	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, int32(5), string(""))
 	if err != nil{
 		return
 	}
