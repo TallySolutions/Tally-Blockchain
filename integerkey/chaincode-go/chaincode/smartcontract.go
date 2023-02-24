@@ -79,13 +79,14 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 
 
-func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, pageSize string, bookmark string) ([] *Asset, error){
+func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, bookmark string) ([] *Asset, error){
 
 	// NOTE: BOOKMARK HAS TO BE SENT AS AN EMPTY STRING WHEN SENT AS A PARAMETER
-	pageSizeInt, e := strconv.Atoi(pageSize)
-	if e != nil {
-		return nil, e
-	  }
+	// pageSizeInt, e := strconv.Atoi(pageSize)
+	// if e != nil {
+	// 	return nil, e
+	//   }
+	pageSizeInt := 5
 	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname, pageSizeInt, bookmark)
 	if err !=nil && midvar!=nil{
 		return nil, err
