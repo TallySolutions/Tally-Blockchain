@@ -162,7 +162,7 @@ func readAsset(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 	}
-
+	c.Writer.Header().Set("Content-Type","application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
 }
 
@@ -179,7 +179,7 @@ func createAsset(c *gin.Context) {
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 
@@ -200,7 +200,7 @@ func increaseValue(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	c.Writer.Header().Set("Content-Type","application/json")
@@ -220,7 +220,7 @@ func decreaseValue(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	c.Writer.Header().Set("Content-Type","application/json")
@@ -233,6 +233,7 @@ func getAllAssets(c *gin.Context) {
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
 
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	c.Writer.Header().Set("Content-Type","application/json")
@@ -250,9 +251,11 @@ func getPagination(c *gin.Context){
 	// pageSize := c.Param("pageSize") -- PAGE SIZE IS NOT PASSED AS A PARAMETER RIGHT NOW
 	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, string(""))
 	if err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	} 
-	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s \n", string(transactionResult)))
+	c.Writer.Header().Set("Content-Type","application/json")
+	c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 
 }
 
@@ -263,7 +266,8 @@ func deleteAsset(c *gin.Context){
 
 	_, err := contract.SubmitTransaction("DeleteAsset", name) 
 	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+		return
 	}
 	//c.String(http.StatusOK, fmt.Sprintf("%s\n", string(deleteAssetResult)))
 	//c.String(http.StatusOK, deleteAssetResult)
