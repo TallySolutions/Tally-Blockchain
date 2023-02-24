@@ -248,15 +248,10 @@ func getPagination(c *gin.Context){
 	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, "5", string(""))
 	if err != nil{
 		return
-	}
-
+	} 
 	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s \n", string(transactionResult)))
 
 }
-
-
-
-
 
 
 func deleteAsset(c *gin.Context){
