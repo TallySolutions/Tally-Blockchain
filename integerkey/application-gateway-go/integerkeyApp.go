@@ -234,7 +234,9 @@ func getAllAssets(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	c.IndentedJSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
+	c.Writer.Header().Set("Content-Type","application/json")
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
+	//c.JSON(http.StatusOK, gin.H{})
 
 }
 
