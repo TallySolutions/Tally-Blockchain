@@ -35,7 +35,7 @@ type CreateAssetRequest struct {                         // for create operation
 
 
 type UpdateValueRequest struct {
-	Name         string `json:"Name" binding:"required"`
+	Name  string `json:"Name" binding:"required"`
 	Value string `json:"Value" binding:"required"`
 }
 
