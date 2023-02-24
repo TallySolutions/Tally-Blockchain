@@ -160,9 +160,7 @@ func readAsset(c *gin.Context) {
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
-
-		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
-
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 	}
 
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluateResult)))
@@ -185,7 +183,8 @@ func createAsset(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
+	// c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
+	c.JSON(http.StatusOK, gin.H{"Name":name, "Value":0})
 
 }
 
@@ -204,6 +203,7 @@ func increaseValue(c *gin.Context) {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
+	c.Writer.Header().Set("Content-Type","application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 
 }
@@ -223,6 +223,7 @@ func decreaseValue(c *gin.Context) {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("{\"error\":\"%s\"}\n", err))
 		return
 	}
+	c.Writer.Header().Set("Content-Type","application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
 }
 
