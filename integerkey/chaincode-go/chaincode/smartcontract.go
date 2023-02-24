@@ -87,7 +87,7 @@ func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextIn
 	// 	return nil, e
 	//   }
 	pageSizeInt := 5
-	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname, pageSizeInt, bookmark)
+	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname, int32(pageSizeInt), bookmark)
 	if err !=nil && midvar!=nil{
 		return nil, err
 	}
