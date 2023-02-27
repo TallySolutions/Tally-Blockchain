@@ -249,14 +249,16 @@ func getPagination(c *gin.Context){
 	startname := c.Param("startname")
 	endname := c.Param("endname")
 	bookmark := c.Param("bookmark")
-	// pageSize := c.Param("pageSize") -- PAGE SIZE IS NOT PASSED AS A PARAMETER RIGHT NOW
+	// pageSize := c.Param("pageSize") -- PAGE SIZE IS NOT PASSED AS A PARAMETER (FOR NOW- will consider if required in later use cases)
 	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, bookmark)
 	if err != nil{
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	} 
+	//c.Writer.Header().Set("Content-Type","application/json")
+	//c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 	c.Writer.Header().Set("Content-Type","application/json")
-	c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 
 }
 
