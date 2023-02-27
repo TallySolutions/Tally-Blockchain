@@ -255,8 +255,6 @@ func getPagination(c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	} 
-	//c.Writer.Header().Set("Content-Type","application/json")
-	//c.JSON(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 	c.Writer.Header().Set("Content-Type","application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(transactionResult)))
 
