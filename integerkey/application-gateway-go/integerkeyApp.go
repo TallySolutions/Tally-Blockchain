@@ -82,7 +82,7 @@ func main() {
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
-	router.GET("integerKey/getPagination/:startName/:endName/:bookmark", getPagination)
+	router.GET("/integerKey/getPagination/:startName/:endName/:bookmark", getPagination)
 	router.Run("localhost:8080")
 
 }
@@ -233,7 +233,7 @@ func getAllAssets(c *gin.Context) {
 	transactionResult, err := contract.EvaluateTransaction("")
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 	c.Writer.Header().Set("Content-Type","application/json")
