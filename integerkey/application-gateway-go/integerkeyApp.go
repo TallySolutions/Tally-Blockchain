@@ -82,7 +82,7 @@ func main() {
 	router.POST("/integerKey/decreaseValue", decreaseValue)
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
-	router.GET("integerKey/getPagination/:startName/:endName", getPagination)
+	router.GET("integerKey/getPagination/:startName/:endName/:bookmark", getPagination)
 	router.Run("localhost:8080")
 
 }
@@ -230,7 +230,7 @@ func decreaseValue(c *gin.Context) {
 
 func getAllAssets(c *gin.Context) {
 
-	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
+	transactionResult, err := contract.EvaluateTransaction("")
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
@@ -248,8 +248,9 @@ func getPagination(c *gin.Context){
 
 	startname := c.Param("startname")
 	endname := c.Param("endname")
+	bookmark := c.Param("bookmark")
 	// pageSize := c.Param("pageSize") -- PAGE SIZE IS NOT PASSED AS A PARAMETER RIGHT NOW
-	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, string(""))
+	transactionResult, err := contract.EvaluateTransaction("GetAssetsPagination", startname, endname, bookmark)
 	if err != nil{
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
