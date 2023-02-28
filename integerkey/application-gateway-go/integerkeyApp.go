@@ -83,7 +83,7 @@ func main() {
 	router.GET("/integerKey/getAllAssets", getAllAssets)
 	router.DELETE("/integerKey/deleteAsset/:name", deleteAsset)
 	router.GET("/integerKey/getPagination/:startName/:endName/:bookmark", getPagination)
-	router.Run("localhost:8080")
+	router.Run("0.0.0.0:8080")
 
 }
 
