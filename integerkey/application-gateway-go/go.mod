@@ -26,6 +26,7 @@ require (
 	github.com/hyperledger/fabric-contract-api-go v1.2.0 // indirect
 	github.com/hyperledger/fabric-protos-go v0.0.0-20220613214546-bf864f01d75e // indirect
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.2.0 // indirect
+	github.com/itsjamie/gin-cors v0.0.0-20220228161158-ef28d3d2a0a8 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

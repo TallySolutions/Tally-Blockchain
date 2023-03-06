@@ -20,19 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Initialize a new Gin router
-router := gin.New()
 
-// Apply the middleware to the router (works with groups too)
-router.Use(cors.Middleware(cors.Config{
-	Origins:        "*",
-	Methods:        "GET, PUT, POST, DELETE",
-	RequestHeaders: "Origin, Authorization, Content-Type",
-	ExposedHeaders: "",
-	MaxAge: 50 * time.Second,
-	Credentials: false,
-	ValidateHeaders: false,
-}))
 
 const (
 	mspID        = "Org1MSP"
@@ -91,7 +79,10 @@ func main() {
 
 	// router := gin.Default()
 
-	router= gin.New()
+// Initialize a new Gin router
+	router := gin.New()
+
+// Apply the middleware to the router (works with groups too)
 	router.Use(cors.Middleware(cors.Config{
 		Origins:        "*",
 		Methods:        "GET, PUT, POST, DELETE",
