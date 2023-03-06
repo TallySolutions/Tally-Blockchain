@@ -182,8 +182,11 @@ func createAsset(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
-
+	c.Writer.Header().Set("Access-Control-Allow-Origin","*")
+	c.Writer.Header().Set("Access-Control-Allow-Methods","PUT")
+	c.Writer.Header().Set("Access-Control-Allow-Headers","Content-Type")
 	// c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
+
 	c.JSON(http.StatusOK, gin.H{"Name":name, "Value":0})
 
 }
