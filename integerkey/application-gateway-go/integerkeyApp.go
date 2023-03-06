@@ -9,6 +9,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/itsjamie/gin-cors"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
@@ -74,7 +75,18 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(chaincodeName)
 
-	router := gin.Default()
+	// router := gin.Default()
+
+	router= gin.New()
+	router.Use(cors.Middleware(cors.Config{
+		Origins:        "*",
+		Methods:        "GET, PUT, POST, DELETE",
+		RequestHeaders: "Origin, Authorization, Content-Type",
+		ExposedHeaders: "",
+		MaxAge: 50 * time.Second,
+		Credentials: false,
+		ValidateHeaders: false,
+	}))
 
 	router.PUT("/integerKey/createAsset", createAsset)
 	router.GET("/integerKey/readAsset/:name", readAsset)
