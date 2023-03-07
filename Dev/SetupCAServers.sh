@@ -1,86 +1,74 @@
-#!/bin/sh
+#!/bin/bash
 
 #Usage: SetupCAServers.sh 
-
-#Be on fabric/tally-network folder
-
-TALLY_HOME=/home/ubuntu/fabric/tally-network
-
-cd ${TALLY_HOME}
 
 #pass default node as 1, node is not used in this script
 . ./SetGlobalVariables.sh 1
 
 #TLS
 
-mkdir -p ${TLS_CA_HOME}
+function SetupServer()
+{
+
+	CA_HOME=$1
+	CA_NAME=$2
+	CA_PORT=$3
+	CA_USER=$4
+	CA_PASSWORD=$5
+	CA_OPS_PORT=$6
+
+	echo Creating Fabric CA Server : ${TLS_CA_NAME}
+
+	mkdir -p ${CA_HOME}
+
+	#Create server config file
 
 
-export FABRIC_CA_CLIENT_HOME=${TALLY_HOME}/organizations/ordererOrganizations/${DOMAIN}
+	/bin/rm -r ${CA_HOME}/*
 
-#Enroll Admin
-fabric-ca-client enroll -u https://${ORDERERCA_CREDS}:${ORDERERCA_URL} --caname ${CA-NAME} --tls.certfiles ${TALLY_HOME}/fabric-ca-servers/tls/ca-cert.pem
+	/bin/cp fabric-ca-server-config-template.yaml ${CA_HOME}/fabric-ca-server-config.yaml
 
-#Create config.yaml
 
-echo 'NodeOUs:
-  Enable: true
-  ClientOUIdentifier:
-    Certificate: cacerts/${ORDERERCA_CERTNAME}_${CA_NAME}.pem
-    OrganizationalUnitIdentifier: client
-  PeerOUIdentifier:
-    Certificate: cacerts/${ORDERERCA_CERTNAME}_${CA_NAME}.pem
-    OrganizationalUnitIdentifier: peer
-  AdminOUIdentifier:
-    Certificate: cacerts/${ORDERERCA_CERTNAME}_${CA_NAME}.pem
-    OrganizationalUnitIdentifier: admin
-  OrdererOUIdentifier:
-    Certificate: cacerts/${ORDERERCA_CERTNAME}_${CA_NAME}.pem
-    OrganizationalUnitIdentifier: orderer' > "${TALLY_HOME}/organizations/ordererOrganizations/${DOMAIN}/msp/config.yaml"
+	sed -e "s/\${CA_NAME}/${CA_NAME}/g" ${CA_HOME}/fabric-ca-server-config.yaml > ${CA_HOME}/fabric-ca-server-config.yaml.1
+	sed -e "s/\${CA_PORT}/${CA_PORT}/g" ${CA_HOME}/fabric-ca-server-config.yaml.1 > ${CA_HOME}/fabric-ca-server-config.yaml.2
+	sed -e "s/\${CA_USER}/${CA_USER}/g" ${CA_HOME}/fabric-ca-server-config.yaml.2 > ${CA_HOME}/fabric-ca-server-config.yaml.3
+	sed -e "s/\${CA_PASSWORD}/${CA_PASSWORD}/g" ${CA_HOME}/fabric-ca-server-config.yaml.3 > ${CA_HOME}/fabric-ca-server-config.yaml.4
+	sed -e "s/\${CA_OPS_PORT}/${CA_OPS_PORT}/g" ${CA_HOME}/fabric-ca-server-config.yaml.4 > ${CA_HOME}/fabric-ca-server-config.yaml.5
 
-  # Copy TLS CA cert to orderer org's /msp/tlscacerts directory (for use in the channel MSP definition)
-  mkdir -p "organizations/ordererOrganizations/<domain>/msp/tlscacerts"
-  cp "fabric-ca-servers/tls/ca-cert.pem" "${PWD}/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+	/bin/rm ${CA_HOME}/fabric-ca-server-config.yaml ${CA_HOME}/fabric-ca-server-config.yaml.1 ${CA_HOME}/fabric-ca-server-config.yaml.2 ${CA_HOME}/fabric-ca-server-config.yaml.3 ${CA_HOME}/fabric-ca-server-config.yaml.4
 
-  # Copy orderer org's CA cert to orderer org's /tlsca directory (for use by clients)
-  mkdir -p "${PWD}/organizations/ordererOrganizations/example.com/tlsca"
-  cp "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem" "${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+	/bin/mv ${CA_HOME}/fabric-ca-server-config.yaml.5 ${CA_HOME}/fabric-ca-server-config.yaml
 
-  infoln "Registering orderer"
-  set -x
-  fabric-ca-client register --caname ca-orderer --id.name orderer --id.secret ordererpw --id.type orderer --tls.certfiles "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem"
-  { set +x; } 2>/dev/null
+	fabric-ca-server init --home ${CA_HOME}
 
-  infoln "Registering the orderer admin"
-  set -x
-  fabric-ca-client register --caname ca-orderer --id.name ordererAdmin --id.secret ordererAdminpw --id.type admin --tls.certfiles "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem"
-  { set +x; } 2>/dev/null
+	mkdir -p ${CA_HOME}/client
 
-  infoln "Generating the orderer msp"
-  set -x
-  fabric-ca-client enroll -u https://orderer:ordererpw@localhost:9054 --caname ca-orderer -M "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp" --csr.hosts orderer.example.com --csr.hosts localhost --tls.certfiles "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem"
-  { set +x; } 2>/dev/null
+	/bin/cp fabric-ca-client-config-template.yaml ${CA_HOME}/client/fabric-ca-client-config.yaml
 
-  cp "${PWD}/organizations/ordererOrganizations/example.com/msp/config.yaml" "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/config.yaml"
 
-  infoln "Generating the orderer-tls certificates"
-  set -x
-  fabric-ca-client enroll -u https://orderer:ordererpw@localhost:9054 --caname ca-orderer -M "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls" --enrollment.profile tls --csr.hosts orderer.example.com --csr.hosts localhost --tls.certfiles "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem"
-  { set +x; } 2>/dev/null
+	sed -e "s/\${CA_NAME}/${CA_NAME}/g" ${CA_HOME}/client/fabric-ca-client-config.yaml > ${CA_HOME}/client/fabric-ca-client-config.yaml.1
+	sed -e "s/\${CA_HOST}/${CA_HOST}/g" ${CA_HOME}/client/fabric-ca-client-config.yaml.1 > ${CA_HOME}/client/fabric-ca-client-config.yaml.2
+	sed -e "s/\${DOMAIN}/${DOMAIN}/g" ${CA_HOME}/client/fabric-ca-client-config.yaml.2 > ${CA_HOME}/client/fabric-ca-client-config.yaml.3
+	sed -e "s/\${CA_PORT}/${CA_PORT}/g" ${CA_HOME}/client/fabric-ca-client-config.yaml.3 > ${CA_HOME}/client/fabric-ca-client-config.yaml.4
 
-  # Copy the tls CA cert, server cert, server keystore to well known file names in the orderer's tls directory that are referenced by orderer startup config
-  cp "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/tlscacerts/"* "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/ca.crt"
-  cp "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/signcerts/"* "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-  cp "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/keystore/"* "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
+	/bin/rm ${CA_HOME}/client/fabric-ca-client-config.yaml ${CA_HOME}/client/fabric-ca-client-config.yaml.1 ${CA_HOME}/client/fabric-ca-client-config.yaml.2 ${CA_HOME}/client/fabric-ca-client-config.yaml.3 
 
-  # Copy orderer org's CA cert to orderer's /msp/tlscacerts directory (for use in the orderer MSP definition)
-  mkdir -p "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts"
-  cp "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/tlscacerts/"* "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+	/bin/mv ${CA_HOME}/client/fabric-ca-client-config.yaml.4 ${CA_HOME}/client/fabric-ca-client-config.yaml
 
-  infoln "Generating the admin msp"
-  set -x
-  fabric-ca-client enroll -u https://ordererAdmin:ordererAdminpw@localhost:9054 --caname ca-orderer -M "${PWD}/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp" --tls.certfiles "${PWD}/organizations/fabric-ca/ordererOrg/ca-cert.pem"
-  { set +x; } 2>/dev/null
+	echo ========================================
 
-  cp "${PWD}/organizations/ordererOrganizations/example.com/msp/config.yaml" "${PWD}/organizations/ordererOrganizations/example.com/users/Admin@example.com/msp/config.yaml"
 }
+
+#TLS
+
+SetupServer ${TLS_CA_HOME} ${TLS_CA_NAME} ${TLS_CA_PORT} ${TLS_CA_USER} ${TLS_CA_PASSWORD} ${TLS_CA_OPS_PORT}
+
+#Tally
+
+SetupServer ${TALLY_CA_HOME} ${TALLY_CA_NAME} ${TALLY_CA_PORT} ${TALLY_CA_USER} ${TALLY_CA_PASSWORD} ${TALLY_CA_OPS_PORT}
+
+#Orderer
+
+SetupServer ${ORDERER_CA_HOME} ${ORDERER_CA_NAME} ${ORDERER_CA_PORT} ${ORDERER_CA_USER} ${ORDERER_CA_PASSWORD} ${ORDERER_CA_OPS_PORT}
+
+

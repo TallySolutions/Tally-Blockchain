@@ -12,9 +12,12 @@ if ! [[ $NODE =~ $re ]] ; then
    NODE=1
 fi
 
-if [[ ${#NODE} -lt 2 ]] ; then
-    NODE="0${NODE}"
+if [[ ${#NODE} -lt 10 ]] ; then
+    NODE="0${#NODE}"
 fi
+
+
+TALLY_HOME=/home/ubuntu/fabric/tally-network
 
 DOMAIN=tally.tallysolutions.com
 
@@ -22,19 +25,20 @@ DOMAIN=tally.tallysolutions.com
 
 CA_HOST=tbchlfdevca01
 
-ORDERER_HOST=tbchlfdevord0${NODE}
+ORDERER_HOST=tbchlfdevord${NODE}
 
-PEER_HOST=tbchlfdevpeer0${NODE}
+PEER_HOST=tbchlfdevpeer${NODE}
 
 #CA Servers
 
-CA_SERVER_HOME=${TALLY_HOME}/fabrica-ca-servers
+CA_SERVER_HOME=${TALLY_HOME}/fabric-ca-servers
 
 #TLS CA Server
 
 TLS_CA_NAME=tls
 TLS_CA_HOME=${CA_SERVER_HOME}/${TLS_CA_NAME}
 TLS_CA_PORT=7054
+TLS_CA_OPS_PORT=9443
 TLS_CA_USER=tlsadmin
 TLS_CA_PASSWORD=tlsadminpw
 
@@ -42,6 +46,7 @@ TLS_CA_PASSWORD=tlsadminpw
 TALLY_CA_NAME=tally
 TALLY_CA_HOME=${CA_SERVER_HOME}/${TALLY_CA_NAME}
 TALLY_CA_PORT=7055
+TALLY_CA_OPS_PORT=9444
 TALLY_CA_USER=tallyadmin
 TALLY_CA_PASSWORD=tallyadminpw
 
@@ -49,6 +54,7 @@ TALLY_CA_PASSWORD=tallyadminpw
 ORDERER_CA_NAME=orderer
 ORDERER_CA_HOME=${CA_SERVER_HOME}/${ORDERER_CA_NAME}
 ORDERER_CA_PORT=7056
+ORDERER_CA_OPS_PORT=9445
 ORDERER_CA_USER=ordadmin
 ORDERER_CA_PASSWORD=ordadminpw
 
@@ -63,5 +69,21 @@ ORDERER_NODE_HOME=${ORDERER_HOME}/orderers/${ORDERER_HOST}
 PEER_NODE_HOME=${PEER_HOME}/peers/${PEER_HOST}
 
 
-#CSR Info
+#USERS
+
+TLS_ADMIN_USER=rcaadmin
+TLS_ADMIN_PASSWORD=rcadminpw
+
+ORDERER_USER=orderer
+ORDERER_PASSWORD=ordererpw
+
+ORDERER_ADMIN_USER=ordererAdmin
+ORDERER_ADMIN_PASSWORD=ordererAdminpw
+
+
+PEER_USER=peer
+PEER_PASSWORD=peerpw
+
+PEER_ADMIN_USER=peerAdmin
+PEER_ADMIN_PASSWORD=peerAdminpw
 
