@@ -3,19 +3,15 @@ import nextId from "react-id-generator";
 
 
 function IntegerKeyForm(props) {
-
     const [input_asset, setInputAsset] = useState('')  // name is taken as input
-    // useState({name :"" value:""}) ............ return (<>asset.name</h1> <p>asset.value</p>) -- when taking in >1 inputs
 
     const handleChange = e =>{
         setInputAsset(e.target.value);
     }
 
-
-
     const handleSubmit = e=>{
         e.preventDefault();  // preventing reloading of the page on clicking button
-        fetch('http://20.219.112.54:8080/integerKey/createAsset',{  // handle error- server down
+        fetch('http://20.219.112.54:8080/integerKey/createAsset',{  
                               method: 'PUT',
                               headers: {
                                             'Content-Type': 'application/json' ,
@@ -36,15 +32,12 @@ function IntegerKeyForm(props) {
                 } )
                 .then(data =>{
                            props.onSubmit({
-                            id: nextId("asset-id-"),
+                            id: nextId("asset-id:"),
                             assetname: data["Name"],
                             assetvalue: data["Value"]
                            });
                            setInputAsset('');
-                      });
-                      // .error(e=>{
-                      //   console.error(e)});
-                            
+                      });                          
 };
 
 

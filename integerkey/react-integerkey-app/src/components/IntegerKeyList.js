@@ -18,10 +18,15 @@ function IntegerKeyList() {
     }
 
 
-    const removeAsset = id =>{
-        const removeArr=[...assets].filter(asset=> asset.id !== id);
-
-        setAssets(removeArr);
+    const removeAsset = assetname =>{
+        const removeArr = [...assets].filter(asset=> asset.assetname !== assetname);
+        fetch(`http://20.219.112.54:8080/integerKey/deleteAsset/${assetname}`, {
+                                    method: 'DELETE',
+                            })
+                            .then(response => response.json())
+                            .then(data => console.log(data))
+                            .catch(error => console.error(error))
+                setAssets(removeArr);
     }
 
 
@@ -33,15 +38,12 @@ function IntegerKeyList() {
 
         setAssets(prev => prev.map(item=> (item.id === assetId ? newValue : item)))
     }
-
-
-
-
+    
      const completeAsset = id =>{
         let updatedAssets= assets.map(asset =>{
             if(asset.id===id){
                 asset.isComplete = !asset.isComplete
-                return asset
+                return asset.assetname
             }
         });
         setAssets(updatedAssets)
@@ -52,10 +54,10 @@ function IntegerKeyList() {
         <h1>List of created Assets</h1>
         <IntegerKeyForm onSubmit={addAsset}/>
         <IntegerKey
-        assets={assets}
-        completeAsset={completeAsset}
-        removeAsset={removeAsset}
-        updateAsset={updateAsset}
+            assets={assets}
+            completeAsset = {completeAsset}
+            removeAsset = {removeAsset}
+            updateAsset = {updateAsset}
         />
     </div>
   )

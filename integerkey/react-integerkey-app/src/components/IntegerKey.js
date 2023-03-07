@@ -24,29 +24,37 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
 
 
   return assets.map((asset, index)=> (
-    <div className={asset.isComplete ? 'asset-row complete': 'asset-row'}
-    key={index}>
+    <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
+            <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
 
-        <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
+                {asset.assetname}
+            </div>
 
-            {asset.assetname}
-        </div>
-        <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
-            {asset.value}
-        </div> 
-        <div className='icons'>
-            <RiCloseCircleLine  
-            
-            onClick={() => removeAsset(asset.id)}
-            className='delete-icon'
-            />
-            <TiEdit 
-            onClick={() => setEdit({id : asset.id , assetname : asset.assetname})}
-            className='edit-icon'
-            />
-        </div>
+            <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
+                {asset.value}
+            </div> 
+
+            <div className='icons'>
+                <RiCloseCircleLine  
+                
+                onClick={
+                    
+                    () => removeAsset(asset.assetname) 
+                    
+                }
+                        className='delete-icon'
+                />
+                <TiEdit 
+                onClick={() => 
+                    setEdit({id : asset.id , assetname : asset.assetname}
+                        
+                        )}
+
+                        className='edit-icon'
+                />
+            </div>
     </div>
-  ))
-}
+  ));
+};
 
-export default IntegerKey
+export default IntegerKey ;
