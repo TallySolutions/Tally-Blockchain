@@ -31,9 +31,9 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
 
             {asset.assetname}
         </div>
-        {/* <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
+        <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
             {asset.value}
-        </div> */}
+        </div> 
         <div className='icons'>
             <RiCloseCircleLine  
             

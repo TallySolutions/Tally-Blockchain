@@ -25,7 +25,7 @@ function IntegerKeyForm(props) {
                               body: JSON.stringify({
                                 Name: input_asset
                               })
-                })//test
+                })
                 .then(response => {
                   if (response.ok){
                     return response.json()
