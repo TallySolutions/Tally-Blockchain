@@ -35,9 +35,11 @@ function IntegerKeyForm(props) {
                             id: nextId("asset-id:"),
                             assetname: data["Name"],
                             assetvalue: data["Value"]
+                            //concat the above
                            });
                            setInputAsset('');
-                      });                          
+                      }); 
+                      // add error handler- to deal with asset creation error  (start with alert)                       
 };
 
 
@@ -49,6 +51,6 @@ function IntegerKeyForm(props) {
         <button className='integerkey-button'>Add asset</button>
     </form>
   )
-}
+};  
 
 export default IntegerKeyForm;
