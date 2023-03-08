@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Usage: SetupCAServers.sh 
+#Usage: 1_SetupCAServers.sh 
 
 #pass default node as 1, node is not used in this script
 . ./SetGlobalVariables.sh 1

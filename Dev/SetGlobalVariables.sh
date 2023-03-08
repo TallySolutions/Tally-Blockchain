@@ -3,21 +3,24 @@
 
 if [[ $# -lt 1 ]] ; then
   echo "Usage: SetGlobalVariables.sh <node_number>"
+  exit 1
 fi
 
 NODE=$1
 
 re='^[0-9]+$'
 if ! [[ $NODE =~ $re ]] ; then
-   NODE=1
+  echo "Usage: Node value should be number!"
+  exit 1
 fi
 
-if [[ ${#NODE} -lt 10 ]] ; then
-    NODE="0${#NODE}"
+if [[ ${NODE} -lt 10 ]] ; then
+    NODE="0${NODE}"
 fi
 
+NETWORK_HOME=fabric/tally-network
 
-TALLY_HOME=/home/ubuntu/fabric/tally-network
+TALLY_HOME=$HOME/$NETWORK_HOME
 
 DOMAIN=tally.tallysolutions.com
 
@@ -28,6 +31,14 @@ CA_HOST=tbchlfdevca01
 ORDERER_HOST=tbchlfdevord${NODE}
 
 PEER_HOST=tbchlfdevpeer${NODE}
+
+ORDERER_HOST_KEY=$HOME/.ssh/TDevBC-Orderer-1-KeyPair.pem
+
+PEER_HOST_KEY=$HOME/.ssh/TDevBC-Peer-keyPair.pem
+
+ORDERER_HOST_USER=ubuntu
+
+PEER_HOST_USER=ubuntu
 
 #CA Servers
 
@@ -87,3 +98,10 @@ PEER_PASSWORD=peerpw
 PEER_ADMIN_USER=peerAdmin
 PEER_ADMIN_PASSWORD=peerAdminpw
 
+#ORDERER
+
+ORDERER_PORT=7060
+ORDERER_ADMIN_PORT=9443
+ORDERER_MSPID=orderer${NODE}
+ORDERER_USER_HOME=/home/ubuntu
+ORDERER_HOME=${ORDERER_USER_HOME}/${NETWORK_HOME}/organizations/ordererOrganizations/${DOMAIN}/orderers/${ORDERER_HOST}
