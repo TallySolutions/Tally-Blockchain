@@ -56,7 +56,7 @@ set -x
   #create orderer config file
 	/bin/cp orderer-template.yaml ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml
 
-  ORDERER_HOME_ESCAPED=`echo ${ORDERER_HOME} | sed -e 's/\//\\\\\//g'`
+  ORDERER_HOME_ESCAPED=`echo ${ORDERER_HOME_REMOTE} | sed -e 's/\//\\\\\//g'`
   sed -e "s/\${ORDERER_PORT}/${ORDERER_PORT}/g"             ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml   > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.1 
   sed -e "s/\${ORDERER_MSPID}/${ORDERER_MSPID}/g"           ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.1 > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.2 
   sed -e "s/\${ORDERER_HOME}/${ORDERER_HOME_ESCAPED}/g"     ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.2 > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.3 

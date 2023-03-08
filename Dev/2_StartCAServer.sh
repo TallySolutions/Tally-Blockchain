@@ -10,17 +10,17 @@ if [[ $# -lt 1 ]] ; then
   exit 1
 fi
 
-if [[ $1 == "TLS"]]; then
+if [[ $1 == "TLS" ]]; then
    cd ${TLS_CA_HOME}
    fabric-ca-server start
 fi
 
-if [[ $1 == "TALLY"]]; then
+if [[ $1 == "TALLY" ]]; then
    cd ${TALLY_CA_HOME}
    fabric-ca-server start
 fi
 
-if [[ $1 == "ORDERER"]]; then
+if [[ $1 == "ORDERER" ]]; then
    cd ${ORDERER_CA_HOME}
    fabric-ca-server start
 fi

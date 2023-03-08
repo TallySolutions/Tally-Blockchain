@@ -30,7 +30,8 @@ CA_HOST=tbchlfdevca01
 
 ORDERER_HOST=tbchlfdevord${NODE}
 
-PEER_HOST=tbchlfdevpeer${NODE}
+PEER_HOST_PREFIX=tbchlfdevpeer
+PEER_HOST=${PEER_HOST_PREFIX}${NODE}
 
 ORDERER_HOST_KEY=$HOME/.ssh/TDevBC-Orderer-1-KeyPair.pem
 
@@ -73,7 +74,7 @@ ORDERER_CA_PASSWORD=ordadminpw
 
 ORG_HOME=${TALLY_HOME}/organizations
 ORDERER_HOME=${ORG_HOME}/ordererOrganizations/${DOMAIN}
-PEER_HOME=${ORG_HOME}/ordererOrganizations/${DOMAIN}
+PEER_HOME=${ORG_HOME}/peerOrganizations/${DOMAIN}
 
 ORDERER_NODE_HOME=${ORDERER_HOME}/orderers/${ORDERER_HOST}
 
@@ -104,4 +105,10 @@ ORDERER_PORT=7060
 ORDERER_ADMIN_PORT=9443
 ORDERER_MSPID=orderer${NODE}
 ORDERER_USER_HOME=/home/ubuntu
-ORDERER_HOME=${ORDERER_USER_HOME}/${NETWORK_HOME}/organizations/ordererOrganizations/${DOMAIN}/orderers/${ORDERER_HOST}
+ORDERER_HOME_REMOTE=${ORDERER_USER_HOME}/${NETWORK_HOME}/organizations/ordererOrganizations/${DOMAIN}/orderers/${ORDERER_HOST}
+
+PEER_PORT=7051
+PEER_CC_PORT=7052
+PEER_USER_HOME=/home/ubuntu
+PEER_HOME_REMOTE=${PEER_USER_HOME}/${NETWORK_HOME}/organizations/peerOrganizations/${DOMAIN}/peers/${ORDERER_HOST}
+PEER_MSPID=peer${NODE}
