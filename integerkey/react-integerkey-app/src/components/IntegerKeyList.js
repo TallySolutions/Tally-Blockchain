@@ -30,14 +30,6 @@ function IntegerKeyList() {
     }
 
 
-    const updateAsset = (assetId, newValue)=> {
-        if (!newValue.assetname || /^\s*$/.test(newValue.assetname) )   // making sure the name is valid
-        {
-            return
-        }
-
-        setAssets(prev => prev.map(item=> (item.id === assetId ? newValue : item)))
-    }
     
      const completeAsset = id =>{
         let updatedAssets= assets.map(asset =>{
@@ -57,7 +49,6 @@ function IntegerKeyList() {
             assets={assets}
             completeAsset = {completeAsset}
             removeAsset = {removeAsset}
-            updateAsset = {updateAsset}
         />
     </div>
   )
