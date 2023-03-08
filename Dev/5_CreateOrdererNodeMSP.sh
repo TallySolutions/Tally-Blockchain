@@ -9,6 +9,13 @@ fi
 
 . ./SetGlobalVariables.sh $1
 
+#First Register the user
+
+. ./RegisterEnroll.sh
+
+RegisterUser ${ORDERER_CA_HOME} ${ORDERER_USER} ${ORDERER_PASSWORD} orderer
+
+
 ORDERER_NODE_FOLDER=organizations/ordererOrganizations/${DOMAIN}
 
 ORDERER_NODE_HOME=${TALLY_HOME}/${ORDERER_NODE_FOLDER}
@@ -18,7 +25,8 @@ ORDERER_NODE_HOME=${TALLY_HOME}/${ORDERER_NODE_FOLDER}
 export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
 
   echo "Generating the orderer msp"
-  set -x
+
+    set -x
   fabric-ca-client enroll -u https://${ORDERER_USER}:${ORDERER_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} -M "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp" --csr.hosts ${ORDERER_HOST}.${DOMAIN} --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
   { set +x; } 2>/dev/null
 

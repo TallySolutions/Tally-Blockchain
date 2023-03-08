@@ -9,6 +9,13 @@ fi
 
 . ./SetGlobalVariables.sh $1
 
+#First register user
+
+. ./RegisterEnroll.sh
+
+RegisterUser ${TALLY_CA_HOME} ${PEER_USER} ${PEER_PASSWORD} peer
+
+
 PEER_NODE_FOLDER=organizations/peerOrganizations/${DOMAIN}
 
 PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
