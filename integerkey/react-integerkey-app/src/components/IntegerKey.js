@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 import IntegerKeyForm from './IntegerKeyForm'
 import {RiCloseCircleLine} from 'react-icons/ri'
 import {TiArrowSortedUp} from 'react-icons/ti'
+import {TiArrowSortedDown} from 'react-icons/ti'
 
 function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
 
@@ -52,6 +53,13 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
                         )}
 
                         className='edit-icon'
+                />
+                <TiArrowSortedDown
+                        onClick={() => 
+                            setEdit({id : asset.id , assetname : asset.assetname}
+                                )}
+        
+                                className='edit-icon'
                 />
             </div>
     </div>
