@@ -19,13 +19,8 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
   return assets.map((asset, index)=> (
     <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
             <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
-
-                {asset.assetname}
+                {asset.displayname}
             </div>
-
-            <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
-                {asset.value}
-            </div> 
 
             <div className='icons'>
                 {/* buttons for add and subtract */}
