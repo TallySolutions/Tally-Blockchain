@@ -36,15 +36,6 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
             </div> 
 
             <div className='icons'>
-                <RiCloseCircleLine  
-                
-                onClick={
-                    
-                    () => removeAsset(asset.assetname) 
-                    
-                }
-                        className='delete-icon'
-                />
                 {/* buttons for add and subtract */}
                 <TiArrowSortedUp
  
@@ -60,6 +51,15 @@ function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
                                 )}
         
                                 className='edit-icon'
+                />
+                <RiCloseCircleLine  
+                
+                onClick={
+                    
+                    () => removeAsset(asset.assetname) 
+                    
+                }
+                        className='delete-icon'
                 />
             </div>
     </div>
