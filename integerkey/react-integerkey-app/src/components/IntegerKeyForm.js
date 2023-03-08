@@ -2,6 +2,11 @@ import React, {useState} from 'react' // useState is imported in order to track 
 import nextId from "react-id-generator";
 
 
+let assetname;
+let assetvalue;
+let displayValue;
+let id;
+
 function IntegerKeyForm(props) {
     const [input_asset, setInputAsset] = useState('')  // name is taken as input
 
@@ -32,8 +37,8 @@ function IntegerKeyForm(props) {
                 } )
                 .then(data =>{
                            props.onSubmit({
-                            id: nextId("asset-id:"),
-                            assetname: data["Name"],
+                            id : nextId("asset-id:"),
+                            assetname: data["Name"] ,
                             assetvalue: data["Value"] ,
                             displayValue: data["Name"] + ":" + data["Value"]
                            });
