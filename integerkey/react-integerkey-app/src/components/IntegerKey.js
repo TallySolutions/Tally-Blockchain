@@ -8,23 +8,6 @@ import {decrementValue} from './IntegerKeyList'
 
 function IntegerKey({assets, completeAsset, removeAsset, updateAsset}) {
 
-    // const [edit, setEdit] = useState({
-    //     id : null,
-    //     value : ''
-    // })
-
-    // const submitUpdate = value => {
-    //     updateAsset(edit.id, value)
-    //     setEdit({
-    //         id: null,
-    //         value:''
-    //     })
-    // }
-
-    // if (edit.id){
-    //     return <IntegerKeyForm edit={edit} onSubmit={submitUpdate} />
-    // }
-
     const handleIncrementClick = (asset) => {
         incrementValue(asset);
       };

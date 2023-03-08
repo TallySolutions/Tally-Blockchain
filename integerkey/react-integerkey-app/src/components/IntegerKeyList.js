@@ -2,7 +2,37 @@ import React, {useState} from 'react';
 import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
 
+export const incrementValue = asset =>{
+    fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
+                          method: 'POST',
+                          headers: {
+                                        'Content-Type': 'application/json' ,
+                                        'Access-Control-Request-Method' : 'POST',
+                                        'Access-Control-Request-Headers' : 'Content-Type'
+                                    },
+                          body: JSON.stringify({
+                            Name: asset.assetname,
+                            Value: "1"
+                          })
+            })
+}
+export const decrementValue = asset =>{
+    fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
+                          method: 'POST',
+                          headers: {
+                                        'Content-Type': 'application/json' ,
+                                        'Access-Control-Request-Method' : 'POST',
+                                        'Access-Control-Request-Headers' : 'Content-Type'
+                                    },
+                          body: JSON.stringify({
+                            Name: asset.assetname,
+                            Value: "1"
+                          })
+            })
+}
+
 function IntegerKeyList() {
+    
 
     const[assets, setAssets] = useState([]);
 
@@ -29,22 +59,6 @@ function IntegerKeyList() {
                 setAssets(removeArr);
     }
     
-    const incrementValue = asset =>{
-        fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
-                              method: 'POST',
-                              headers: {
-                                            'Content-Type': 'application/json' ,
-                                            'Access-Control-Request-Method' : 'POST',
-                                            'Access-Control-Request-Headers' : 'Content-Type'
-                                        },
-                              body: JSON.stringify({
-                                Name: asset.assetname,
-                                Value: "1"
-                              })
-                })
-    }
-
-
     
      const completeAsset = id =>{
         let updatedAssets= assets.map(asset =>{
