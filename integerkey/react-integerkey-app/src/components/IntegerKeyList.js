@@ -28,6 +28,21 @@ function IntegerKeyList() {
                             .catch(error => console.error(error))
                 setAssets(removeArr);
     }
+    
+    const incrementValue = asset =>{
+        fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
+                              method: 'POST',
+                              headers: {
+                                            'Content-Type': 'application/json' ,
+                                            'Access-Control-Request-Method' : 'POST',
+                                            'Access-Control-Request-Headers' : 'Content-Type'
+                                        },
+                              body: JSON.stringify({
+                                Name: asset.assetname,
+                                Value: "1"
+                              })
+                })
+    }
 
 
     
