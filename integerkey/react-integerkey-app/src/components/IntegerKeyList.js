@@ -2,7 +2,8 @@ import React, {useState} from 'react';
 import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
 
-export const incrementValue = (asset) =>{
+export const incrementValue = (asset,props) =>{
+    // create  updatearr
     fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
                           method: 'POST',
                           headers: {
@@ -13,22 +14,25 @@ export const incrementValue = (asset) =>{
                           body: JSON.stringify({
                             Name: asset.assetname,
                             Value: "1"
-                        //   }).then(response => {
-                        //                 if (response.ok){
-                        //                 return response.json()
-                        //                 }
-                        //                 else{
-                        //                 return console.error(response)
-                        //                 }
-                        //   } )
-                        //   .then(data =>{
-
-                        //      asset.displayValue= data["Name"] + " = " + data["Value"]
-                            
-                        }) 
-            })
-}
+                          })})
+                          .then(response => {
+                                        if (response.ok){
+                                                return response.json()
+                                        }
+                                        else{
+                                            return console.error(response)
+                                        }
+                          } )
+                          .then(data =>{
+                                asset.displayValue= data["Name"] + " = " + data["Value"] 
+                                console.log(data)
+                                this.setState()
+                            })
+                                        
+                         }
+                    
 export const decrementValue = asset =>{
+    // create updatearr
     fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
                           method: 'POST',
                           headers: {
@@ -39,8 +43,21 @@ export const decrementValue = asset =>{
                           body: JSON.stringify({
                             Name: asset.assetname,
                             Value: "1"
-                          })
-            })
+                          })})
+                          .then(response => {
+                            if (response.ok){
+                                    return response.json()
+                            }
+                            else{
+                                return console.error(response)
+                            }
+              } )
+              .then(data =>{
+                    asset.displayValue= data["Name"] + " = " + data["Value"] 
+                    console.log(data)
+                    this.setState()
+                })
+                            
 }
 
 function IntegerKeyList() {
@@ -95,4 +112,4 @@ function IntegerKeyList() {
   )
 }
 
-export default IntegerKeyList
+export default IntegerKeyList ;

@@ -33,10 +33,10 @@ function IntegerKeyForm(props) {
                 } )
                 .then(data =>{
                            props.onSubmit({
-                            id : nextId("asset-id:"),
-                            assetname: data["Name"] ,
-                            assetvalue: data["Value"] ,
-                            displayValue: data["Name"] + " = " + data["Value"]
+                                id : nextId("asset-id:"),
+                                assetname: data["Name"] ,
+                                assetvalue: data["Value"] ,
+                                displayValue: data["Name"] + " = " + data["Value"]
                            });
                            setInputAsset('');
                       }); 

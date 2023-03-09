@@ -6,6 +6,12 @@ import {TiArrowSortedDown} from 'react-icons/ti'
 import {incrementValue} from './IntegerKeyList'
 import {decrementValue} from './IntegerKeyList'
 
+
+function HandleRefresh(){
+    
+}
+
+
 function IntegerKey({assets, completeAsset, removeAsset}) {
 
     const handleIncrementClick = (asset) => {
@@ -17,31 +23,33 @@ function IntegerKey({assets, completeAsset, removeAsset}) {
 
 
   return assets.map((asset, index)=> (
+
     <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
+
             <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
                 {asset.displayValue}
             </div>
 
             <div className='icons'>
-                {/* buttons for add and subtract */}
-                <TiArrowSortedUp
- 
-                        onClick={() => handleIncrementClick(asset)}
+                {/* buttons for add and subtract, deletion */}
+                  <TiArrowSortedUp
+  
+                          onClick={() => handleIncrementClick(asset)}
 
-                        className='edit-icon'
-                />
-                <TiArrowSortedDown
-                        onClick={
-                            () => handleDecrementClick(asset)
-                                }
-                            className='edit-icon'
-                />
-                <RiCloseCircleLine  
-                            onClick={
-                                () => removeAsset(asset.assetname) 
-                            }
-                            className='delete-icon'
-                />
+                          className='edit-icon'
+                  />
+                  <TiArrowSortedDown
+                          onClick={
+                              () => handleDecrementClick(asset)
+                                  }
+                              className='edit-icon'
+                  />
+                  <RiCloseCircleLine  
+                              onClick={
+                                  () => removeAsset(asset.assetname) 
+                              }
+                              className='delete-icon'
+                  />
             </div>
     </div>
   ));
