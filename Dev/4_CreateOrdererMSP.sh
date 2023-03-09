@@ -13,7 +13,7 @@ mkdir -p ${ORDERER_NODE_HOME}
 export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
 
 #Enroll Admin
-fabric-ca-client enroll -u https://${ORDERER_CA_USER}:${ORDERER_CA_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} --tls.certfiles ${ORDERER_CA_HOME}/ca-cert.pem -M "${ORDERER_NODE_HOME}/msp"
+fabric-ca-client enroll -u https://${ORDERER_CA_USER}:${ORDERER_CA_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=admin --tls.certfiles ${ORDERER_CA_HOME}/ca-cert.pem -M "${ORDERER_NODE_HOME}/msp"
 if [[ $? -ne 0 ]]; then
 	echo "Unable to enroll Orderer CA Admin MSP : is Orderer CA setup and running?"
 	exit 1
@@ -50,7 +50,7 @@ echo "NodeOUs:
 
   echo "Generating the admin msp"
   set -x
-  fabric-ca-client enroll -u https://${ORDERER_ADMIN_USER}:${ORDERER_ADMIN_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} -M "${ORDERER_NODE_HOME}/users/Admin@${DOMAIN}/msp" --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
+  fabric-ca-client enroll -u https://${ORDERER_ADMIN_USER}:${ORDERER_ADMIN_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=admin -M "${ORDERER_NODE_HOME}/users/Admin@${DOMAIN}/msp" --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
   { set +x; } 2>/dev/null
 
   cp "${ORDERER_NODE_HOME}/msp/config.yaml" "${ORDERER_NODE_HOME}/users/Admin@${DOMAIN}/msp/config.yaml"

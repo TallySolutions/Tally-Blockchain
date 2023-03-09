@@ -1,32 +1,38 @@
 #!/bin/bash
 
-#Usage: 7_CreatePeerNodeMSP.sh <PEER-NODE-NO>
+#Usage: 7_CreatePeerNodeMSP.sh 
 
-if [[ $# -lt 1 ]] ; then
-  echo "Usage: 7_CreatePeerNodeMSP.sh <Peer no Number:1,2 etc.>"
-  exit 1
-fi
 
-. ./SetGlobalVariables.sh $1
 
-#First register user
 
 . ./RegisterEnroll.sh
 
-RegisterUser ${TALLY_CA_HOME} ${PEER_USER} ${PEER_PASSWORD} peer
+function create()
+{
 
+  if [[ $# -lt 1 ]] ; then
+    echo "Usage: create <Peer no Number:1,2 etc.>"
+    exit 1
+  fi
 
-PEER_NODE_FOLDER=organizations/peerOrganizations/${DOMAIN}
-
-PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
-
-/bin/rm -rf "${PEER_NODE_HOME}/peers/${PEER_HOST}"
-
-export FABRIC_CA_CLIENT_HOME=${TALLY_CA_HOME}/client
+  . ./SetGlobalVariables.sh $1
+  
+  #First register user
+  
+  RegisterUser ${TALLY_CA_HOME} ${PEER_USER} ${PEER_PASSWORD} peer
+  
+  
+  PEER_NODE_FOLDER=organizations/peerOrganizations/${DOMAIN}
+  
+  PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
+  
+  /bin/rm -rf "${PEER_NODE_HOME}/peers/${PEER_HOST}"
+  
+  export FABRIC_CA_CLIENT_HOME=${TALLY_CA_HOME}/client
 
   echo "Generating the peer msp"
   set -x
-  fabric-ca-client enroll -u https://${PEER_USER}:${PEER_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} -M "${PEER_NODE_HOME}/peers/${PEER_HOST}/msp" --csr.hosts ${PEER_HOST}.${DOMAIN} --tls.certfiles "${TALLY_CA_HOME}/ca-cert.pem"
+  fabric-ca-client enroll -u https://${PEER_USER}:${PEER_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=client -M "${PEER_NODE_HOME}/peers/${PEER_HOST}/msp" --csr.hosts ${PEER_HOST}.${DOMAIN} --tls.certfiles "${TALLY_CA_HOME}/ca-cert.pem"
   { set +x; } 2>/dev/null
 
   cp "${PEER_NODE_HOME}/msp/config.yaml" "${PEER_NODE_HOME}/peers/${PEER_HOST}/msp/config.yaml"
@@ -49,7 +55,8 @@ export FABRIC_CA_CLIENT_HOME=${TALLY_CA_HOME}/client
 
   echo "Deleting remote node folder ..."
 
-set -x
+  set -x
+
 
   ssh -i ${PEER_HOST_KEY} ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN} /bin/rm -rf ${NETWORK_HOME}/${PEER_NODE_FOLDER}
 
@@ -57,7 +64,7 @@ set -x
 
   scp -C -i ${PEER_HOST_KEY} -r ${PEER_NODE_HOME}/peers/${PEER_HOST} ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers/${PEER_HOST}
 
-{ set +x; } 2>/dev/null
+  { set +x; } 2>/dev/null
 
 
   #create peer config file
@@ -78,5 +85,9 @@ set -x
   #transfer the config file to peer machine
   scp -C -i ${PEER_HOST_KEY} ${PEER_NODE_HOME}/peers/${PEER_HOST}/core.yaml ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers/${PEER_HOST}/core.yaml
 
+}
 
+create 1
+create 2
+create 3
 

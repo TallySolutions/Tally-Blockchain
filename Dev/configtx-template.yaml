@@ -72,7 +72,6 @@ Organizations:
                 Type: Signature
                 Rule: "OR('${PEER_MSPID}.peer')"
 
-
 ################################################################################
 #
 #   SECTION: Capabilities

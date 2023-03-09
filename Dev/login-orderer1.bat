@@ -1,1 +1,1 @@
-ssh -i D:\TW\PrivateKeys\TDevBC-Orderer-1-keyPair.pem ubuntu@13.235.156.179
+ssh -i D:\TW\PrivateKeys\TDevBC-Orderer-1-keyPair.pem ubuntu@13.235.156.179 

@@ -1,0 +1,1 @@
+ssh -i D:\TW\PrivateKeys\TDevBC-Peer-keyPair.pem ubuntu@15.207.93.2 ". ./.profile && cd fabric/tally-network/organizations/peerOrganizations/tally.tallysolutions.com/peers/tbchlfdevpeer01 && peer node start"
