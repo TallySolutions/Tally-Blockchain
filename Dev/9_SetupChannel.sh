@@ -13,27 +13,9 @@ verifyResult() {
   fi
 }
 
-function  setup_channel()
+function  create_genesis()
 {
-  
-  if [[ $# -lt 1 ]] ; then
-    echo "Usage: setup_channel <Order node Number:1,2 etc.>"
-    exit 1
-  fi
-  
-  . ./SetGlobalVariables.sh $1
-  
-  echo ${TALLY_HOME}
-  
-  OSN_TLS_CA_ROOT_CERT=${TLS_CA_HOME}/ca-cert.pem
-  ADMIN_TLS_SIGN_CERT=${TALLY_HOME}/admin_client/client-tls-cert.pem
-  ADMIN_TLS_PRIVATE_KEY=${TALLY_HOME}/admin_client/client-tls-key.pem
-  
-  osnadmin channel list --channelID ${CHANNEL_ID}  -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_ADMIN_PORT} --ca-file $OSN_TLS_CA_ROOT_CERT --client-cert $ADMIN_TLS_SIGN_CERT --client-key $ADMIN_TLS_PRIVATE_KEY
-
-  if [[ $? -eq 0 ]]; then
-     echo "Channel ${CHANNEL_ID} already present!"
-  fi
+  . ./SetGlobalVariables.sh 1
   
   #create configtx file
   /bin/cp configtx-template.yaml ${TALLY_HOME}/admin_client/configtx.yaml
@@ -55,12 +37,35 @@ function  setup_channel()
   
   mkdir -p ${TALLY_HOME}/admin_client/${CHANNEL_ID}
   
-  echo "Creating Channel ${CHANNEL_ID} ..."
-  
-  set -x
+  echo "Creating Channel genesis block ..."
+ 
   
   configtxgen -profile TallyApplicationGenesis -outputBlock ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.pb -channelID ${CHANNEL_ID}
+
+  configtxlator proto_decode --input ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.pb --type common.Block | jq .data.data[0].payload.data.config > ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.json
+
+  echo "Genesis block created ====>"
+
+  cat   ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.json
+
+}
+
+function  setup_channel()
+{
   
+  if [[ $# -lt 1 ]] ; then
+    echo "Usage: setup_channel <Order node Number:1,2 etc.>"
+    exit 1
+  fi
+  
+  . ./SetGlobalVariables.sh $1
+
+  OSN_TLS_CA_ROOT_CERT=${TLS_CA_HOME}/ca-cert.pem
+  ADMIN_TLS_SIGN_CERT=${TALLY_HOME}/admin_client/client-tls-cert.pem
+  ADMIN_TLS_PRIVATE_KEY=${TALLY_HOME}/admin_client/client-tls-key.pem
+  
+  set -x
+
   osnadmin channel join --channelID ${CHANNEL_ID}  --config-block ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.pb -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_ADMIN_PORT} --ca-file $OSN_TLS_CA_ROOT_CERT --client-cert $ADMIN_TLS_SIGN_CERT --client-key $ADMIN_TLS_PRIVATE_KEY
   
   { set +x; } 2> /dev/null
@@ -150,11 +155,14 @@ function set_anchor_peer()
   echo "Update config to ${ORDERER_HOST}..."
   peer channel update -f temp/anchor_update_in_envelope.pb temp/config_block.pb -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" -c ${CHANNEL_ID} 
   verifyResult $? "Channel update failed"
+
+  /bin/rm -rf temp
   
   peer channel getinfo -c ${CHANNEL_ID}
   
 }
 
+create_genesis
 
 setup_channel 1
 setup_channel 2
@@ -162,6 +170,9 @@ setup_channel 2
 join_peer 1
 join_peer 2
 join_peer 3
+
+echo "Waiting 15 seconds ..."
+sleep 15
 
 set_anchor_peer 1
 set_anchor_peer 2

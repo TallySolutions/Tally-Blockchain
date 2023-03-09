@@ -7,6 +7,9 @@ if [[ $# -lt 2 ]] ; then
   exit 1
 fi
 
+MAX_RETRY=3
+DELAY=10
+
 function setup_peer_paths()
 {
   export FABRIC_CFG_PATH=${PEER_HOME}/peers/${PEER_HOST}
@@ -90,6 +93,92 @@ function approveForTally() {
   echo "Chaincode definition approved on ${PEER_HOST} on channel '$CHANNEL_ID'"
 }
 
+function checkCommitReadiness()
+{
+  echo "Checking the commit readiness of the chaincode definition on $PEER_HOST on channel '$CHANNEL_ID'..."
+  local rc=1
+  local COUNTER=1
+  # continue to poll
+  # we either get a successful response, or reach MAX RETRY
+  while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ]; do
+    sleep $DELAY
+    echo "Attempting to check the commit readiness of the chaincode definition on $PEER_HOST, Retry after $DELAY seconds."
+    set -x
+    peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_ID --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} --output json >&${CC_PKG_PATH}/log.txt
+    res=$?
+    { set +x; } 2>/dev/null
+    let rc=0
+    for var in "$@"; do
+      grep "$var" ${CC_PKG_PATH}/log.txt &>/dev/null || let rc=1
+    done
+    COUNTER=$(expr $COUNTER + 1)
+  done
+  cat ${CC_PKG_PATH}/log.txt
+  if test $rc -eq 0; then
+    echo "Checking the commit readiness of the chaincode definition successful on $PEER_HOST on channel '$CHANNEL_ID'"
+  else
+    fatalln "After $MAX_RETRY attempts, Check commit readiness result on $PEER_HOST is INVALID!"
+  fi
+}
+
+function commitChaincodeDefinition()
+{
+  # while 'peer chaincode' command can get the orderer endpoint from the
+  # peer (if join was successful), let's supply it directly as we know
+  # it using the "-o" option
+  set -x
+  peer lifecycle chaincode commit -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" --channelID $CHANNEL_ID --name ${CC_NAME} --peerAddresses ${PEER_HOST}.${DOMAIN}:${PEER_PORT} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} --tlsRootCertFiles ${PEER_HOME}/peers/${PEER_HOST}/tls/ca.crt >&${CC_PKG_PATH}/log.txt
+  res=$?
+  { set +x; } 2>/dev/null
+  cat ${CC_PKG_PATH}/log.txt
+  verifyResult $res "Chaincode definition commit failed on $PEER_HOST on channel '$CHANNEL_ID' failed"
+  echo "Chaincode definition committed on channel '$CHANNEL_ID'"
+
+}
+
+function queryCommitted()
+{
+  EXPECTED_RESULT="Version: ${CC_VERSION}, Sequence: ${CC_SEQUENCE}, Endorsement Plugin: escc, Validation Plugin: vscc"
+  echo "Querying chaincode definition on peer0.org${ORG} on channel '$CHANNEL_ID'..."
+  local rc=1
+  local COUNTER=1
+  # continue to poll
+  # we either get a successful response, or reach MAX RETRY
+  while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ]; do
+    sleep $DELAY
+    echo "Attempting to Query committed status on ${PEER_HOST}, Retry after $DELAY seconds."
+    set -x
+    peer lifecycle chaincode querycommitted --channelID $CHANNEL_ID --name ${CC_NAME} >&${CC_PKG_PATH}/log.txt
+    res=$?
+    { set +x; } 2>/dev/null
+    test $res -eq 0 && VALUE=$(cat $CC_PKG_PATH/log.txt | grep -o '^Version: '$CC_VERSION', Sequence: [0-9]*, Endorsement Plugin: escc, Validation Plugin: vscc')
+    test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+    COUNTER=$(expr $COUNTER + 1)
+  done
+  cat $CC_PKG_PATH/log.txt
+  if test $rc -eq 0; then
+    echo "Query chaincode definition successful on ${PEER_HOST} on channel '$CHANNEL_NAME'"
+  else
+    fatalln "After $MAX_RETRY attempts, Query chaincode definition result on ${PEER_HOST} is INVALID!"
+  fi
+}
+
+function chaincodeInvokeInit() {
+
+  # while 'peer chaincode' command can get the orderer endpoint from the
+  # peer (if join was successful), let's supply it directly as we know
+  # it using the "-o" option
+  set -x
+  fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
+  echo "invoke fcn call:${fcn_call}"
+  peer chaincode invoke -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" -C $CHANNEL_ID -n ${CC_NAME} --peerAddresses ${PEER_HOST}.${DOMAIN}:${PEER_PORT}  --isInit -c ${fcn_call} >&$CC_PKG_PATH/log.txt
+  res=$?
+  { set +x; } 2>/dev/null
+  cat $CC_PKG_PATH/log.txt
+  verifyResult $res "Invoke execution on $PEER_HOST failed "
+  echo "Invoke transaction successful on $PEER_HOST on channel '$CHANNEL_NAME'"
+}
+
 function deployCC()
 {
    if [[ $# -lt 3 ]] ; then
@@ -125,25 +214,24 @@ function deployCC()
    ## approve the definition 
    approveForTally
 
-## check whether the chaincode definition is ready to be committed
-## expect org1 to have approved and org2 not to
-#checkCommitReadiness 1 "\"Org1MSP\": true" "\"Org2MSP\": false"
-#checkCommitReadiness 2 "\"Org1MSP\": true" "\"Org2MSP\": false"
+   ## check whether the chaincode definition is ready to be committed
+   ## expect Tally to have approved 
+   checkCommitReadiness "\"Tally\": true" 
 
-## now that we know for sure both orgs have approved, commit the definition
-#commitChaincodeDefinition 1 2
+   ## now that we know for sure both orgs have approved, commit the definition
+   commitChaincodeDefinition
 
-## query on both orgs to see that the definition committed successfully
-#queryCommitted 1
+   ## query on both orgs to see that the definition committed successfully
+   queryCommitted 
 
-## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
-## method defined
-if [ "$CC_INIT_FCN" = "NA" ]; then
-  infoln "Chaincode initialization is not required"
-else
-  echo "Invoking Chaincode ..."
-  #chaincodeInvokeInit 1 2
-fi
+   ## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
+   ## method defined
+   if [ "$CC_INIT_FCN" = "NA" ]; then
+     echo "Chaincode initialization is not required"
+   else
+     echo "Invoking Chaincode ..."
+     chaincodeInvokeInit
+   fi
 
 }
 
