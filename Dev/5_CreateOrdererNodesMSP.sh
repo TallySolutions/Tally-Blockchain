@@ -1,33 +1,36 @@
 #!/bin/bash
 
-#Usage: 5_CreateOrdererNodeMSP.sh <ORDERER-NODE-NO>
-
-if [[ $# -lt 1 ]] ; then
-  echo "Usage: 5_CreateOrdererNodeMSP.sh <Orderer no Number:1,2 etc.>"
-  exit 1
-fi
-
-. ./SetGlobalVariables.sh $1
-
-#First Register the user
+#Usage: 5_CreateOrdererNodeMSP.sh 
 
 . ./RegisterEnroll.sh
 
-RegisterUser ${ORDERER_CA_HOME} ${ORDERER_USER} ${ORDERER_PASSWORD} orderer
+function create()
+{
 
+  if [[ $# -lt 1 ]] ; then
+    echo "Usage: create <Orderer no Number:1,2 etc.>"
+    exit 1
+  fi
 
-ORDERER_NODE_FOLDER=organizations/ordererOrganizations/${DOMAIN}
+  . ./SetGlobalVariables.sh $1
 
-ORDERER_NODE_HOME=${TALLY_HOME}/${ORDERER_NODE_FOLDER}
-
-/bin/rm -rf "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}"
-
-export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
+  #First Register the user
+  
+  RegisterUser ${ORDERER_CA_HOME} ${ORDERER_USER} ${ORDERER_PASSWORD} orderer
+  
+  
+  ORDERER_NODE_FOLDER=organizations/ordererOrganizations/${DOMAIN}
+  
+  ORDERER_NODE_HOME=${TALLY_HOME}/${ORDERER_NODE_FOLDER}
+  
+  /bin/rm -rf "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}"
+  
+  export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
 
   echo "Generating the orderer msp"
 
     set -x
-  fabric-ca-client enroll -u https://${ORDERER_USER}:${ORDERER_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} -M "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp" --csr.hosts ${ORDERER_HOST}.${DOMAIN} --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
+  fabric-ca-client enroll -u https://${ORDERER_USER}:${ORDERER_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=orderer -M "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp" --csr.hosts ${ORDERER_HOST}.${DOMAIN} --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
   { set +x; } 2>/dev/null
 
   cp "${ORDERER_NODE_HOME}/msp/config.yaml" "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp/config.yaml"
@@ -50,7 +53,7 @@ export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
 
   echo "Deleting remote node folder ..."
 
-set -x
+  set -x
 
   ssh -i ${ORDERER_HOST_KEY} ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN} /bin/rm -rf ${NETWORK_HOME}/${ORDERER_NODE_FOLDER}
 
@@ -58,7 +61,7 @@ set -x
 
   scp -C -i ${ORDERER_HOST_KEY} -r ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST} ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}:${NETWORK_HOME}/${ORDERER_NODE_FOLDER}/orderers/${ORDERER_HOST}
 
-{ set +x; } 2>/dev/null
+  { set +x; } 2>/dev/null
 
 
   #create orderer config file
@@ -76,5 +79,8 @@ set -x
   #transfer the config file to orderer machine
   scp -C -i ${ORDERER_HOST_KEY} ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}:${NETWORK_HOME}/${ORDERER_NODE_FOLDER}/orderers/${ORDERER_HOST}/orderer.yaml
 
+}
 
+create 1 
+create 2
 

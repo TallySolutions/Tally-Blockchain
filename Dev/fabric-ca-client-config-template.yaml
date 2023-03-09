@@ -115,7 +115,7 @@ csr:
       ST: Karanataka
       L:
       O: Tally Solutions Pvt Ltd
-      OU: Engineering
+      OU: client
   hosts:
     - ${CA_HOST}.${DOMAIN}
     - "*.${DOMAIN}"

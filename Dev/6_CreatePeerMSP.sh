@@ -13,7 +13,7 @@ mkdir -p ${PEER_NODE_HOME}
 export FABRIC_CA_CLIENT_HOME=${TALLY_CA_HOME}/client
 
 #Enroll Admin
-fabric-ca-client enroll -u https://${TALLY_CA_USER}:${TALLY_CA_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} --tls.certfiles ${TALLY_CA_HOME}/ca-cert.pem -M "${PEER_NODE_HOME}/msp"
+fabric-ca-client enroll -u https://${TALLY_CA_USER}:${TALLY_CA_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=admin --tls.certfiles ${TALLY_CA_HOME}/ca-cert.pem -M "${PEER_NODE_HOME}/msp"
 if [[ $? -ne 0 ]]; then
 	echo "Unable to enroll Peer CA Admin MSP : is Tally CA setup and running?"
 	exit 1
@@ -50,7 +50,7 @@ echo "NodeOUs:
 
   echo "Generating the admin msp"
   set -x
-  fabric-ca-client enroll -u https://${PEER_ADMIN_USER}:${PEER_ADMIN_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} -M "${PEER_NODE_HOME}/users/Admin@${DOMAIN}/msp" --tls.certfiles "${TALLY_CA_HOME}/ca-cert.pem"
+  fabric-ca-client enroll -u https://${PEER_ADMIN_USER}:${PEER_ADMIN_PASSWORD}@${CA_HOST}.${DOMAIN}:${TALLY_CA_PORT} --caname ${TALLY_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=admin -M "${PEER_NODE_HOME}/users/Admin@${DOMAIN}/msp" --tls.certfiles "${TALLY_CA_HOME}/ca-cert.pem"
   { set +x; } 2>/dev/null
 
   cp "${PEER_NODE_HOME}/msp/config.yaml" "${PEER_NODE_HOME}/users/Admin@${DOMAIN}/msp/config.yaml"
