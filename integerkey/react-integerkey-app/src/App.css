@@ -106,3 +106,10 @@ h1 {
   color: #609966;
   margin-right: 2px;
 }
+
+.refresh-button{
+  background-color: #9DC08B;
+  border-width: 35;
+  border-radius: 5%;
+  border-style: hidden;
+}
