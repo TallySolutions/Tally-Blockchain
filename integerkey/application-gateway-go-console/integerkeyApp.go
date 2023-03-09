@@ -71,7 +71,13 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(ccName)
 
+	createAsset("foo")
     readAsset("foo")
+	increaseValue("foo", "5")
+	decreaseValue("foo", "3")
+	getAllAssets()
+	deleteAsset("foo")
+	getAllAssets()
 }
 
 func newGrpcConnection() *grpc.ClientConn {

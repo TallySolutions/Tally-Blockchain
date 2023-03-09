@@ -1,14 +1,79 @@
 #!/bin/bash
 
 #Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath>
-
+function printHelp()
+{
+  echo "Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
+  echo "Flags:"
+  echo "    -v version     : Version of the chaincode, default: 1.0"
+  echo "    -s int         : The sequence number of the chaincode definition for the channel, default: 1"
+  echo "    -f function    : Init function to invoked after deploying chaincode, default: NA"
+  echo "    -d int         : delay in seconds, before retry, default: 3"
+  echo "    -r int         : No of retries, default: 5"
+  echo "    -h             : print this help"
+}
 if [[ $# -lt 2 ]] ; then
-  echo "Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath>"
+  printHelp  
   exit 1
 fi
 
-MAX_RETRY=3
-DELAY=10
+CC_NAME=$1
+shift
+CC_SRC_PATH=$1
+shift
+
+#defailts
+CC_VERSION="1.0"
+CC_SEQUENCE=1
+CC_INIT_FCN="NA"
+DELAY=3
+MAX_RETRY=5
+
+while [[ $# -ge 1 ]] ; do
+  key="$1"
+  case $key in
+  -h )
+    printHelp 
+    exit 0
+    ;;
+  -v )
+    CC_VERSION="$2"
+    shift
+    ;;
+  -s )
+    CC_SEQUENCE="$2"
+    shift
+    ;;
+  -r )
+    MAX_RETRY="$2"
+    shift
+    ;;
+  -d )
+    DELAY="$2"
+    shift
+    ;;
+  -f )
+    CC_INIT_FCN="$2"
+    shift
+    ;;
+  * )
+    echo "Unknown flag: $key"
+    printHelp
+    exit 1
+    ;;
+  esac
+  shift
+done
+
+echo "Running chaincode deploy with: "
+echo Name          = $CC_NAME
+echo Path          = $CC_SRC_PATH
+echo Version       = $CC_VERSION
+echo Sequence      = $CC_SEQUENCE
+echo Init Function = $CC_INIT_FCN
+echo Delay         = $DELAY
+echo Max Retry     = $MAX_RETRY
+
 
 function setup_peer_paths()
 {
@@ -104,7 +169,7 @@ function checkCommitReadiness()
     sleep $DELAY
     echo "Attempting to check the commit readiness of the chaincode definition on $PEER_HOST, Retry after $DELAY seconds."
     set -x
-    peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_ID --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} --output json >&${CC_PKG_PATH}/log.txt
+    peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_ID --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --output json >&${CC_PKG_PATH}/log.txt
     res=$?
     { set +x; } 2>/dev/null
     let rc=0
@@ -127,7 +192,7 @@ function commitChaincodeDefinition()
   # peer (if join was successful), let's supply it directly as we know
   # it using the "-o" option
   set -x
-  peer lifecycle chaincode commit -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" --channelID $CHANNEL_ID --name ${CC_NAME} --peerAddresses ${PEER_HOST}.${DOMAIN}:${PEER_PORT} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} ${INIT_REQUIRED} ${CC_END_POLICY} ${CC_COLL_CONFIG} --tlsRootCertFiles ${PEER_HOME}/peers/${PEER_HOST}/tls/ca.crt >&${CC_PKG_PATH}/log.txt
+  peer lifecycle chaincode commit -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" --channelID $CHANNEL_ID --name ${CC_NAME} --peerAddresses ${PEER_HOST}.${DOMAIN}:${PEER_PORT} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --tlsRootCertFiles ${PEER_HOME}/peers/${PEER_HOST}/tls/ca.crt >&${CC_PKG_PATH}/log.txt
   res=$?
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
@@ -181,16 +246,9 @@ function chaincodeInvokeInit() {
 
 function deployCC()
 {
-   if [[ $# -lt 3 ]] ; then
-     echo "Usage: 11_DeployChaincode.sh <target peer node no: 1,2 etc.> <ChaincodeName> <ChainCodePath>"
-     exit 1
-   fi
+  
+   . ./SetGlobalVariables.sh 1
    
-   . ./SetGlobalVariables.sh $1
-   
-   CC_NAME=$2
-   CC_SRC_PATH=$3
-   CC_VERSION="1.0"
    CC_PKG_PATH=${TALLY_HOME}/admin_client/chaincode/${CC_NAME}
    
    setup_peer_paths
@@ -235,4 +293,4 @@ function deployCC()
 
 }
 
-deployCC 1 $1 $2
+deployCC 
