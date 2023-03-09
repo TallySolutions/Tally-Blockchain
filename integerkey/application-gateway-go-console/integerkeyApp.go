@@ -23,7 +23,7 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	domain       = "tally.tallysolutions.com"
 	user         = "Admin"
-	peer         = "tbchlfdevpeer01"
+	peer         = "tbchlfdevpeer02"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
@@ -71,7 +71,13 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(ccName)
 
+	//createAsset("foo")
     readAsset("foo")
+	//increaseValue("foo", "5")
+	//decreaseValue("foo", "3")
+	//getAllAssets()
+	//deleteAsset("foo")
+	//getAllAssets()
 }
 
 func newGrpcConnection() *grpc.ClientConn {

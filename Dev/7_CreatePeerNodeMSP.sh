@@ -85,6 +85,9 @@ function create()
   #transfer the config file to peer machine
   scp -C -i ${PEER_HOST_KEY} ${PEER_NODE_HOME}/peers/${PEER_HOST}/core.yaml ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers/${PEER_HOST}/core.yaml
 
+  #transfer th external builders
+  scp -C -i ${PEER_HOST_KEY} -r builders ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers/${PEER_HOST}/.
+
 }
 
 create 1

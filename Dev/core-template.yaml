@@ -514,7 +514,7 @@ vm:
     # https://localhost:2376
     # If you utilize external chaincode builders and don't need the default Docker chaincode builder,
     # the endpoint should be unconfigured so that the peer's Docker health checker doesn't get registered.
-    endpoint: unix:///var/run/docker.sock
+    endpoint: 
 
     # settings for docker vms
     docker:
@@ -569,30 +569,30 @@ chaincode:
         name:
 
     # Generic builder environment, suitable for most chaincode types
-    builder: $(DOCKER_NS)/fabric-ccenv:$(TWO_DIGIT_VERSION)
+    #builder: $(DOCKER_NS)/fabric-ccenv:$(TWO_DIGIT_VERSION)
 
     # Enables/disables force pulling of the base docker images (listed below)
     # during user chaincode instantiation.
     # Useful when using moving image tags (such as :latest)
-    pull: false
+    #pull: false
 
-    golang:
+    #golang:
         # golang will never need more than baseos
-        runtime: $(DOCKER_NS)/fabric-baseos:$(TWO_DIGIT_VERSION)
+        #runtime: $(DOCKER_NS)/fabric-baseos:$(TWO_DIGIT_VERSION)
 
         # whether or not golang chaincode should be linked dynamically
-        dynamicLink: false
+        #dynamicLink: false
 
-    java:
+    #java:
         # This is an image based on java:openjdk-8 with addition compiler
         # tools added for java shim layer packaging.
         # This image is packed with shim layer libraries that are necessary
         # for Java chaincode runtime.
-        runtime: $(DOCKER_NS)/fabric-javaenv:$(TWO_DIGIT_VERSION)
+        #runtime: $(DOCKER_NS)/fabric-javaenv:$(TWO_DIGIT_VERSION)
 
-    node:
+    #node:
         # This is an image based on node:$(NODE_VER)-alpine
-        runtime: $(DOCKER_NS)/fabric-nodeenv:$(TWO_DIGIT_VERSION)
+        #runtime: $(DOCKER_NS)/fabric-nodeenv:$(TWO_DIGIT_VERSION)
 
     # List of directories to treat as external builders and launchers for
     # chaincode. The external builder detection processing will iterate over the
@@ -600,10 +600,14 @@ chaincode:
     # If you don't need to fallback to the default Docker builder, also unconfigure vm.endpoint above.
     # To override this property via env variable use CORE_CHAINCODE_EXTERNALBUILDERS: [{name: x, path: dir1}, {name: y, path: dir2}]
     externalBuilders:
-       - name: ccaas_builder
-         path: /opt/hyperledger/ccaas_builder
+       - name: golang-builder
+         path: ${PEER_HOME}/builders/golang
          propagateEnvironment:
-           - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG
+            - HOME
+            - GOPROXY
+            - GONOPROXY
+            - GOSUMDB
+            - GONOSUMDB
 
 
     # The maximum duration to wait for the chaincode build and install process
@@ -646,7 +650,7 @@ chaincode:
     # Logging section for the chaincode container
     logging:
       # Default level for all loggers within the chaincode container
-      level:  info
+      level:  debug
       # Override default level for the 'shim' logger
       shim:   warning
       # Format for the chaincode container logs

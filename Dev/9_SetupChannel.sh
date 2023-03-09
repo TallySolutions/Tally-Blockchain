@@ -115,7 +115,7 @@ function set_anchor_peer()
 
   /bin/rm -rf temp
   mkdir temp
-
+  
   echo "Fetching config from ${ORDERER_HOST}..."
   peer channel fetch config temp/config_block.pb -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" -c ${CHANNEL_ID}
   verifyResult $? "Fetch config failed"
