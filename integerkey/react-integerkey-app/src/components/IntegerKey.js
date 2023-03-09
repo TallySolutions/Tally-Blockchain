@@ -1,15 +1,11 @@
 import React, {useState} from 'react'
-import IntegerKeyForm from './IntegerKeyForm'
+//import IntegerKeyForm from './IntegerKeyForm'
 import {RiCloseCircleLine} from 'react-icons/ri'
 import {TiArrowSortedUp} from 'react-icons/ti'
 import {TiArrowSortedDown} from 'react-icons/ti'
 import {incrementValue} from './IntegerKeyList'
 import {decrementValue} from './IntegerKeyList'
 
-
-function HandleRefresh(){
-    
-}
 
 
 function IntegerKey({assets, completeAsset, removeAsset}) {
