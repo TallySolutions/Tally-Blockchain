@@ -23,15 +23,18 @@ function IntegerKey({assets, completeAsset, removeAsset}) {
     <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
 
             <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
-                {asset.displayValue}
+
+                        {asset.displayValue}
+
             </div>
 
             <div className='icons'>
                 {/* buttons for add and subtract, deletion */}
                   <TiArrowSortedUp
   
-                          onClick={() => handleIncrementClick(asset)}
-
+                          onClick={
+                            () => handleIncrementClick(asset)
+                          }
                           className='edit-icon'
                   />
                   <TiArrowSortedDown
