@@ -19,6 +19,10 @@ function IntegerKeyList() {
     }
     
     const incrementValue = asset =>{
+        // if (asset.Value >= 20){
+        //     alert('You cannot have an asset with a value higher than 20.')
+        //     return
+        // }
         fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
                               method: 'POST',
                               headers: {
@@ -53,6 +57,9 @@ function IntegerKeyList() {
                                      
                 }
                 const decrementValue = asset =>{
+                    // if (asset.Value <= 0){
+                    //     alert('You cannot have an asset with a value lesser than 0.')
+                    // }
                      fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
                                            method: 'POST',
                                            headers: {
@@ -70,15 +77,15 @@ function IntegerKeyList() {
                                                          }
                                                          else{
                                                              //asset.isComplete= true ;
-                                                             alert('The asset does not exist. Try reloading the list for the updated version.' );
+                                                            //  alert('The asset does not exist. Try reloading the list for the updated version.' );
                                                              return console.error(response)
                                                          }
                                            } )
                                            .then(data =>{
-                                                 asset.Value= data["Value"]
-                                                 asset.displayValue= data["Name"] + " = " + data["Value"] 
-                                                 console.log(assets)
-                                                 updateAsset(asset.id, asset.Value)
+                                                        asset.Value= data["Value"]
+                                                        asset.displayValue= data["Name"] + " = " + data["Value"] 
+                                                        console.log(assets)
+                                                        updateAsset(asset.id, asset.Value)
                                              })
                                                   
                              }
@@ -93,7 +100,7 @@ function IntegerKeyList() {
                                   return response.json()
                                 }
                                 else{
-                                  alert('Asset was already removed! Try reloading the list to ensure there are no non-existing assets' );
+                                //   alert('Asset was already removed! Try reloading the list to ensure there are no non-existing assets' );
                                   return console.error(response)
                                 }
                               } )
