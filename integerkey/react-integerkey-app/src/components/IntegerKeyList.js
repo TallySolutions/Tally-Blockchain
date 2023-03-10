@@ -42,10 +42,10 @@ function IntegerKeyList() {
                                     asset.Value= data["Value"]
                                     asset.displayValue= data["Name"] + " = " + data["Value"] 
                                     console.log(data)
-                                    
+                                    setAssets(assets) 
                                 })
-                             setAssets(assets)         
-      }
+                                     
+                }
       const decrementValue = asset =>{
         fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
                               method: 'POST',
@@ -70,9 +70,8 @@ function IntegerKeyList() {
                                     asset.Value= data["Value"]
                                     asset.displayValue= data["Name"] + " = " + data["Value"] 
                                     console.log(data)
-                                    
-                                })
-                             setAssets(assets)         
+                                    setAssets(assets)
+                                })         
       }
 
     const removeAsset = assetname =>{
