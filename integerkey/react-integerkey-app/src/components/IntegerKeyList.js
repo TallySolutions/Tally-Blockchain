@@ -36,7 +36,7 @@ function IntegerKeyList() {
                                             }
                                             else{
                                                 //asset.isComplete= true ;
-                                                alert('You cannot go above 20' );
+                                                alert('The asset does not exist. Try reloading the list' );
                                                 return console.error(response)
                                             }
                               } )
@@ -70,7 +70,7 @@ function IntegerKeyList() {
                                                          }
                                                          else{
                                                              //asset.isComplete= true ;
-                                                             alert('You cannot go below 0' );
+                                                             alert('The asset does not exist. Try reloading the list.' );
                                                              return console.error(response)
                                                          }
                                            } )
