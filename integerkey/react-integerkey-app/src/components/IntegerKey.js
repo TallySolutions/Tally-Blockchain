@@ -6,7 +6,7 @@ import {TiArrowSortedDown} from 'react-icons/ti'
 
 
 
-function IntegerKey({assets, updateAsset, incrementValue, decrementValue, removeAsset}) {
+function IntegerKey({assets, incrementValue, decrementValue, removeAsset}) {
 
 
   return assets.map((asset, index)=> (

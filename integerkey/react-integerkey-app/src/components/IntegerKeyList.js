@@ -109,7 +109,6 @@ function IntegerKeyList() {
         <IntegerKeyForm onSubmit={addAsset}/>
         <IntegerKey
             assets={assets}
-            updateAsset = {updateAsset}
             incrementValue={incrementValue}
             decrementValue = {decrementValue}
             removeAsset = {removeAsset}
