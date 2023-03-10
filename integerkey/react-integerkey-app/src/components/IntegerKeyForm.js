@@ -26,6 +26,7 @@ function IntegerKeyForm(props) {
                     return response.json()
                   }
                   else{
+                    alert('Error in creating asset!!! Try a different name.' );
                     return console.error(response)
                   }
                 } )

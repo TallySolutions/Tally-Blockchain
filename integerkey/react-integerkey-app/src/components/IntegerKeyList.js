@@ -36,6 +36,7 @@ function IntegerKeyList() {
                                             }
                                             else{
                                                 //asset.isComplete= true ;
+                                                alert('You cannot go above 20' );
                                                 return console.error(response)
                                             }
                               } )
@@ -69,6 +70,7 @@ function IntegerKeyList() {
                                                          }
                                                          else{
                                                              //asset.isComplete= true ;
+                                                             alert('You cannot go below 0' );
                                                              return console.error(response)
                                                          }
                                            } )
@@ -86,7 +88,15 @@ function IntegerKeyList() {
         fetch(`http://20.219.112.54:8080/integerKey/deleteAsset/${assetname}`, {
                                     method: 'DELETE',
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (response.ok){
+                                  return response.json()
+                                }
+                                else{
+                                  alert('Asset was already removed! Try reloading the list to ensure there are no non-existing assets' );
+                                  return console.error(response)
+                                }
+                              } )
                             .then(data => console.log(data))
                             .catch(error => console.error(error))
                 setAssets(removeArr);
