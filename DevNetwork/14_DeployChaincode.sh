@@ -1,16 +1,23 @@
 #!/bin/bash
 
-#Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath>
+. ./SetEnv.sh 
+. ./SetCANode.sh 
+. ./SetOrdererNode.sh 
+. ./SetPeerNode.sh 
+
+setCANode 1
+
+#Usage: 14_DeployChaincode.sh <ChaincodeName> <ChainCodePath>
 function printHelp()
 {
-  echo "Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
-  echo "Flags:"
-  echo "    -v version     : Version of the chaincode, default: 1.0"
-  echo "    -s int         : The sequence number of the chaincode definition for the channel, default: 1"
-  echo "    -f function    : Init function to invoked after deploying chaincode, default: NA"
-  echo "    -d int         : delay in seconds, before retry, default: 3"
-  echo "    -r int         : No of retries, default: 5"
-  echo "    -h             : print this help"
+  infoln "Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
+  infoln "Flags:"
+  infoln "    -v version     : Version of the chaincode, default: 1.0"
+  infoln "    -s int         : The sequence number of the chaincode definition for the channel, default: 1"
+  infoln "    -f function    : Init function to invoked after deploying chaincode, default: NA"
+  infoln "    -d int         : delay in seconds, before retry, default: 3"
+  infoln "    -r int         : No of retries, default: 5"
+  infoln "    -h             : print this help"
 }
 if [[ $# -lt 2 ]] ; then
   printHelp  
@@ -65,14 +72,14 @@ while [[ $# -ge 1 ]] ; do
   shift
 done
 
-echo "Running chaincode deploy with: "
-echo Name          = $CC_NAME
-echo Path          = $CC_SRC_PATH
-echo Version       = $CC_VERSION
-echo Sequence      = $CC_SEQUENCE
-echo Init Function = $CC_INIT_FCN
-echo Delay         = $DELAY
-echo Max Retry     = $MAX_RETRY
+infoln "Running chaincode deploy with: "
+infoln "Name          = $CC_NAME"
+infoln "Path          = $CC_SRC_PATH"
+infoln "Version       = $CC_VERSION"
+infoln "Sequence      = $CC_SEQUENCE"
+infoln "Init Function = $CC_INIT_FCN"
+infoln "Delay         = $DELAY"
+infoln "Max Retry     = $MAX_RETRY"
 
 
 function setup_peer_paths()
@@ -88,24 +95,14 @@ function checkPrereqs() {
   jq --version > /dev/null 2>&1
 
   if [[ $? -ne 0 ]]; then
-    echo "jq command not found..."
-    echo
-    echo "Follow the instructions in the Fabric docs to install the prereqs"
-    echo "https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html"
+    errorln "jq command not found..."
+    errorln
+    errorln "Follow the instructions in the Fabric docs to install the prereqs"
+    errorln "https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html"
     exit 1
   fi
 }
 
-function fatalln() {
-  echo "ERROR: $1"
-  exit 1
-}
-
-verifyResult() {
-  if [ $1 -ne 0 ]; then
-    fatalln "$2"
-  fi
-}
 
 packageChaincode() {
   set -x
@@ -118,7 +115,7 @@ packageChaincode() {
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
   verifyResult $res "Chaincode packaging has failed"
-  echo "Chaincode is packaged"
+  successln "Chaincode is packaged"
 }
 
 # installChaincode PEER ORG
@@ -133,7 +130,7 @@ function installChaincode() {
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
   verifyResult $res "Chaincode installation on ${PEER_HOST} has failed"
-  echo "Chaincode is installed on ${PEER_HOST}"
+  successln "Chaincode is installed on ${PEER_HOST}"
 }
 
 # queryInstalled PEER ORG
@@ -144,7 +141,7 @@ function queryInstalled() {
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
   verifyResult $res "Query installed on ${PEER_HOST} has failed"
-  echo "Query installed successful on ${PEER_HOST} on channel"
+  successln "Query installed successful on ${PEER_HOST} on channel"
 }
 
 # approveForMyOrg VERSION PEER ORG
@@ -155,19 +152,19 @@ function approveForTally() {
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
   verifyResult $res "Chaincode definition approved on ${PEER_HOST} on channel '$CHANNEL_ID' failed"
-  echo "Chaincode definition approved on ${PEER_HOST} on channel '$CHANNEL_ID'"
+  successln "Chaincode definition approved on ${PEER_HOST} on channel '$CHANNEL_ID'"
 }
 
 function checkCommitReadiness()
 {
-  echo "Checking the commit readiness of the chaincode definition on $PEER_HOST on channel '$CHANNEL_ID'..."
+  infoln "Checking the commit readiness of the chaincode definition on $PEER_HOST on channel '$CHANNEL_ID'..."
   local rc=1
   local COUNTER=1
   # continue to poll
   # we either get a successful response, or reach MAX RETRY
   while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ]; do
     sleep $DELAY
-    echo "Attempting to check the commit readiness of the chaincode definition on $PEER_HOST, Retry after $DELAY seconds."
+    infoln "Attempting to check the commit readiness of the chaincode definition on $PEER_HOST, Retry after $DELAY seconds."
     set -x
     peer lifecycle chaincode checkcommitreadiness --channelID $CHANNEL_ID --name ${CC_NAME} --version ${CC_VERSION} --sequence ${CC_SEQUENCE} --output json >&${CC_PKG_PATH}/log.txt
     res=$?
@@ -180,7 +177,7 @@ function checkCommitReadiness()
   done
   cat ${CC_PKG_PATH}/log.txt
   if test $rc -eq 0; then
-    echo "Checking the commit readiness of the chaincode definition successful on $PEER_HOST on channel '$CHANNEL_ID'"
+    successln "Checking the commit readiness of the chaincode definition successful on $PEER_HOST on channel '$CHANNEL_ID'"
   else
     fatalln "After $MAX_RETRY attempts, Check commit readiness result on $PEER_HOST is INVALID!"
   fi
@@ -197,14 +194,14 @@ function commitChaincodeDefinition()
   { set +x; } 2>/dev/null
   cat ${CC_PKG_PATH}/log.txt
   verifyResult $res "Chaincode definition commit failed on $PEER_HOST on channel '$CHANNEL_ID' failed"
-  echo "Chaincode definition committed on channel '$CHANNEL_ID'"
+  successln "Chaincode definition committed on channel '$CHANNEL_ID'"
 
 }
 
 function queryCommitted()
 {
   EXPECTED_RESULT="Version: ${CC_VERSION}, Sequence: ${CC_SEQUENCE}, Endorsement Plugin: escc, Validation Plugin: vscc"
-  echo "Querying chaincode definition on peer0.org${ORG} on channel '$CHANNEL_ID'..."
+  infoln "Querying chaincode definition on peer0.org${ORG} on channel '$CHANNEL_ID'..."
   local rc=1
   local COUNTER=1
   # continue to poll
@@ -222,7 +219,7 @@ function queryCommitted()
   done
   cat $CC_PKG_PATH/log.txt
   if test $rc -eq 0; then
-    echo "Query chaincode definition successful on ${PEER_HOST} on channel '$CHANNEL_NAME'"
+    successln "Query chaincode definition successful on ${PEER_HOST} on channel '$CHANNEL_NAME'"
   else
     fatalln "After $MAX_RETRY attempts, Query chaincode definition result on ${PEER_HOST} is INVALID!"
   fi
@@ -235,20 +232,22 @@ function chaincodeInvokeInit() {
   # it using the "-o" option
   set -x
   fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
-  echo "invoke fcn call:${fcn_call}"
+  infoln "invoke fcn call:${fcn_call}"
   peer chaincode invoke -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT} --tls --cafile "${ORDERER_HOME}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem" -C $CHANNEL_ID -n ${CC_NAME} --peerAddresses ${PEER_HOST}.${DOMAIN}:${PEER_PORT}  --isInit -c ${fcn_call} >&$CC_PKG_PATH/log.txt
   res=$?
   { set +x; } 2>/dev/null
   cat $CC_PKG_PATH/log.txt
   verifyResult $res "Invoke execution on $PEER_HOST failed "
-  echo "Invoke transaction successful on $PEER_HOST on channel '$CHANNEL_NAME'"
+  successln "Invoke transaction successful on $PEER_HOST on channel '$CHANNEL_NAME'"
 }
 
 function deployCC()
 {
   
-   . ./SetGlobalVariables.sh 1
-   
+   #Use peer host 1
+  
+   setPeerNode 1
+
    CC_PKG_PATH=${TALLY_HOME}/admin_client/chaincode/${CC_NAME}
    
    setup_peer_paths
@@ -285,11 +284,13 @@ function deployCC()
    ## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
    ## method defined
    if [ "$CC_INIT_FCN" = "NA" ]; then
-     echo "Chaincode initialization is not required"
+     infoln "Chaincode initialization is not required"
    else
-     echo "Invoking Chaincode ..."
+     infoln "Invoking Chaincode ..."
      chaincodeInvokeInit
    fi
+
+   successln "Chaincode deployed."
 
 }
 

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"time"
-
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
@@ -23,23 +22,31 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	domain       = "tally.tallysolutions.com"
 	user         = "Admin"
-	peer         = "tbchlfdevpeer02"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
 	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
 	tlsCertPath  = cryptoPath + "/peers/" + peer + "/tls/ca.crt"
-	peerEndpoint = peer + "." + domain + ":" + peer_port
-	gatewayPeer  = peer + "." + domain
 	ccName       = "integerkey"
 	channelName  = "integerkey"
 
 )
 
+var peer string
+var peerEndpoint string
+var gatewayPeer string
 
 var contract *client.Contract
 
 func main() {
+
+    if len(os.Args) < 2 {
+		panic("Usage: integerKeyApp <peer node>")
+	}
+
+	peer = os.Args[1]
+	peerEndpoint = peer + "." + domain + ":" + peer_port
+	gatewayPeer  = peer + "." + domain
 
 	fmt.Printf("\nConnecting to : %s \n", peerEndpoint)
 

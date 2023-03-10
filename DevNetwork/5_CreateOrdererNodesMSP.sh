@@ -2,6 +2,12 @@
 
 #Usage: 5_CreateOrdererNodeMSP.sh 
 
+. ./SetEnv.sh 
+. ./SetCANode.sh 
+. ./SetOrdererNode.sh 
+
+setCANode 1
+
 . ./RegisterEnroll.sh
 
 function create()
@@ -12,7 +18,7 @@ function create()
     exit 1
   fi
 
-  . ./SetGlobalVariables.sh $1
+  setOrdererNode $1
 
   #First Register the user
   
@@ -27,58 +33,61 @@ function create()
   
   export FABRIC_CA_CLIENT_HOME=${ORDERER_CA_HOME}/client
 
-  echo "Generating the orderer msp"
+  infoln "Generating the orderer msp"
 
-    set -x
   fabric-ca-client enroll -u https://${ORDERER_USER}:${ORDERER_PASSWORD}@${CA_HOST}.${DOMAIN}:${ORDERER_CA_PORT} --caname ${ORDERER_CA_NAME} --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=orderer -M "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp" --csr.hosts ${ORDERER_HOST}.${DOMAIN} --tls.certfiles "${ORDERER_CA_HOME}/ca-cert.pem"
-  { set +x; } 2>/dev/null
-
+  verifyResult $? "Unable to enroll orderer msp."
+  
   cp "${ORDERER_NODE_HOME}/msp/config.yaml" "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp/config.yaml"
 
-  echo "Generating the orderer-tls certificates"
-  set -x
+  infoln "Generating the orderer-tls certificates"
   fabric-ca-client enroll -u https://${TLS_ADMIN_USER}:${TLS_ADMIN_PASSWORD}@${CA_HOST}.${DOMAIN}:${TLS_CA_PORT} --caname ${TLS_CA_NAME} -M "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls" --enrollment.profile tls --csr.hosts ${ORDERER_HOST}.${DOMAIN} --tls.certfiles "${TLS_CA_HOME}/ca-cert.pem"
-  { set +x; } 2>/dev/null
+  verifyResult $? "Unable to enroll orderer tls."
 
   # Copy the tls CA cert, server cert, server keystore to well known file names in the orderer's tls directory that are referenced by orderer startup config
   cp "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/tlscacerts/"* "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/ca.crt"
+  verifyResult $? "Unable to copy tls certificate."
   cp "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/signcerts/"* "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/server.crt"
+  verifyResult $? "Unable to copy tls certificate."
   cp "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/keystore/"* "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/server.key"
+  verifyResult $? "Unable to copy tls certificate."
 
   # Copy orderer org's CA cert to orderer's /msp/tlscacerts directory (for use in the orderer MSP definition)
   mkdir -p "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp/tlscacerts"
   cp "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/tls/tlscacerts/"* "${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/msp/tlscacerts/tlsca.${DOMAIN}-cert.pem"
+  verifyResult $? "Unable to create tlc ca certificate."
 
 
+  infoln "Deleting remote node folder ..."
 
-  echo "Deleting remote node folder ..."
-
-  set -x
 
   ssh -i ${ORDERER_HOST_KEY} ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN} /bin/rm -rf ${NETWORK_HOME}/${ORDERER_NODE_FOLDER}
 
   ssh -i ${ORDERER_HOST_KEY} ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN} /bin/mkdir -p ${NETWORK_HOME}/${ORDERER_NODE_FOLDER}/orderers
 
   scp -C -i ${ORDERER_HOST_KEY} -r ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST} ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}:${NETWORK_HOME}/${ORDERER_NODE_FOLDER}/orderers/${ORDERER_HOST}
-
-  { set +x; } 2>/dev/null
+  verifyResult $? "Unable to copy ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST} to ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}"
 
 
   #create orderer config file
 	/bin/cp orderer-template.yaml ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml
 
   ORDERER_HOME_ESCAPED=`echo ${ORDERER_HOME_REMOTE} | sed -e 's/\//\\\\\//g'`
-  sed -e "s/\${ORDERER_PORT}/${ORDERER_PORT}/g"             ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml   > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.1 
-  sed -e "s/\${ORDERER_MSPID}/${ORDERER_MSPID}/g"           ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.1 > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.2 
-  sed -e "s/\${ORDERER_HOME}/${ORDERER_HOME_ESCAPED}/g"     ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.2 > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.3 
-  sed -e "s/\${ORDERER_ADMIN_PORT}/${ORDERER_ADMIN_PORT}/g" ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.3 > ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.4 
+  sed -i "s/\${ORDERER_PORT}/${ORDERER_PORT}/g"             ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
+  verifyResult $? "Unable to update orderer.yaml."
+  sed -i "s/\${ORDERER_MSPID}/${ORDERER_MSPID}/g"           ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
+  verifyResult $? "Unable to update orderer.yaml."
+  sed -i "s/\${ORDERER_HOME}/${ORDERER_HOME_ESCAPED}/g"     ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
+  verifyResult $? "Unable to update orderer.yaml."
+  sed -i "s/\${ORDERER_ADMIN_PORT}/${ORDERER_ADMIN_PORT}/g" ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
+  verifyResult $? "Unable to update orderer.yaml."
 
-  /bin/rm ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.1 ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.2 ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.3
-  /bin/mv ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml.4  ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml
 
   #transfer the config file to orderer machine
   scp -C -i ${ORDERER_HOST_KEY} ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}:${NETWORK_HOME}/${ORDERER_NODE_FOLDER}/orderers/${ORDERER_HOST}/orderer.yaml
+  verifyResult $? "Unable to copy orderer.yaml to ${ORDERER_HOST_USER}@${ORDERER_HOST}.${DOMAIN}"
 
+  successln "Successfully created orderer node $1"
 }
 
 create 1 

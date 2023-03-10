@@ -300,7 +300,7 @@ signing:
 #  if the server creates a self-signed TLS certificate.
 ###########################################################################
 csr:
-   cn: tbchlfdevca01.tally.tallysolutions.com
+   cn: ${CA_HOST}.${DOMAIN}
    keyrequest:
      algo: ecdsa
      size: 256
@@ -311,8 +311,8 @@ csr:
         O: Tally Solutions Pvt Ltd
         OU: Engineering
    hosts:
-     - tbchlfdevca01.tally.tallysolutions.com
-     - "*.tally.tallysolutions.com"
+     - ${CA_HOST}.${DOMAIN}
+     - "*.${DOMAIN}"
    ca:
       expiry: 131400h
       pathlength: 1
