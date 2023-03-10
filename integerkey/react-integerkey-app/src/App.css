@@ -19,10 +19,11 @@ body {
   margin: 128px auto;
   border-radius: 10px;
   padding-bottom: 32px;
+  margin-top: 60px;
 }
 
 h1 {
-  margin: 32px 0;
+  margin: 28px 0;
   color: #40513B;
   font-size: 34px;
 }
@@ -30,6 +31,7 @@ h1 {
 
 .integerkey-form {
   margin-bottom: 32px;
+  margin-top: 10px;
 }
 
 .integerkey-input {
@@ -103,9 +105,30 @@ h1 {
   margin-right: 2px;
 }
 
-.refresh-button{
+.refresh-button, .clearAll-button{
   background-color: #9DC08B;
-  border-width: 35;
-  border-radius: 5%;
   border-style: hidden;
+  color: #609966;
+  margin-right: 25px;
+  height: 40px;
+  /* font-size: 35px; */
+
+}
+
+.refresh-button{
+  font-size: 25px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.clearAll-button{
+  font-size: 35px;
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
+
+.buttons{
+  display: flex ;
+  flex-direction: row;
+  justify-content: flex-end;
 }

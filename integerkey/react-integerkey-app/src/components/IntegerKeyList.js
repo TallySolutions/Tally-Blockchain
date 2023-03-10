@@ -122,7 +122,6 @@ function IntegerKeyList() {
 
   return (
     <div>
-        <h1>List of created Assets</h1>
         <IntegerKeyForm onSubmit={addAsset}/>
         <IntegerKey
             assets={assets}

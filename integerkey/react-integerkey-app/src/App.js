@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import IntegerKeyList from './components/IntegerKeyList';
 import { FaSyncAlt } from 'react-icons/fa';
+import {AiOutlineClear} from 'react-icons/ai';
 
 function App() {
         const [assets, setAssets] = useState([]); 
@@ -18,9 +19,16 @@ function App() {
 
         return (
           <div className="integerkey-app">
-            <button onClick={handleRefresh} className='refresh-button'>
-              <FaSyncAlt />
-            </button>
+            <h1>List of created Assets</h1>
+            <div className='buttons'>
+                      <button onClick={handleRefresh} className='refresh-button'>
+                              <FaSyncAlt />
+                      </button>
+                      <button className='clearAll-button'>
+                              <AiOutlineClear/>
+                      </button>
+            </div>
+            
             <IntegerKeyList assets={assets}/>
           </div>
         );
