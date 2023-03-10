@@ -19,6 +19,8 @@ function IntegerKeyList() {
     }
     
     const incrementValue = asset =>{
+       // asset.isComplete = false ;
+
         fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
                               method: 'POST',
                               headers: {
@@ -35,14 +37,19 @@ function IntegerKeyList() {
                                                     return response.json()
                                             }
                                             else{
+                                                //asset.isComplete= true ;
                                                 return console.error(response)
                                             }
                               } )
                               .then(data =>{
                                     asset.Value= data["Value"]
                                     asset.displayValue= data["Name"] + " = " + data["Value"] 
-                                    console.log(data)
-                                    setAssets(assets) 
+                                    console.log(assets)
+                                    // asset.isComplete = true ;
+                                    // setAssets(assets) 
+                                    updateAsset(asset.id, asset.Value)
+
+                                    // completeAsset(asset.id)
                                 })
                                      
                 }
@@ -86,10 +93,10 @@ function IntegerKeyList() {
     }
     
     
-     const completeAsset = id =>{
+     const updateAsset = (id, Value) =>{
         let updatedAssets= assets.map(asset =>{
             if(asset.id===id){
-                asset.isComplete = !asset.isComplete
+                asset.Value = Value
                 return asset
             }
         });
@@ -102,7 +109,7 @@ function IntegerKeyList() {
         <IntegerKeyForm onSubmit={addAsset}/>
         <IntegerKey
             assets={assets}
-            completeAsset = {completeAsset}
+            updateAsset = {updateAsset}
             incrementValue={incrementValue}
             decrementValue = {decrementValue}
             removeAsset = {removeAsset}

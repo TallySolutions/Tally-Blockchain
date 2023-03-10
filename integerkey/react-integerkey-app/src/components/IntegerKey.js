@@ -6,14 +6,14 @@ import {TiArrowSortedDown} from 'react-icons/ti'
 
 
 
-function IntegerKey({assets, completeAsset, incrementValue, decrementValue, removeAsset}) {
+function IntegerKey({assets, updateAsset, incrementValue, decrementValue, removeAsset}) {
 
 
   return assets.map((asset, index)=> (
 
     <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
 
-            <div key={asset.id} onClick={()=>completeAsset(asset.id)}>
+            <div key={asset.id}>
 
                         {asset.displayValue}
 

@@ -35,7 +35,7 @@ function IntegerKeyForm(props) {
                            props.onSubmit({
                                 id : nextId("asset-id:"),
                                 assetname: data["Name"] ,
-                                assetvalue: data["Value"] ,
+                                // assetvalue: data["Value"] ,
                                 displayValue: data["Name"] + " = " + data["Value"]
                            });
                            setInputAsset('');
