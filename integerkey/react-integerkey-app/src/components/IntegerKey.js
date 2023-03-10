@@ -3,19 +3,10 @@ import React, {useState} from 'react'
 import {RiCloseCircleLine} from 'react-icons/ri'
 import {TiArrowSortedUp} from 'react-icons/ti'
 import {TiArrowSortedDown} from 'react-icons/ti'
-import {incrementValue} from './IntegerKeyList'
-import {decrementValue} from './IntegerKeyList'
 
 
 
-function IntegerKey({assets, completeAsset, removeAsset}) {
-
-    const handleIncrementClick = (asset) => {
-        incrementValue(asset);
-      };
-      const handleDecrementClick = (asset) => {
-        decrementValue(asset);
-      };
+function IntegerKey({assets, completeAsset, incrementValue, decrementValue, removeAsset}) {
 
 
   return assets.map((asset, index)=> (
@@ -33,13 +24,13 @@ function IntegerKey({assets, completeAsset, removeAsset}) {
                   <TiArrowSortedUp
   
                           onClick={
-                            () => handleIncrementClick(asset)
+                            () => incrementValue(asset)
                           }
                           className='edit-icon'
                   />
                   <TiArrowSortedDown
                           onClick={
-                              () => handleDecrementClick(asset)
+                              () => decrementValue(asset)
                                   }
                               className='edit-icon'
                   />

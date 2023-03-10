@@ -2,64 +2,6 @@ import React, {useState} from 'react';
 import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
 
-export const incrementValue = asset =>{
-    // const[assets, setAssets] = useState([]);
-    // const updateArr = [...assets].filter(asset=> asset.assetname !== assetname);
-    fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
-                          method: 'POST',
-                          headers: {
-                                        'Content-Type': 'application/json' ,
-                                        'Access-Control-Request-Method' : 'POST',
-                                        'Access-Control-Request-Headers' : 'Content-Type'
-                                    },
-                          body: JSON.stringify({
-                            Name: asset.assetname,
-                            Value: "1"
-                          })})
-                          .then(response => {
-                                        if (response.ok){
-                                                return response.json()
-                                        }
-                                        else{
-                                            return console.error(response)
-                                        }
-                          } )
-                          .then(data =>{
-                                asset.displayValue= data["Name"] + " = " + data["Value"] 
-                                console.log(data)
-                                // this.setState()
-                            })
-                        //   setAssets(updateArr)         
-                         }
-                    
-export const decrementValue = asset =>{
-    // create updatearr
-    fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
-                          method: 'POST',
-                          headers: {
-                                        'Content-Type': 'application/json' ,
-                                        'Access-Control-Request-Method' : 'POST',
-                                        'Access-Control-Request-Headers' : 'Content-Type'
-                                    },
-                          body: JSON.stringify({
-                            Name: asset.assetname,
-                            Value: "1"
-                          })})
-                          .then(response => {
-                            if (response.ok){
-                                    return response.json()
-                            }
-                            else{
-                                return console.error(response)
-                            }
-              } )
-              .then(data =>{
-                    asset.displayValue= data["Name"] + " = " + data["Value"] 
-                    console.log(data)
-                    this.setState()
-                })
-                            
-}
 
 function IntegerKeyList() {
 
@@ -75,7 +17,63 @@ function IntegerKeyList() {
         const newAssets = [asset, ...assets]
         setAssets(newAssets);
     }
-
+    
+    const incrementValue = asset =>{
+        fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
+                              method: 'POST',
+                              headers: {
+                                            'Content-Type': 'application/json' ,
+                                            'Access-Control-Request-Method' : 'POST',
+                                            'Access-Control-Request-Headers' : 'Content-Type'
+                                        },
+                              body: JSON.stringify({
+                                Name: asset.assetname,
+                                Value: "1"
+                              })})
+                              .then(response => {
+                                            if (response.ok){
+                                                    return response.json()
+                                            }
+                                            else{
+                                                return console.error(response)
+                                            }
+                              } )
+                              .then(data =>{
+                                    asset.Value= data["Value"]
+                                    asset.displayValue= data["Name"] + " = " + data["Value"] 
+                                    console.log(data)
+                                    
+                                })
+                             setAssets(assets)         
+      }
+      const decrementValue = asset =>{
+        fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
+                              method: 'POST',
+                              headers: {
+                                            'Content-Type': 'application/json' ,
+                                            'Access-Control-Request-Method' : 'POST',
+                                            'Access-Control-Request-Headers' : 'Content-Type'
+                                        },
+                              body: JSON.stringify({
+                                Name: asset.assetname,
+                                Value: "1"
+                              })})
+                              .then(response => {
+                                            if (response.ok){
+                                                    return response.json()
+                                            }
+                                            else{
+                                                return console.error(response)
+                                            }
+                              } )
+                              .then(data =>{
+                                    asset.Value= data["Value"]
+                                    asset.displayValue= data["Name"] + " = " + data["Value"] 
+                                    console.log(data)
+                                    
+                                })
+                             setAssets(assets)         
+      }
 
     const removeAsset = assetname =>{
         const removeArr = [...assets].filter(asset=> asset.assetname !== assetname);
@@ -106,6 +104,8 @@ function IntegerKeyList() {
         <IntegerKey
             assets={assets}
             completeAsset = {completeAsset}
+            incrementValue={incrementValue}
+            decrementValue = {decrementValue}
             removeAsset = {removeAsset}
         />
     </div>
