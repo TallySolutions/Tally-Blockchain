@@ -4,7 +4,7 @@ import IntegerKeyList from './components/IntegerKeyList';
 import { FaSyncAlt } from 'react-icons/fa';
 
 function App() {
-        const [assets, setAssets] = useState([]);
+        const [assets, setAssets] = useState([]); 
 
         const handleRefresh = async () => {
           const response = await fetch('http://20.219.112.54:8080/integerKey/getAllAssets');

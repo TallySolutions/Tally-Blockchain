@@ -19,8 +19,6 @@ function IntegerKeyList() {
     }
     
     const incrementValue = asset =>{
-       // asset.isComplete = false ;
-
         fetch('http://20.219.112.54:8080/integerKey/increaseValue',{  
                               method: 'POST',
                               headers: {
@@ -53,33 +51,35 @@ function IntegerKeyList() {
                                 })
                                      
                 }
-      const decrementValue = asset =>{
-        fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
-                              method: 'POST',
-                              headers: {
-                                            'Content-Type': 'application/json' ,
-                                            'Access-Control-Request-Method' : 'POST',
-                                            'Access-Control-Request-Headers' : 'Content-Type'
-                                        },
-                              body: JSON.stringify({
-                                Name: asset.assetname,
-                                Value: "1"
-                              })})
-                              .then(response => {
-                                            if (response.ok){
-                                                    return response.json()
-                                            }
-                                            else{
-                                                return console.error(response)
-                                            }
-                              } )
-                              .then(data =>{
-                                    asset.Value= data["Value"]
-                                    asset.displayValue= data["Name"] + " = " + data["Value"] 
-                                    console.log(data)
-                                    setAssets(assets)
-                                })         
-      }
+                const decrementValue = asset =>{
+                     fetch('http://20.219.112.54:8080/integerKey/decreaseValue',{  
+                                           method: 'POST',
+                                           headers: {
+                                                         'Content-Type': 'application/json' ,
+                                                         'Access-Control-Request-Method' : 'POST',
+                                                         'Access-Control-Request-Headers' : 'Content-Type'
+                                                     },
+                                           body: JSON.stringify({
+                                             Name: asset.assetname,
+                                             Value: "1"
+                                           })})
+                                           .then(response => {
+                                                         if (response.ok){
+                                                                 return response.json()
+                                                         }
+                                                         else{
+                                                             //asset.isComplete= true ;
+                                                             return console.error(response)
+                                                         }
+                                           } )
+                                           .then(data =>{
+                                                 asset.Value= data["Value"]
+                                                 asset.displayValue= data["Name"] + " = " + data["Value"] 
+                                                 console.log(assets)
+                                                 updateAsset(asset.id, asset.Value)
+                                             })
+                                                  
+                             }
 
     const removeAsset = assetname =>{
         const removeArr = [...assets].filter(asset=> asset.assetname !== assetname);

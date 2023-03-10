@@ -27,10 +27,6 @@ h1 {
   font-size: 34px;
 }
 
-.complete {
-  text-decoration: line-through;
-  opacity: 0.4;
-}
 
 .integerkey-form {
   margin-bottom: 32px;
