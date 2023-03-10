@@ -36,7 +36,7 @@ function IntegerKeyList() {
                                             }
                                             else{
                                                 //asset.isComplete= true ;
-                                                alert('The asset does not exist. Try reloading the list' );
+                                                alert('The asset does not exist. Try reloading the list for the updated version.' );
                                                 return console.error(response)
                                             }
                               } )
@@ -70,7 +70,7 @@ function IntegerKeyList() {
                                                          }
                                                          else{
                                                              //asset.isComplete= true ;
-                                                             alert('The asset does not exist. Try reloading the list.' );
+                                                             alert('The asset does not exist. Try reloading the list for the updated version.' );
                                                              return console.error(response)
                                                          }
                                            } )
