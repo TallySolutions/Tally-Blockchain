@@ -257,15 +257,15 @@ function deployCC()
    
    
    ## package the chaincode
-   echo "Packaging chaincode on ${PEER_HOST}"
+   infoln "Packaging chaincode on ${PEER_HOST}"
    packageChaincode
    
    ## Install chaincode on peer0.org1 and peer0.org2
-   echo "Installing chaincode on ${PEER_HOST}"
+   infoln "Installing chaincode on ${PEER_HOST}"
    installChaincode 
 
    ## query whether the chaincode is installed
-   echo "Querying chaincode on ${PEER_HOST}"
+   infoln "Querying chaincode on ${PEER_HOST}"
    queryInstalled
 
    ## approve the definition 

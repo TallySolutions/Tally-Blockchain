@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. ./Utils.sh
-
 function setEnv()
 {
 
@@ -97,9 +95,3 @@ function setEnv()
 
 export -f setEnv
 
-. ./SetOrdererNode.sh
-. ./SetPeerNode.sh
-
-
-infoln "Setting up environment ..."
-setEnv

@@ -44,7 +44,29 @@ function  create_genesis()
   successln "Genesis block created."
 
 }
+function isChannelActive()
+{
+   if [[ $# -lt 1 ]] ; then
+     fatalln "Usage: isChannelActive <Order node Number:1,2 etc.>"
+   fi
+   setOrdererNode $1 
+   
+   export OSN_TLS_CA_ROOT_CERT=${TLS_CA_HOME}/ca-cert.pem
+   export ADMIN_TLS_SIGN_CERT=${TALLY_HOME}/admin_client/client-tls-cert.pem
+   export ADMIN_TLS_PRIVATE_KEY=${TALLY_HOME}/admin_client/client-tls-key.pem
+  
+   infoln "Checking channel ${CHANNEL_ID} on Orderer $1 ..."
+   list_json=$(osnadmin channel list --channelID ${CHANNEL_ID} -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_ADMIN_PORT} --ca-file $OSN_TLS_CA_ROOT_CERT --client-cert $ADMIN_TLS_SIGN_CERT --client-key $ADMIN_TLS_PRIVATE_KEY | tail -n +2)
+   channel_name=$(echo $list_json | jq -r 'try (.name)')
+   channel_status=$(echo $list_json | jq -r 'try (.status)')
 
+   if [[ "$channel_name" == "$CHANNEL_ID" ]] && [[ "$channel_status" == "active" ]]; then
+      return 0
+   fi
+
+   return 1
+
+}
 function  setup_channel()
 {
   
@@ -53,16 +75,22 @@ function  setup_channel()
   fi
 
   setOrdererNode $1 
-  
+
+  isChannelActive $1
+  if [[ $? -eq 0 ]];then
+   warnln "Channel $CHANNEL_ID already active for orderer $1, skippping ..."
+   return
+  fi
+
   OSN_TLS_CA_ROOT_CERT=${TLS_CA_HOME}/ca-cert.pem
   ADMIN_TLS_SIGN_CERT=${TALLY_HOME}/admin_client/client-tls-cert.pem
   ADMIN_TLS_PRIVATE_KEY=${TALLY_HOME}/admin_client/client-tls-key.pem
   
-  infoln "Setting channel $CHANNEL_ID ..."
+  infoln "Setting up channel $CHANNEL_ID ..."
   osnadmin channel join --channelID ${CHANNEL_ID}  --config-block ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.pb -o ${ORDERER_HOST}.${DOMAIN}:${ORDERER_ADMIN_PORT} --ca-file $OSN_TLS_CA_ROOT_CERT --client-cert $ADMIN_TLS_SIGN_CERT --client-key $ADMIN_TLS_PRIVATE_KEY
   verifyResult $? "Channel setup failed."
 
-  successln "Orderer $1 created and joined channel $CHANNEL_ID with genesis block."
+  successln "Orderer $1 : created and joined channel $CHANNEL_ID with genesis block."
   
 }
 
@@ -86,6 +114,12 @@ function join_peer()
   
   infoln "Joining Channel ${CHANNEL_ID} for peer $1..."
   
+  peer channel getinfo --channelID ${CHANNEL_ID}
+  if [[ $? -eq 0 ]];then
+   warnln "Channel $CHANNEL_ID already exists for peer $1, skippping ..."
+   return
+  fi
+
   peer channel join -b ${TALLY_HOME}/admin_client/${CHANNEL_ID}/genesis_block.pb
   verifyResult $? "Channel join failed."
 
@@ -93,6 +127,7 @@ function join_peer()
   
 
 }
+
 
 
 create_genesis
