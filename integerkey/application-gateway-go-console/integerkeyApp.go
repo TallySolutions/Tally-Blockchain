@@ -26,7 +26,6 @@ const (
 	cryptoPath   = peer_home + domain 
 	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
 	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
-	tlsCertPath  = cryptoPath + "/peers/" + peer + "/tls/ca.crt"
 	ccName       = "integerkey"
 	channelName  = "integerkey"
 
@@ -35,24 +34,114 @@ const (
 var peer string
 var peerEndpoint string
 var gatewayPeer string
+var tlsCertPath string 
 
-var contract *client.Contract
 
+func printUsage()  {
+	panic("Usage: \n" +
+	"      integerKeyApp <peer_node> new <var_name>\n" +
+	"      integerKeyApp <peer_node> read <var_name>\n" +
+	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
+	"      integerKeyApp <peer_node> dec <var_name> <dec_by>\n" +
+	"      integerKeyApp <peer_node> del <var_name>\n" +
+	"      integerKeyApp <peer_node> list<\n" +
+	"\n"+
+	"  Where:\n" +
+	"      <peer_node>: peer host name\n" +
+	"      <var_name> : Variable name\n" +
+	"      <inc_by>   : increment by how much value\n" +
+	"      <dec_by>   : decrement by how much value\n")
+}
 func main() {
 
     if len(os.Args) < 2 {
-		panic("Usage: integerKeyApp <peer node>")
-	}
+		printUsage()
+    }
 
 	peer = os.Args[1]
 	peerEndpoint = peer + "." + domain + ":" + peer_port
 	gatewayPeer  = peer + "." + domain
+	tlsCertPath  = cryptoPath + "/peers/" + peer + "/tls/ca.crt"
 
+	ops := os.Args[2]
+
+	if ops == "new" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "read" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "del" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "inc" && len(os.Args) < 4 {
+		printUsage()
+	}
+	if ops == "dec" && len(os.Args) < 4 {
+		printUsage()
+	}
+
+	if ops == "new" {
+       var_name := os.Args[3]
+	   fmt.Printf("Creating new variable %s \n", var_name)
+	   client,gw := connect()
+	   contract := getContract(gw)
+	   createAsset(contract,var_name)
+	   gw.Close()
+	   client.Close()
+	}else if ops == "read" {
+		var_name := os.Args[3]
+		fmt.Printf("Reading variable %s \n", var_name)
+		client,gw := connect()
+		contract := getContract(gw)
+		readAsset(contract,var_name)
+		gw.Close()
+		client.Close()
+	  }else if ops == "del" {
+		var_name := os.Args[3]
+		fmt.Printf("Deleting variable %s \n", var_name)
+		client,gw := connect()
+		contract := getContract(gw)
+		deleteAsset(contract,var_name)
+		gw.Close()
+		client.Close()
+	  }else if ops == "inc" {
+		var_name := os.Args[3]
+		inc_by := os.Args[4]
+		fmt.Printf("Incrementing variable %s by %s\n", var_name, inc_by)
+		client,gw := connect()
+		contract := getContract(gw)
+		increaseValue(contract,var_name, inc_by)
+		gw.Close()
+		client.Close()
+	 }else if ops == "dec" {
+		var_name := os.Args[3]
+		dec_by := os.Args[4]
+		fmt.Printf("Decrementing variable %s by %s\n", var_name, dec_by)
+		client,gw := connect()
+		contract := getContract(gw)
+		decreaseValue(contract,var_name, dec_by)
+		gw.Close()
+		client.Close()
+	}else if ops == "list" {
+		fmt.Printf("Listing all variables\n")
+		client,gw := connect()
+		contract := getContract(gw)
+		getAllAssets(contract)
+		gw.Close()
+		client.Close()
+ 
+	}else{
+		printUsage()
+	}
+
+}
+
+func connect() (*grpc.ClientConn, *client.Gateway) {
 	fmt.Printf("\nConnecting to : %s \n", peerEndpoint)
 
 	// gRPC client conn- shared by all gateway connections to this endpoint
 	clientConnection := newGrpcConnection()
-	defer clientConnection.Close()
 
 	//creating client identity, signing implementation
 	id := newIdentity()
@@ -72,19 +161,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer gw.Close()
+	
+	return clientConnection, gw
 
 
+}
+
+func getContract(gw *client.Gateway ) *client.Contract {
 	network := gw.GetNetwork(channelName)
-	contract = network.GetContract(ccName)
-
-	//createAsset("foo")
-    readAsset("foo")
-	//increaseValue("foo", "5")
-	//decreaseValue("foo", "3")
-	//getAllAssets()
-	//deleteAsset("foo")
-	//getAllAssets()
+	return  network.GetContract(ccName)
 }
 
 func newGrpcConnection() *grpc.ClientConn {
@@ -154,7 +239,7 @@ func newSign() identity.Sign {
 }
 
 // function to call the ReadAsset function present in smartcontract.go
-func readAsset(name string) {
+func readAsset(contract *client.Contract , name string) {
 
 	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
@@ -165,7 +250,7 @@ func readAsset(name string) {
 
 }
 
-func createAsset(name string) {
+func createAsset(contract *client.Contract , name string) {
 
 	fmt.Printf("\n--> Creating Asset : %s\n", name)
 
@@ -175,7 +260,7 @@ func createAsset(name string) {
 
 }
 
-func increaseValue(name string, incVal string) {
+func increaseValue(contract *client.Contract , name string, incVal string) {
 
 	fmt.Printf("Name : %s , IncreaseValue: %s ", name, incVal)
 
@@ -183,7 +268,7 @@ func increaseValue(name string, incVal string) {
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 }
 
-func decreaseValue(name string, decVal string) {
+func decreaseValue(contract *client.Contract , name string, decVal string) {
 
 	fmt.Printf("Name : %s , DecreaseValue: %s ", name, decVal)
 
@@ -192,7 +277,7 @@ func decreaseValue(name string, decVal string) {
 }
 
 
-func getAllAssets() {
+func getAllAssets(contract *client.Contract ) {
 
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
 
@@ -200,7 +285,7 @@ func getAllAssets() {
 
 }
 
-func deleteAsset(name string){
+func deleteAsset(contract *client.Contract , name string){
 
 
 	_, err := contract.SubmitTransaction("DeleteAsset", name) 
