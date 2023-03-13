@@ -1,11 +1,43 @@
 import React, {useState} from 'react';
 import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
-
+import { FaSyncAlt } from 'react-icons/fa';
+import {AiOutlineClear} from 'react-icons/ai';
 
 function IntegerKeyList({url}) {
 
   const [assets, setAssets] = useState([]); 
+
+  const handleRefresh = async () => {
+    const response = await fetch( url + '/integerKey/getAllAssets')
+    .then(response => {
+      if (response.ok){
+              return response.json()
+      }
+      else{
+          //asset.isComplete= true ;
+         //  alert('The asset does not exist. Try reloading the list for the updated version.' );
+          return console.error(response)
+      }
+      } )
+      .then(data =>{
+           
+          var newAssets = []
+      
+          //loop throug data array
+          data.forEach(function(obj) { 
+            console.log(obj.Name); 
+           //create new asset objec, Name, Value and displayValue, add to assets
+            var asset = { assetname: obj.Name , Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
+            newAssets.push(asset);
+          });
+      
+          //set Assets
+          console.log(newAssets)
+          setAssets(newAssets)
+       })
+
+  };
 
     const addAsset = asset => {
         
@@ -122,6 +154,15 @@ function IntegerKeyList({url}) {
 
   return (
     <div>
+        <div className='buttons'>
+                <button onClick={handleRefresh} className='refresh-button'>
+                        <FaSyncAlt />
+                </button>
+                <button className='clearAll-button'>
+                        <AiOutlineClear/>
+                </button>
+        </div>
+
         <IntegerKeyForm onSubmit={addAsset} url={url}/>
         <IntegerKey
             assets={assets}
