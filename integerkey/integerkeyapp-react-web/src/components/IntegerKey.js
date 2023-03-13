@@ -9,7 +9,7 @@ import {TiArrowSortedDown} from 'react-icons/ti'
 function IntegerKey({assets, incrementValue, decrementValue, removeAsset}) {
 
 
-  return assets.map((asset, index)=> (
+  return assets.list.map((asset, index)=> (
 
     <div className={'asset-row'} key={index}>
 
