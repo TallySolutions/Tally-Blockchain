@@ -15,9 +15,32 @@ function App() {
   const [assets, setAssets] = useState([]); 
 
   const handleRefresh = async () => {
-    const response = await fetch( url + '/integerKey/getAllAssets');
-    const data = await response.json();
-    setAssets(data);
+    const response = await fetch( url + '/integerKey/getAllAssets')
+    .then(response => {
+      if (response.ok){
+              return response.json()
+      }
+      else{
+          //asset.isComplete= true ;
+         //  alert('The asset does not exist. Try reloading the list for the updated version.' );
+          return console.error(response)
+      }
+      } )
+      .then(data =>{
+           
+          //clear : assets.reamoveAll()
+      
+          //loop throug data array
+        
+          //create new asset objec, Name, Value and displayValue, add to assets
+      
+          //set Assets
+           asset.Value= data["Value"]
+           asset.displayValue= data["Name"] + " = " + data["Value"] 
+           console.log(assets)
+           setAssets(asssets)
+      })
+
   };
 
   useEffect(() => {
