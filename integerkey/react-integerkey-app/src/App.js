@@ -4,11 +4,19 @@ import IntegerKeyList from './components/IntegerKeyList';
 import { FaSyncAlt } from 'react-icons/fa';
 import {AiOutlineClear} from 'react-icons/ai';
 
+
 function App() {
+        
+  const domain = "tally.tallysolutions.com"
+  const hostname = os.hostname()
+  const port = 8080
+
+  const url = 'http://' + hostname + '.' + domain + ':' + port 
+
         const [assets, setAssets] = useState([]); 
 
         const handleRefresh = async () => {
-          const response = await fetch('http://20.219.112.54:8080/integerKey/getAllAssets');
+          const response = await fetch( url+ '/integerKey/getAllAssets');
           const data = await response.json();
           setAssets(data);
         };
@@ -29,7 +37,7 @@ function App() {
                       </button>
             </div>
             
-            <IntegerKeyList assets={assets}/>
+            <IntegerKeyList assets={assets} url={url}/>
           </div>
         );
 }

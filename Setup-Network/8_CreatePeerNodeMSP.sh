@@ -24,10 +24,6 @@ function createPeerNode()
   RegisterUser ${TALLY_CA_HOME} ${PEER_USER} ${PEER_PASSWORD} peer
   
   
-  PEER_NODE_FOLDER=organizations/peerOrganizations/${DOMAIN}
-  
-  PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
-  
   /bin/rm -rf "${PEER_NODE_HOME}/peers/${PEER_HOST}"
   
   export FABRIC_CA_CLIENT_HOME=${TALLY_CA_HOME}/client
@@ -61,6 +57,9 @@ function createPeerNode()
   ssh -i ${PEER_HOST_KEY} ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN} /bin/rm -rf ${NETWORK_HOME}/${PEER_NODE_FOLDER}
 
   ssh -i ${PEER_HOST_KEY} ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN} /bin/mkdir -p ${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers
+
+  scp -C -i ${PEER_HOST_KEY} -r ${PEER_NODE_HOME}/users ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/users
+  verifyResult $? "Unable to copy peer users to ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}."
 
   scp -C -i ${PEER_HOST_KEY} -r ${PEER_NODE_HOME}/peers/${PEER_HOST} ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}:${NETWORK_HOME}/${PEER_NODE_FOLDER}/peers/${PEER_HOST}
   verifyResult $? "Unable to copy peer to ${PEER_HOST_USER}@${PEER_HOST}.${DOMAIN}."

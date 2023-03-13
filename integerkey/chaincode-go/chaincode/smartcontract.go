@@ -190,8 +190,12 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 	if err !=nil{
 			fmt.Println(err)
 	}
+	if asset_read.Value < 0 {
+		return nil, fmt.Errorf("You cannot have a value lesser than 0.")
+	}
 	decrementValueuInt := uint(intermediateval)
 	newValue := uint(asset_read.Value) - decrementValueuInt
+	
 
 	// overwriting original asset with new value
 	asset := Asset{

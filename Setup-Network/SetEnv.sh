@@ -10,3 +10,4 @@
 
 infoln "Setting up environment ..."
 setEnv
+

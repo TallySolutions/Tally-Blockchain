@@ -82,6 +82,11 @@ function setEnv()
  PEER_CC_PORT=7052
  PEER_USER_HOME=/home/ubuntu
  PEER_MSPID=Tally
+
+ PEER_NODE_FOLDER=organizations/peerOrganizations/${DOMAIN}
+  
+ PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
+
  
  #Channel
  
