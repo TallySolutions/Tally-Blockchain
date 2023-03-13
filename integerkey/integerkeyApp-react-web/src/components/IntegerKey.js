@@ -11,7 +11,7 @@ function IntegerKey({assets, incrementValue, decrementValue, removeAsset}) {
 
   return assets.map((asset, index)=> (
 
-    <div className={asset.isComplete ? 'asset-row complete': 'asset-row'} key={index}>
+    <div className={'asset-row'} key={index}>
 
             <div key={asset.id}>
 
