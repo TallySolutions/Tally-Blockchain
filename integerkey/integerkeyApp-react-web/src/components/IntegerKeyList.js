@@ -3,8 +3,9 @@ import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
 
 
-function IntegerKeyList({assets, setAssets, url}) {
+function IntegerKeyList({url}) {
 
+  const [assets, setAssets] = useState([]); 
 
     const addAsset = asset => {
         

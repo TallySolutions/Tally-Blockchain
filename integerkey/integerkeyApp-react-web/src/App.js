@@ -7,7 +7,7 @@ import {AiOutlineClear} from 'react-icons/ai';
 function App() {
 
   const domain = "tally.tallysolutions.com"
-  const hostname = os.hostname()
+  const hostname = "tbchlfdevpeer01"
   const port = 8080
 
   const url = 'http://' + hostname + '.' + domain + ':' + port 
@@ -36,7 +36,7 @@ function App() {
                 </button>
       </div>
       
-      <IntegerKeyList assets={assets} setAssets={setAssets} url={url}/>
+      <IntegerKeyList url={url}/>
     </div>
   );
 }
