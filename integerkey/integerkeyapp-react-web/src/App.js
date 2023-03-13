@@ -41,7 +41,7 @@ function App() {
     //        asset.displayValue= data["Name"] + " = " + data["Value"] 
     //        console.log(assets)
     //        setAssets(asssets)
-    //   })
+       })
 
   };
 
