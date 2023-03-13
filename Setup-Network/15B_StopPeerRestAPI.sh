@@ -19,7 +19,7 @@ function stopPeerRestAPISvc()
       if [[ $PID -ne -1 ]]; then
          errorln "Unable to stop peer Rest API Service."
       else 
-         successln "Peer Rest API Service stopped at peer node $1."
+         infoln "Peer Rest API Service stopped at peer node $1."
       fi 
    else
          warnln "Peer Rest API Service not running at peer node $1."

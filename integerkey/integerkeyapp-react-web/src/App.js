@@ -6,35 +6,37 @@ import {AiOutlineClear} from 'react-icons/ai';
 
 function App() {
 
-  const domain = "tally.tallysolutions.com"
-  const hostname = "tbchlfdevpeer01"
-  const port = 8080
 
-  const url = 'http://' + hostname + '.' + domain + ':' + port 
+  const domain = "tally.tallysolutions.com"
+  const hostname =  window.location.hostname
+  const port = 8080
+  const url = 'http://' + hostname + ':' + port 
+
+  console.log(url)
 
   const [assets, setAssets] = useState([]); 
 
   const handleRefresh = async () => {
     const response = await fetch( url + '/integerKey/getAllAssets')
-    // .then(response => {
-    //   if (response.ok){
-    //           return response.json()
-    //   }
-    //   else{
-    //       //asset.isComplete= true ;
-    //      //  alert('The asset does not exist. Try reloading the list for the updated version.' );
-    //       return console.error(response)
-    //   }
-    //   } )
-    //   .then(data =>{
+    .then(response => {
+      if (response.ok){
+              return response.json()
+      }
+      else{
+          //asset.isComplete= true ;
+         //  alert('The asset does not exist. Try reloading the list for the updated version.' );
+          return console.error(response)
+      }
+      } )
+      .then(data =>{
            
-    //       //clear : assets.reamoveAll()
+          //clear : assets.reamoveAll()
       
-    //       //loop throug data array
+          //loop throug data array
         
-    //       //create new asset objec, Name, Value and displayValue, add to assets
+          //create new asset objec, Name, Value and displayValue, add to assets
       
-    //       //set Assets
+          //set Assets
     //        asset.Value= data["Value"]
     //        asset.displayValue= data["Name"] + " = " + data["Value"] 
     //        console.log(assets)
