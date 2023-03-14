@@ -124,6 +124,8 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
 	var assets []*Asset
 
+
+	var assetCount = 0
 	for iteratorVar.HasNext() {
 		queryResponse, err := iteratorVar.Next()
 		if err != nil {
@@ -136,9 +138,14 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 		  return nil, err
 		}
 		assets = append(assets, &asset)
+		assetCount++
 	  }
-	
+	  
+	  if assetCount > 0 {
 	  return assets, nil
+	  } else {
+		return nil, fmt.Errorf("No assets found")
+	  }
 
 }
 
@@ -190,10 +197,10 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 	if err !=nil{
 			fmt.Println(err)
 	}
-	if asset_read.Value < 0 {
-		return nil, fmt.Errorf("You cannot have a value lesser than 0.")
-	}
 	decrementValueuInt := uint(intermediateval)
+	if decrementValueuInt > uint(asset_read.Value) {
+		return nil, fmt.Errorf("You cannot decrement value to less than 0.")
+	}
 	newValue := uint(asset_read.Value) - decrementValueuInt
 	
 
@@ -228,3 +235,34 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	 fmt.Printf("Message received on deletion: %s", delop)
 	 return nil
   }
+
+
+
+//   func (s *SmartContract) ClearAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error){
+
+// 	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
+// 	if err !=nil{
+// 		return nil, err
+// 	}
+// 	defer iteratorVar.Close()
+
+// 	for iteratorVar.HasNext() {
+// 		queryResponse, err := iteratorVar.Next()
+// 		if err != nil {
+// 		  return nil, err
+// 		}
+	
+// 		var asset Asset
+// 		err = json.Unmarshal(queryResponse.Value, &asset)
+// 		if err != nil {
+// 		  return nil, err
+// 		}
+// 		delop:= ctx.GetStub().DelState(name)
+// 	 	fmt.Printf("Message received on deletion: %s", delop)
+// 	 	return nil
+// 		assets = append(assets, &asset)
+// 	  }
+	
+// 	  return assets, nil
+
+// }

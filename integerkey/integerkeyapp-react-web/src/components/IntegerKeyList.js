@@ -57,24 +57,15 @@ class IntegerKeyList extends React.Component {
       })
         .then(response => {
           if (response.ok) {
-            return response.json()
-          }
+            var data = response.json()
+            asset.Value = data["Value"]
+            asset.displayValue = data["Name"] + " = " + data["Value"]
+            this.updateAsset(asset.id, asset.Value)
+            }
           else {
-            //asset.isComplete= true ;
-            alert('The asset does not exist. Try reloading the list for the updated version.');
-            return console.error(response)
+            alert('Error increasing asset value.');
           }
-        })
-        .then(data => {
-          asset.Value = data["Value"]
-          asset.displayValue = data["Name"] + " = " + data["Value"]
-          console.log(this.state.Assets)
-          // asset.isComplete = true ;
-          // setAssets(assets) 
-          this.updateAsset(asset.id, asset.Value)
-
-          // completeAsset(asset.id)
-        })
+        });
 
     };
     this.decrementValue = asset => {
@@ -95,20 +86,16 @@ class IntegerKeyList extends React.Component {
       })
         .then(response => {
           if (response.ok) {
-            return response.json()
+            var data =  response.json()
+            asset.Value = data["Value"]
+            asset.displayValue = data["Name"] + " = " + data["Value"]
+            console.log(this.state.Assets)
+            this.updateAsset(asset.id, asset.Value)
           }
           else {
-            //asset.isComplete= true ;
-            //  alert('The asset does not exist. Try reloading the list for the updated version.' );
-            return console.error(response)
+            alert('Error decreasing asset data.');
           }
-        })
-        .then(data => {
-          asset.Value = data["Value"]
-          asset.displayValue = data["Name"] + " = " + data["Value"]
-          console.log(this.state.Assets)
-          this.updateAsset(asset.id, asset.Value)
-        })
+        });
 
     };
 
@@ -127,18 +114,12 @@ class IntegerKeyList extends React.Component {
       })
         .then(response => {
           if (response.ok) {
-            return response.json()
+            intKeyList.setAsset(removeArr);
           }
           else {
-            //   alert('Asset was already removed! Try reloading the list to ensure there are no non-existing assets' );
-            return console.error(response)
+            alert('Error removing asset.' );
           }
-        })
-        .then(data => {
-          console.log(data)
-          intKeyList.setAsset(removeArr);
-        })
-        .catch(error => console.error(error))
+        });
     };
 
 
@@ -152,57 +133,66 @@ class IntegerKeyList extends React.Component {
       this.setAsset(updatedAssets)
     };
 
-    this.handleRefresh = () => {
+    this.handleAutoRefresh = () => {
+      this.handleRefresh(true);
+    }
+    this.handleManualRefresh = () => {
+      this.handleRefresh(false);
+    }
+    this.handleRefresh = isAuto => {
 
       var intKeyList = this;
-      console.log(this);
       fetch(this.url + '/integerKey/getAllAssets')
         .then(response => {
           if (response.ok) {
-            return response.json()
+            return response.json();
           }
           else {
-            //asset.isComplete= true ;
-            //  alert('The asset does not exist. Try reloading the list for the updated version.' );
-            return console.error(response)
+            return {error: 'Internal error'};
           }
         })
         .then(data => {
-          var assets = [];
-          console.log("DATA => " + data);
-          //loop throug data array
-          data.forEach(function (obj) {
-            console.log(obj.Name);
-            //create new asset objec, Name, Value and displayValue, add to assets
-            var asset = { assetname: obj.Name, Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
-            console.log(assets);
-            assets.push(asset);
-          });
-
-          //set Assets
-          intKeyList.setAsset(assets);
-          console.log(assets)
-        })
-
+          if(data.hasOwnProperty('error')){
+            if (!isAuto){
+               alert('Error: ' +  data.error );  
+            }            
+          }else{
+             var assets = [];
+             //loop throug data array
+             data.forEach(function (obj) {
+               //create new asset objec, Name, Value and displayValue, add to assets
+               var asset = { assetname: obj.Name, Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
+               assets.push(asset);
+             });
+   
+             //set Assets
+             intKeyList.setAsset(assets);
+          }
+        });
     };
+
+
+    this.handleClearAll= () =>{
+        //allAssets= assets;
+    }
+
   }
 
 
   componentDidMount() {
     console.log("Component loaded")
-    this.handleRefresh();
-
-    setInterval(this.handleRefresh, 500);
+    this.handleAutoRefresh();
+    setInterval(this.handleAutoRefresh, 500);
   }
 
   render() {
     return (
       <div >
         <div className='buttons'>
-          <button onClick={this.handleRefresh} className='refresh-button'>
+          <button onClick={this.handleManualRefresh} className='refresh-button'>
             <FaSyncAlt />
           </button>
-          <button className='clearAll-button'>
+          <button onClick={this.handleClearAll} className='clearAll-button'>
             <AiOutlineClear />
           </button>
         </div>

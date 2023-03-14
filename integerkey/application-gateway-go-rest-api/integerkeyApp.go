@@ -264,7 +264,7 @@ func getAllAssets(c *gin.Context) {
 	transactionResult, err := contract.EvaluateTransaction("GetAllAssets")
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
 	c.Writer.Header().Set("Content-Type","application/json")
@@ -307,6 +307,11 @@ func deleteAsset(c *gin.Context){
 }
 
 
+func clearAllAssets(c *gin.Context){
+	//[]* allAssets =
+}
+
+
 func formatJSON(data []byte) string {
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, data, "", "  "); err != nil {
@@ -314,3 +319,5 @@ func formatJSON(data []byte) string {
 	}
 	return prettyJSON.String()
 }
+
+
