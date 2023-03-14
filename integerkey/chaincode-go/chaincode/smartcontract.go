@@ -237,32 +237,3 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
   }
 
 
-
-//   func (s *SmartContract) ClearAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error){
-
-// 	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
-// 	if err !=nil{
-// 		return nil, err
-// 	}
-// 	defer iteratorVar.Close()
-
-// 	for iteratorVar.HasNext() {
-// 		queryResponse, err := iteratorVar.Next()
-// 		if err != nil {
-// 		  return nil, err
-// 		}
-	
-// 		var asset Asset
-// 		err = json.Unmarshal(queryResponse.Value, &asset)
-// 		if err != nil {
-// 		  return nil, err
-// 		}
-// 		delop:= ctx.GetStub().DelState(name)
-// 	 	fmt.Printf("Message received on deletion: %s", delop)
-// 	 	return nil
-// 		assets = append(assets, &asset)
-// 	  }
-	
-// 	  return assets, nil
-
-// }

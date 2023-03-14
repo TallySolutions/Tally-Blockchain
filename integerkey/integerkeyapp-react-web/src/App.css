@@ -125,28 +125,20 @@ h1 {
   margin-right: 2px;
 }
 
-.refresh-button, .clearAll-button{
+.refresh-button{
   background-color: #9DC08B;
   border-style: hidden;
   color: #609966;
   margin-right: 25px;
   height: 40px;
   cursor: pointer;
+  font-size: 25px;
+  margin-top: 5px;
+  margin-bottom: 5px;
   /* font-size: 35px; */
 
 }
 
-.refresh-button{
-  font-size: 25px;
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-
-.clearAll-button{
-  font-size: 35px;
-  margin-top: 0px;
-  margin-bottom: 5px;
-}
 
 .buttons{
   display: flex ;

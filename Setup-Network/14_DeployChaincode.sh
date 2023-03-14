@@ -10,7 +10,7 @@ setCANode 1
 #Usage: 14_DeployChaincode.sh <ChaincodeName> <ChainCodePath>
 function printHelp()
 {
-  infoln "Usage: 11_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
+  infoln "Usage: 14_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
   infoln "Flags:"
   infoln "    -v version     : Version of the chaincode, default: 1.0"
   infoln "    -s int         : The sequence number of the chaincode definition for the channel, default: 1"

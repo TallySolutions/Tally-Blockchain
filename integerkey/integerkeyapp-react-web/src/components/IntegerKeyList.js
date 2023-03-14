@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import IntegerKeyForm from './IntegerKeyForm';
 import IntegerKey from './IntegerKey';
 import { FaSyncAlt } from 'react-icons/fa';
-import { AiOutlineClear } from 'react-icons/ai';
+
 
 class IntegerKeyList extends React.Component {
 
@@ -212,10 +212,6 @@ class IntegerKeyList extends React.Component {
     };
 
 
-    // this.handleClearAll= () =>{
-    //     //allAssets= assets;
-    // }
-
   }
 
 
@@ -231,9 +227,6 @@ class IntegerKeyList extends React.Component {
         <div className='buttons'>
           <button onClick={this.handleManualRefresh} className='refresh-button'>
             <FaSyncAlt />
-          </button>
-          <button className='clearAll-button'>
-            <AiOutlineClear />
           </button>
         </div>
 
