@@ -32,9 +32,9 @@ function IntegerKeyForm(props) {
                 } )
                 .then(data =>{
                            props.onSubmit({
-                                id : nextId("asset-id:"),
-                                assetname: data["Name"] ,
-                                displayValue: data["Name"] + " = " + data["Value"]
+                                Name: data["Name"] ,
+                                displayValue: data["Name"] + " = " + data["Value"],
+                                isUpdating: false
                            });
                            setInputAsset('');
                       }); 

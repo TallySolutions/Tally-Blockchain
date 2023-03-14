@@ -68,23 +68,43 @@ h1 {
   padding: 16px 22px;
 }
 
-.integerkey-container {
-  display: flex;
+.asset-row-container {
   flex-direction: row;
   position: relative;
+  left: 20px;
 }
+
 
 .asset-row {
   display: flex;
+  margin: 10px;
   justify-content: space-between;
   align-items: center;
-  margin: 4px auto;
   color: #609966;
   background: #EDF1D6 ;
-
   padding: 16px;
   border-radius: 5px;
   width: 90%;
+  height: 40px;
+}
+
+.overlay {
+  z-index: 9;
+  background: #DDD;
+  opacity: 0.5;
+  position:absolute;
+  top: 0;
+  margin: 0;
+  left: 10px
+}
+
+.no-overlay {
+  z-index: -100;
+  opacity: 0;
+  position:absolute;
+  top: 0;
+  margin: 0;
+  left: 10px
 }
 
 

@@ -307,9 +307,9 @@ func deleteAsset(c *gin.Context){
 }
 
 
-func clearAllAssets(c *gin.Context){
-	//[]* allAssets =
-}
+// func clearAllAssets(c *gin.Context){
+// 	//[]* allAssets =
+// }
 
 
 func formatJSON(data []byte) string {

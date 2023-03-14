@@ -13,9 +13,25 @@ class IntegerKeyList extends React.Component {
     this.setState(state);
   }
 
+  setAssetUpdating(asset) {
+    asset.isUpdating = true;
+    var state = this.state;
+    this.setState(state);
+    this.operation_in_progress = true;
+  }
+  setAssetUpdated(asset) {
+    asset.isUpdating = false;
+    var state = this.state;
+    this.setState(state);
+    this.operation_in_progress = false;
+  }
+
+
   constructor(props) {
 
     super(props);
+
+    this.operation_in_progress = false;
 
     this.url = props.url;
 
@@ -29,7 +45,7 @@ class IntegerKeyList extends React.Component {
 
     this.addAsset = asset => {
 
-      if (!asset.assetname || /^\s*$/.test(asset.assetname))   // making sure the name is valid
+      if (!asset.Name || /^\s*$/.test(asset.Name))   // making sure the name is valid
       {
         return
       }
@@ -39,10 +55,7 @@ class IntegerKeyList extends React.Component {
     };
 
     this.incrementValue = asset => {
-      // if (asset.Value >= 20){
-      //     alert('You cannot have an asset with a value higher than 20.')
-      //     return
-      // }
+      this.setAssetUpdating(asset);
       fetch(this.url + '/integerKey/increaseValue', {
         method: 'POST',
         headers: {
@@ -51,27 +64,32 @@ class IntegerKeyList extends React.Component {
           'Access-Control-Request-Headers': 'Content-Type'
         },
         body: JSON.stringify({
-          Name: asset.assetname,
+          Name: asset.Name,
           Value: "1"
         })
       })
         .then(response => {
           if (response.ok) {
-            var data = response.json()
-            asset.Value = data["Value"]
-            asset.displayValue = data["Name"] + " = " + data["Value"]
-            this.updateAsset(asset.id, asset.Value)
-            }
+             return response.json()
+          }
           else {
-            alert('Error increasing asset value.');
+            return {error: "Error increasing asset value."}
+          }
+        }).then(data => {
+          if(data.hasOwnProperty('error')){
+               alert('Error: ' +  data.error );  
+               this.setAssetUpdated(asset);            
+          }else{
+            console.log(JSON.stringify(data));
+            asset.Value = data.Value
+            asset.displayValue = data.Name + " = " + data.Value;
+            this.updateAsset(asset.Name, asset.Value)
           }
         });
 
     };
     this.decrementValue = asset => {
-      // if (asset.Value <= 0){
-      //     alert('You cannot have an asset with a value lesser than 0.')
-      // }
+      this.setAssetUpdating(asset);
       fetch(this.url + '/integerKey/decreaseValue', {
         method: 'POST',
         headers: {
@@ -80,30 +98,40 @@ class IntegerKeyList extends React.Component {
           'Access-Control-Request-Headers': 'Content-Type'
         },
         body: JSON.stringify({
-          Name: asset.assetname,
+          Name: asset.Name,
           Value: "1"
         })
       })
-        .then(response => {
-          if (response.ok) {
-            var data =  response.json()
-            asset.Value = data["Value"]
-            asset.displayValue = data["Name"] + " = " + data["Value"]
-            console.log(this.state.Assets)
-            this.updateAsset(asset.id, asset.Value)
-          }
-          else {
-            alert('Error decreasing asset data.');
-          }
-        });
+      .then(response => {
+        if (response.ok) {
+           return response.json()
+        }
+        else {
+          return {error: "Error decreasing asset value."}
+        }
+      }).then(data => {
+        if(data.hasOwnProperty('error')){
+             alert('Error: ' +  data.error );  
+             this.setAssetUpdated(asset);            
+        }else{
+          console.log(JSON.stringify(data));
+          asset.Value = data.Value
+          asset.displayValue = data.Name + " = " + data.Value;
+          this.updateAsset(asset.Name, asset.Value)
+        }
+      });
 
     };
 
-    this.removeAsset = assetname => {
+    this.removeAsset = asset => {
+      var assetname = asset.Name;
 
       var intKeyList = this;
 
-      const removeArr = [...this.state.Assets.list].filter(asset => asset.assetname !== assetname);
+      const removeArr = [...this.state.Assets.list].filter(asset => asset.Name !== assetname);
+      asset.isUpdating = true;
+      this.setAssetUpdating(asset);
+
       fetch(this.url + '/integerKey/deleteAsset/' + assetname, {
         method: 'DELETE',
         headers: {
@@ -113,24 +141,34 @@ class IntegerKeyList extends React.Component {
         },
       })
         .then(response => {
+          asset.isUpdating = false;
           if (response.ok) {
             intKeyList.setAsset(removeArr);
           }
           else {
             alert('Error removing asset.' );
+            this.setAssetUpdated(asset);            
           }
         });
     };
 
 
-    this.updateAsset = (id, Value) => {
+    this.updateAsset = (Name, Value) => {
       let updatedAssets = this.state.Assets.list.map(asset => {
-        if (asset.id === id) {
-          asset.Value = Value
-          return asset
+        if (asset.Name === Name) {
+          asset.Name = Name;
+          asset.Value = Value;
+          asset.displayValue = Name + '=' + Value;
+          asset.isUpdating = false;
+          return asset;
+        }else{
+          //asset.isUpdating = false;
+          return asset;
         }
       });
+      console.log(updatedAssets)
       this.setAsset(updatedAssets)
+      this.operation_in_progress = false;
     };
 
     this.handleAutoRefresh = () => {
@@ -140,6 +178,8 @@ class IntegerKeyList extends React.Component {
       this.handleRefresh(false);
     }
     this.handleRefresh = isAuto => {
+
+      if(this.operation_in_progress) return;
 
       var intKeyList = this;
       fetch(this.url + '/integerKey/getAllAssets')
@@ -161,7 +201,7 @@ class IntegerKeyList extends React.Component {
              //loop throug data array
              data.forEach(function (obj) {
                //create new asset objec, Name, Value and displayValue, add to assets
-               var asset = { assetname: obj.Name, Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
+               var asset = { Name: obj.Name, Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
                assets.push(asset);
              });
    
@@ -172,9 +212,9 @@ class IntegerKeyList extends React.Component {
     };
 
 
-    this.handleClearAll= () =>{
-        //allAssets= assets;
-    }
+    // this.handleClearAll= () =>{
+    //     //allAssets= assets;
+    // }
 
   }
 
@@ -182,7 +222,7 @@ class IntegerKeyList extends React.Component {
   componentDidMount() {
     console.log("Component loaded")
     this.handleAutoRefresh();
-    setInterval(this.handleAutoRefresh, 500);
+    //setInterval(this.handleAutoRefresh, 500);
   }
 
   render() {
@@ -192,7 +232,7 @@ class IntegerKeyList extends React.Component {
           <button onClick={this.handleManualRefresh} className='refresh-button'>
             <FaSyncAlt />
           </button>
-          <button onClick={this.handleClearAll} className='clearAll-button'>
+          <button className='clearAll-button'>
             <AiOutlineClear />
           </button>
         </div>
