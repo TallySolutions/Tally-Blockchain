@@ -42,12 +42,14 @@ var tlsCertPath string
 
 type CreateAssetRequest struct {                         // for create operations
 	Name string `json:"name" binding:"required"`
+	Owner string `json:"owner" binding:"required"`
 }
 
 
 type UpdateValueRequest struct {
 	Name  string `json:"Name" binding:"required"`
 	Value string `json:"Value" binding:"required"`
+	Owner string `json:"Owner" binding:"required"`
 }
 
 var contract *client.Contract
@@ -199,10 +201,11 @@ func createAsset(c *gin.Context) {
 	var request CreateAssetRequest
 	c.BindJSON(&request)
 	name := request.Name
+	owner:= request.Owner
 
-	fmt.Printf("\n--> Creating Asset : %s\n", name)
+	fmt.Printf("\n--> Creating Asset : %s with owner: %s\n", name, owner)
 
-	result, err := contract.SubmitTransaction("CreateAsset", name) // SubmitTransaction returns results of a transaction only after its commited
+	result, err := contract.SubmitTransaction("CreateAsset", name, owner) // SubmitTransaction returns results of a transaction only after its commited
 
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
@@ -215,7 +218,7 @@ func createAsset(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Headers","Content-Type")
 	// c.String(http.StatusOK, fmt.Sprintf("{\"name\":\"%s\",\"value\":\"0\"}\n", name))
 
-	c.JSON(http.StatusOK, gin.H{"Name":name, "Value":0})
+	c.JSON(http.StatusOK, gin.H{"Name":name, "Value":0, "Owner":owner})
 
 }
 
@@ -225,10 +228,11 @@ func increaseValue(c *gin.Context) {
 	c.BindJSON(&request)
 	name := request.Name
 	incVal := request.Value
+	owner := request.Owner
 
-	fmt.Printf("Name : %s , IncreaseValue: %s ", name, incVal)
+	fmt.Printf("Name : %s , IncreaseValue: %s , Owner: %s ", name, incVal, owner)
 
-	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal, owner)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
@@ -245,10 +249,11 @@ func decreaseValue(c *gin.Context) {
 	c.BindJSON(&request)
 	name := request.Name
 	decVal := request.Value
+	owner := request.Owner
 
-	fmt.Printf("Name : %s , DecreaseValue: %s ", name, decVal)
+	fmt.Printf("Name : %s , DecreaseValue: %s , Owner: %s ", name, decVal, owner)
 
-	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
+	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal, owner)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})

@@ -14,6 +14,7 @@ type SmartContract struct {
 type Asset struct {
 	Name  string `json:"Name"`
 	Value uint   `json:"Value"`
+	Owner string `json:"Owner"`
 }
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
@@ -27,7 +28,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 }
 
 // function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string, Owner string) error {
 
 	exists, err := s.AssetExists(ctx, Name) // exists-> boolean value, err-> can be nil or the error, if present
 
@@ -43,6 +44,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	asset := Asset{ //creation of asset
 		Name:  Name,
 		Value: 0,
+		Owner: Owner,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -121,9 +123,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 	defer iteratorVar.Close()
 
-
 	var assets []*Asset
-
 
 	var assetCount = 0
 	for iteratorVar.HasNext() {
@@ -152,8 +152,9 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
 
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
-func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
+func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, owner string) (*Asset, error) {
 	// NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
+	// accepting owner because we will be OVERWRITING the asset
 	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
 	if err != nil {
 		return nil, err
@@ -174,6 +175,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 	asset := Asset{
 		Name:  Name,
 		Value: newValue,
+		Owner: owner,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -187,7 +189,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 }
 
 // DecreaseAsset decreases the value of the asset by the specified value
-func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) (*Asset, error) {
+func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, owner string) (*Asset, error) {
 	asset_read, err := s.ReadAsset(ctx, Name)
 	if err != nil {
 		return nil, err
@@ -208,6 +210,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 	asset := Asset{
 		Name:  Name,
 		Value: newValue,
+		Owner: owner,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -235,5 +238,4 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	 fmt.Printf("Message received on deletion: %s", delop)
 	 return nil
   }
-
 
