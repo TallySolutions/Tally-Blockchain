@@ -34,14 +34,21 @@ h1 {
   margin-top: 10px;
 }
 
+.integerkey-form-inputs{
+  align-items: center;
+  margin-top: 0px;
+}
+
 .integerkey-input {
   padding: 14px 32px 14px 16px;
   border-radius: 4px 0 0 4px;
   border: 2px solid #609966;
   outline: none;
-  width: 320px;
+  width: 200px;
   background: transparent;
   color: #fff;
+  margin-bottom:10px;
+  margin-right: 10px;
 }
 
 .integerkey-input::placeholder {

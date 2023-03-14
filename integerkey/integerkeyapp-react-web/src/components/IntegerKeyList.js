@@ -65,7 +65,8 @@ class IntegerKeyList extends React.Component {
         },
         body: JSON.stringify({
           Name: asset.Name,
-          Value: "1"
+          Value: "1" , 
+          Owner: asset.Owner
         })
       })
         .then(response => {
@@ -82,8 +83,8 @@ class IntegerKeyList extends React.Component {
           }else{
             console.log(JSON.stringify(data));
             asset.Value = data.Value
-            asset.displayValue = data.Name + " = " + data.Value;
-            this.updateAsset(asset.Name, asset.Value)
+            asset.displayValue = data.Name + " = " + data.Value + " | owned by " + data.Owner;
+            this.updateAsset(asset.Name, asset.Value, asset.Owner)
           }
         });
 
@@ -99,7 +100,8 @@ class IntegerKeyList extends React.Component {
         },
         body: JSON.stringify({
           Name: asset.Name,
-          Value: "1"
+          Value: "1",
+          Owner: asset.Owner
         })
       })
       .then(response => {
@@ -116,8 +118,8 @@ class IntegerKeyList extends React.Component {
         }else{
           console.log(JSON.stringify(data));
           asset.Value = data.Value
-          asset.displayValue = data.Name + " = " + data.Value;
-          this.updateAsset(asset.Name, asset.Value)
+          asset.displayValue = data.Name + " = " + data.Value + " | owned by " + data.Owner;
+          this.updateAsset(asset.Name, asset.Value, asset.Owner)
         }
       });
 
@@ -153,12 +155,13 @@ class IntegerKeyList extends React.Component {
     };
 
 
-    this.updateAsset = (Name, Value) => {
+    this.updateAsset = (Name, Value, Owner) => {
       let updatedAssets = this.state.Assets.list.map(asset => {
         if (asset.Name === Name) {
           asset.Name = Name;
           asset.Value = Value;
-          asset.displayValue = Name + '=' + Value;
+          asset.Owner= Owner;
+          asset.displayValue = Name + '=' + Value + " | owned by " + Owner;
           asset.isUpdating = false;
           return asset;
         }else{
@@ -200,8 +203,8 @@ class IntegerKeyList extends React.Component {
              var assets = [];
              //loop throug data array
              data.forEach(function (obj) {
-               //create new asset objec, Name, Value and displayValue, add to assets
-               var asset = { Name: obj.Name, Value: obj.Value, displayValue: obj.Name + " = " + obj.Value }
+               //create new asset objec, Name, Value, Owner and displayValue, add to assets
+               var asset = { Name: obj.Name, Value: obj.Value, Owner: obj.Owner, displayValue: obj.Name + " = " + obj.Value + " | owned by "+ obj.Owner}
                assets.push(asset);
              });
    
