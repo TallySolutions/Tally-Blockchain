@@ -1,5 +1,4 @@
 import React, {useState} from 'react' // useState is imported in order to track data involved
-import nextId from "react-id-generator";
 
 function IntegerKeyForm(props) {
     const [input_asset, setInputAsset] = useState('')  // name is taken as input
