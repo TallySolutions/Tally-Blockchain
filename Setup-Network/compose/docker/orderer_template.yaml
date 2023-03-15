@@ -8,7 +8,7 @@ networks:
 services:
 
   ${ORDERER_HOST}.${DOMAIN}:
-    container_name: ${ORDERER_HOST}.${DOMAIN}:${ORDERER_PORT}:
+    container_name: ${ORDERER_HOST}.${DOMAIN}_${ORDERER_PORT}
     image: hyperledger/fabric-orderer:latest
     labels:
       service: hyperledger-fabric
@@ -16,7 +16,7 @@ services:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
       - ORDERER_GENERAL_LISTENPORT=7050
-      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPID=${ORDERER_MSPID}
       - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
       # enabled TLS
       - ORDERER_GENERAL_TLS_ENABLED=true

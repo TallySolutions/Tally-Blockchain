@@ -161,7 +161,7 @@ class IntegerKeyList extends React.Component {
           asset.Name = Name;
           asset.Value = Value;
           asset.Owner= Owner;
-          asset.displayValue = Name + '=' + Value + " | owned by " + Owner;
+          asset.displayValue = Name + ' = ' + Value + " | owned by " + Owner;
           asset.isUpdating = false;
           return asset;
         }else{
