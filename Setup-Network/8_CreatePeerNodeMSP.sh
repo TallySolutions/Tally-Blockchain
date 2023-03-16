@@ -23,6 +23,7 @@ function createPeerNode()
   
   RegisterUser ${TALLY_CA_HOME} ${PEER_USER} ${PEER_PASSWORD} peer
   
+  PEER_NODE_HOME=${TALLY_HOME}/organizations/peerOrganizations/${DOMAIN}
   
   /bin/rm -rf "${PEER_NODE_HOME}/peers/${PEER_HOST}"
   

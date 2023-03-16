@@ -8,14 +8,14 @@ networks:
 services:
 
   ${ORDERER_HOST}.${DOMAIN}:
-    container_name: ${ORDERER_HOST}.${DOMAIN}_${ORDERER_PORT}
+    container_name: ${ORDERER_HOST}.${DOMAIN}_${DOCKER_ORDERER_PORT}
     image: hyperledger/fabric-orderer:latest
     labels:
       service: hyperledger-fabric
     environment:
       - FABRIC_LOGGING_SPEC=INFO
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
-      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LISTENPORT=${ORDERER_PORT}
       - ORDERER_GENERAL_LOCALMSPID=${ORDERER_MSPID}
       - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
       # enabled TLS
@@ -33,8 +33,8 @@ services:
       - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
       - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
       - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
-      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
-      - ORDERER_OPERATIONS_LISTENADDRESS=${ORDERER_HOST}.${DOMAIN}:9443
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:${ORDERER_ADMIN_PORT}
+      - ORDERER_OPERATIONS_LISTENADDRESS=0.0.0.0:${ORDERER_OPS_PORT}
       - ORDERER_METRICS_PROVIDER=prometheus
     working_dir: /root
     command: orderer
@@ -43,8 +43,8 @@ services:
         - ${ORDERER_HOME}/tls/:/var/hyperledger/orderer/tls
         - ${ORDERER_HOST}.${DOMAIN}:/var/hyperledger/production/orderer
     ports:
-      - ${ORDERER_PORT}:7050
-      - ${ORDERER_ADMIN_PORT}:7053
-      - ${ORDERER_OPS_PORT}:9443
+      - ${DOCKER_ORDERER_PORT}:${ORDERER_PORT}
+      - ${DOCKER_ORDERER_ADMIN_PORT}:${ORDERER_ADMIN_PORT}
+      - ${DOCKER_ORDERER_OPS_PORT}:${ORDERER_OPS_PORT}
     networks:
       - tally_network

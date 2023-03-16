@@ -81,6 +81,8 @@ function create()
   verifyResult $? "Unable to update orderer.yaml."
   sed -i "s/\${ORDERER_ADMIN_PORT}/${ORDERER_ADMIN_PORT}/g" ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
   verifyResult $? "Unable to update orderer.yaml."
+  sed -i "s/\${ORDERER_OPS_PORT}/${ORDERER_OPS_PORT}/g" ${ORDERER_NODE_HOME}/orderers/${ORDERER_HOST}/orderer.yaml 
+  verifyResult $? "Unable to update orderer.yaml."
 
 
   #transfer the config file to orderer machine

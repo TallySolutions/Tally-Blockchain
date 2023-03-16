@@ -39,7 +39,7 @@ Organizations:
                 Rule: "OR('${ORDERER_MSPID}.member')"
             Admins:
                 Type: Signature
-                Rule: "OR('OrdererMSP.admin')"
+                Rule: "OR('${ORDERER_MSPID}.admin')"
 
         OrdererEndpoints:
             - ${ORDERER_HOST_PREFIX}01.${DOMAIN}:${ORDERER_PORT}
