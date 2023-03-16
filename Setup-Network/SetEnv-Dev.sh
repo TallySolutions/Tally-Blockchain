@@ -89,10 +89,6 @@ function setEnv()
  PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
 
  
- #Channel
- 
- CHANNEL_ID=integerkey
- 
  #Chaincode
  
  CC_RUNTIME_LANGUAGE=golang

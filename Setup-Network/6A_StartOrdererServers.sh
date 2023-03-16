@@ -29,3 +29,4 @@ function startOrderer()
 
 startOrderer 1
 startOrderer 2
+startOrderer 3

@@ -44,6 +44,7 @@ Organizations:
         OrdererEndpoints:
             - ${ORDERER_HOST_PREFIX}01.${DOMAIN}:${ORDERER_PORT}
             - ${ORDERER_HOST_PREFIX}02.${DOMAIN}:${ORDERER_PORT}
+            - ${ORDERER_HOST_PREFIX}03.${DOMAIN}:${ORDERER_PORT}
 
     - &TallyOrg
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -184,6 +185,7 @@ Orderer: &OrdererDefaults
     Addresses:
         - ${ORDERER_HOST_PREFIX}01.${DOMAIN}:${ORDERER_PORT}
         - ${ORDERER_HOST_PREFIX}02.${DOMAIN}:${ORDERER_PORT}
+        - ${ORDERER_HOST_PREFIX}03.${DOMAIN}:${ORDERER_PORT}
 
     EtcdRaft:
         Consenters:
@@ -195,6 +197,10 @@ Orderer: &OrdererDefaults
           Port: ${ORDERER_PORT}
           ClientTLSCert: ${ORDERER_HOME}/orderers/${ORDERER_HOST_PREFIX}02/tls/server.crt
           ServerTLSCert: ${ORDERER_HOME}/orderers/${ORDERER_HOST_PREFIX}02/tls/server.crt
+        - Host: ${ORDERER_HOST_PREFIX}03.${DOMAIN}
+          Port: ${ORDERER_PORT}
+          ClientTLSCert: ${ORDERER_HOME}/orderers/${ORDERER_HOST_PREFIX}03/tls/server.crt
+          ServerTLSCert: ${ORDERER_HOME}/orderers/${ORDERER_HOST_PREFIX}03/tls/server.crt
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s

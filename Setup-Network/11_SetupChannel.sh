@@ -120,14 +120,27 @@ function join_peer()
 
 }
 
+if [[ $# -lt 1 ]] ; then
+  fatalln "Usage: 11_SetupChannel.sh <Channle_Name> [<Channle_Name> ...]"
+fi
 
+while true ;do
+  CHANNEL_ID=$1
+  if [[ "$CHANNEL_ID" == "" ]];then
+    break
+  fi
 
-create_genesis
+  infoln "Creating channel $CHANNEL_ID ..."
+  create_genesis
+  
+  setup_channel 1
+  setup_channel 2
+  setup_channel 3
+  
+  join_peer 1
+  join_peer 2
+  join_peer 3
 
-setup_channel 1
-setup_channel 2
-
-join_peer 1
-join_peer 2
-join_peer 3
+  shift
+done
 

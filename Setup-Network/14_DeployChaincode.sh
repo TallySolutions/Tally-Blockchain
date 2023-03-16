@@ -10,7 +10,7 @@ setCANode 1
 #Usage: 14_DeployChaincode.sh <ChaincodeName> <ChainCodePath>
 function printHelp()
 {
-  infoln "Usage: 14_DeployChaincode.sh <ChaincodeName> <ChainCodePath> [flags]"
+  infoln "Usage: 14_DeployChaincode.sh <ChannelName> <ChaincodeName> <ChainCodePath> [flags]"
   infoln "Flags:"
   infoln "    -v version     : Version of the chaincode, default: 1.0"
   infoln "    -s int         : The sequence number of the chaincode definition for the channel, default: 1"
@@ -19,11 +19,13 @@ function printHelp()
   infoln "    -r int         : No of retries, default: 5"
   infoln "    -h             : print this help"
 }
-if [[ $# -lt 2 ]] ; then
+if [[ $# -lt 3 ]] ; then
   printHelp  
   exit 1
 fi
 
+CHANNEL_ID=$1
+shift
 CC_NAME=$1
 shift
 CC_SRC_PATH=$1

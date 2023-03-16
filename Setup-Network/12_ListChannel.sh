@@ -22,5 +22,19 @@ function list()
    infoln "============== END OF OUTPUT ================="
 }
 
-list 1
-list 2
+if [[ $# -lt 1 ]] ; then
+  fatalln "Usage: 12_ListChannel.sh <Channle_Name> [<Channle_Name> ...]"
+fi
+
+while true ;do
+  CHANNEL_ID=$1
+  if [[ "$CHANNEL_ID" == "" ]];then
+    break
+  fi
+
+  list 1
+  list 2
+  list 3
+
+  shift
+done

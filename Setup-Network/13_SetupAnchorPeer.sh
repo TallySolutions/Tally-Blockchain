@@ -88,4 +88,18 @@ function set_anchor_peer()
   successln "Peer(S) $* set as anchor peer"
 }
 
-set_anchor_peer 1 2
+if [[ $# -lt 1 ]] ; then
+  fatalln "Usage: 13_SetupAnchorPeer.sh <Channle_Name> [<Channle_Name> ...]"
+fi
+
+while true ;do
+  CHANNEL_ID=$1
+  if [[ "$CHANNEL_ID" == "" ]];then
+    break
+  fi
+
+  infoln "creating acnhore peer for channel $CHANNEL_ID ..."
+  set_anchor_peer 1 2
+
+  shift
+done
