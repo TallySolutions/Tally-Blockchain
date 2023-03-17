@@ -126,7 +126,7 @@ func (s *SmartContract) RegisterOwner(ctx TransactionContextInterface, Name stri
 		if err != nil {
 			return err
 		}
-		state_err := ctx.GetStub().PutState(Prefix + Name, assetJSON) // new state added
+		state_err := ctx.GetStub().PutState(Prefix + Name, ownerJSON) // new state added
 		fmt.Printf("Owner creation returned : %s\n", state_err)
 
 		return state_err
