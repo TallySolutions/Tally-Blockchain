@@ -1,5 +1,6 @@
 package chaincode
 
+
 import (
 	"encoding/json"
 	"fmt"
@@ -14,12 +15,14 @@ type SmartContract struct {
 type Asset struct {
 	Name  string `json:"Name"`
 	Value uint   `json:"Value"`
-	Owner string `json:"Owner"`
+	OwnerID string `json:"OwnerID"`
 }
+
+const Prefix = "Key: "
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
-	assetJSON, err := ctx.GetStub().GetState(Name)
+	assetJSON, err := ctx.GetStub().GetState(Prefix + Name)
 	if err != nil {
 		return false, fmt.Errorf("failed to read from world state: %v", err)
 	}
@@ -28,9 +31,9 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 }
 
 // function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string, Owner string) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string, OwnerID string) error {
 
-	exists, err := s.AssetExists(ctx, Name) // exists-> boolean value, err-> can be nil or the error, if present
+	exists, err := s.AssetExists(ctx, Prefix + Name) // exists-> boolean value, err-> can be nil or the error, if present
 
 	fmt.Printf("Asset exists returned : %t, %s\n", exists, err)
 
@@ -38,20 +41,20 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 	if exists {
-		return fmt.Errorf("the asset %s already exists", Name)
+		return fmt.Errorf("the asset %s already exists", Prefix + Name)
 	}
 
 	asset := Asset{ //creation of asset
-		Name:  Name,
+		Name:  Prefix + Name,
 		Value: 0,
-		Owner: Owner,
+		OwnerID: OwnerID,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
 	}
 
-	state_err := ctx.GetStub().PutState(Name, assetJSON) // new state added
+	state_err := ctx.GetStub().PutState(Prefix + Name, assetJSON) // new state added
 
 	fmt.Printf("Asset creation returned : %s\n", state_err)
 
@@ -60,12 +63,12 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 // ReadAsset returns the asset stored in the world state with given Name.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
-	assetJSON, err := ctx.GetStub().GetState(Name)
+	assetJSON, err := ctx.GetStub().GetState(Prefix + Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if assetJSON == nil {
-		return nil, fmt.Errorf("the asset %s does not exist", Name)
+		return nil, fmt.Errorf("the asset %s does not exist", Prefix + Name)
 	}
 
 	var asset Asset
@@ -88,7 +91,7 @@ func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextIn
 	// 	return nil, e
 	//   }
 	pageSizeInt := 5
-	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(startname, endname, int32(pageSizeInt), bookmark)
+	iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(Prefix + startname, Prefix + endname, int32(pageSizeInt), bookmark)
 	if err !=nil && midvar!=nil{
 		return nil, err
 	}
@@ -155,7 +158,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, owner string) (*Asset, error) {
 	// NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
 	// accepting owner because we will be OVERWRITING the asset
-	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
+	asset_read, err := s.ReadAsset(ctx, Prefix + Name) // asset is read
 	if err != nil {
 		return nil, err
 	}
@@ -173,16 +176,16 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	// overwriting original asset with new value
 	asset := Asset{
-		Name:  Name,
+		Name:  Prefix + Name,
 		Value: newValue,
-		Owner: owner,
+		OwnerID: owner,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return nil, err
 	}
 
-	updatestate_err := ctx.GetStub().PutState(Name, assetJSON)
+	updatestate_err := ctx.GetStub().PutState(Prefix+ Name, assetJSON)
 	fmt.Printf("Increasing asset value returned the following: %s ", updatestate_err)
 
 	return &asset, nil
@@ -190,7 +193,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 
 // DecreaseAsset decreases the value of the asset by the specified value
 func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, owner string) (*Asset, error) {
-	asset_read, err := s.ReadAsset(ctx, Name)
+	asset_read, err := s.ReadAsset(ctx, Prefix + Name)
 	if err != nil {
 		return nil, err
 	}
@@ -208,16 +211,16 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	// overwriting original asset with new value
 	asset := Asset{
-		Name:  Name,
+		Name:  Prefix + Name,
 		Value: newValue,
-		Owner: owner,
+		OwnerID: owner,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return nil, err
 	}
 
-	updatestate_Err := ctx.GetStub().PutState(Name, assetJSON)
+	updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 	fmt.Printf("After decreasing asset value: %s", updatestate_Err)
 
 	return &asset , nil
@@ -226,15 +229,15 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 // DeleteAsset deletes the state from the ledger
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, name string) error {
-	exists, err := s.AssetExists(ctx, name)
+	exists, err := s.AssetExists(ctx, Prefix + name)
 	if err != nil {
 	  return err
 	}
 	if !exists {
-	  return fmt.Errorf("the asset %s does not exist", name)
+	  return fmt.Errorf("the asset %s does not exist", Prefix + name)
 	}
   
-	 delop:= ctx.GetStub().DelState(name)
+	 delop:= ctx.GetStub().DelState(Prefix + name)
 	 fmt.Printf("Message received on deletion: %s", delop)
 	 return nil
   }

@@ -94,6 +94,8 @@ func main() {
 	network := gw.GetNetwork(channelName)
 	contract = network.GetContract(ccName)
 
+	// handle owner contract
+
 	router := gin.New()
 
 	router.Use(cors.Middleware(cors.Config{
@@ -197,6 +199,8 @@ func readAsset(c *gin.Context) {
 }
 
 func createAsset(c *gin.Context) {
+
+	// verify owner before creation
 
 	var request CreateAssetRequest
 	c.BindJSON(&request)
