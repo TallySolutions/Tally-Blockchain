@@ -31,6 +31,28 @@ const Prefix = "Owner: "
 
 func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool,error){
 	// returns boolean for owner status
+	ownerJSON, err := ctx.GetStub().GetState( Prefix + Name)
+	if err != nil {
+
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+
+	}
+
+	var owner OwnerAsset
+	err := json.Unmarshal([]byte(ownerJSON), &owner)
+	if err != nil {
+		fmt.Errorf("failed conversion to JSON in checking active status")
+		return nil, err
+	}
+	if owner.isActive{
+
+		fmt.Printf("Owner exists returned : %t\n", owner.isActive)
+		return true,nil
+	} else {
+			fmt.Printf("Owner exists returned : %t\n", owner.isActive)
+			return false, nil
+	}
+
 }
 
 
@@ -56,8 +78,27 @@ func (s *SmartContract) RegisterOwner(ctx TransactionContextInterface, Name stri
 	}
 
 	// if owner exists already
+	
 	if ownerexists {
+
 		// now there are 2 possible scenarios- active, the other is inactive
+
+		owneractive, err := s.IsOwnerActive(ctx, Name)
+
+		if err != nil {
+			return err
+		}
+
+		if owneractive{		// if owner is active
+				
+		}
+
+	} else{
+
+		//create owner
+
+
 	}
+
 
 }
