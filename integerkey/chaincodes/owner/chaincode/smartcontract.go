@@ -30,7 +30,7 @@ const Prefix = "Owner: "
 
 
 func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool,error){
-	
+	// returns boolean for owner status
 }
 
 
