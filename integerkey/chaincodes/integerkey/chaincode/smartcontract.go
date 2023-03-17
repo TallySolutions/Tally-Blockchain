@@ -45,7 +45,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	asset := Asset{ //creation of asset
-		Name:  Prefix + Name,
+		Name: Name,
 		Value: 0,
 		OwnerID: OwnerID,
 	}
@@ -68,7 +68,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 		return nil, fmt.Errorf("failed to read from world state: %v", err)
 	}
 	if assetJSON == nil {
-		return nil, fmt.Errorf("the asset %s does not exist", Prefix + Name)
+		return nil, fmt.Errorf("the asset %s does not exist", Name)
 	}
 
 	var asset Asset
@@ -79,7 +79,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, N
 
 	return &asset, nil
 }
-
 
 
 
@@ -158,7 +157,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, owner string) (*Asset, error) {
 	// NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
 	// accepting owner because we will be OVERWRITING the asset
-	asset_read, err := s.ReadAsset(ctx, Prefix + Name) // asset is read
+	asset_read, err := s.ReadAsset(ctx, Name) // asset is read
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +175,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	// overwriting original asset with new value
 	asset := Asset{
-		Name:  Prefix + Name,
+		Name:  Name,
 		Value: newValue,
 		OwnerID: owner,
 	}
@@ -185,7 +184,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 		return nil, err
 	}
 
-	updatestate_err := ctx.GetStub().PutState(Prefix+ Name, assetJSON)
+	updatestate_err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 	fmt.Printf("Increasing asset value returned the following: %s ", updatestate_err)
 
 	return &asset, nil
@@ -193,7 +192,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
 
 // DecreaseAsset decreases the value of the asset by the specified value
 func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, owner string) (*Asset, error) {
-	asset_read, err := s.ReadAsset(ctx, Prefix + Name)
+	asset_read, err := s.ReadAsset(ctx, Name)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +210,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 	// overwriting original asset with new value
 	asset := Asset{
-		Name:  Prefix + Name,
+		Name:  Name,
 		Value: newValue,
 		OwnerID: owner,
 	}
@@ -229,12 +228,12 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
 // DeleteAsset deletes the state from the ledger
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, name string) error {
-	exists, err := s.AssetExists(ctx, Prefix + name)
+	exists, err := s.AssetExists(ctx, name)
 	if err != nil {
 	  return err
 	}
 	if !exists {
-	  return fmt.Errorf("the asset %s does not exist", Prefix + name)
+	  return fmt.Errorf("the asset %s does not exist", name)
 	}
   
 	 delop:= ctx.GetStub().DelState(Prefix + name)
