@@ -73,6 +73,22 @@ func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterf
 	return nil
 }
 
+func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInterface , Name string) error{
+
+	ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
+		if err != nil {
+			return fmt.Errorf("Failed to read from world state: %v", err)
+		}
+	var owner OwnerAsset
+	err := json.Unmarshal([]byte(ownerJSON), &owner)
+		if err != nil {
+			fmt.Errorf("Failed conversion to JSON in checking active status")
+			return err
+		}
+	owner.isActive = false
+	return nil
+}
+
 
 func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
 	ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
