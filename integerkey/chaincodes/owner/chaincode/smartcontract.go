@@ -1,92 +1,74 @@
 package chaincode
 
+import (
+	"encoding/json"
+	"fmt"
 
-// go get github.com/google/uuid -- to be done in terminal
-
-
-
-import(
-    "fmt"
-    "encoding/json"
-    "strconv"
-    "github.com/hyperledger/fabric-contract-api-go/contractapi"
-    "github.com/google/uuid"
+	"github.com/google/uuid"
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
-
 type SmartContract struct {
-    contractapi.Contract
+	contractapi.Contract
 }
 
 type OwnerAsset struct {
-    OwnerID string `json: "OwnerID"`
-    OwnerName string `json: "OwnerName"`
-    IsActive bool `json: "IsActive"`
+	OwnerID   string `json:"OwnerID"`
+	OwnerName string `json:"OwnerName"`
+	IsActive  bool   `json:"IsActive"`
 }
 
-const Prefix = "Owner: "
+const Prefix = "Owner:"
 
+func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
+	// returns boolean for owner status
+	ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
+	if err != nil {
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+	}
 
+	var owner OwnerAsset
+	err2 := json.Unmarshal([]byte(ownerJSON), &owner)
 
+	if err2 != nil {
+		return false, fmt.Errorf("failed conversion to JSON in checking active status: %v", err2)
+	}
 
-func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool,error) {
-    // returns boolean for owner status
-    ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
-    if err != nil {
-
-    return false, fmt.Errorf("failed to read from world state: %v", err)
-
-    }
-
-    var owner OwnerAsset
-    err2 := json.Unmarshal([]byte(ownerJSON), &owner)
-
-    if err != nil {
-    fmt.Errorf("failed conversion to JSON in checking active status")
-        return nil, err2
-    }
-
-    if owner.IsActive {
-
-    fmt.Printf("Owner exists returned : %t\n", owner.IsActive)
-        return true,nil
-    } else {
-        fmt.Printf("Owner exists returned : %t\n", owner.IsActive)
-        return false, nil
-    }
-
+	if owner.IsActive {
+		fmt.Printf("Owner exists returned : %t\n", owner.IsActive)
+		return true, nil
+	} else {
+		fmt.Printf("Owner exists returned : %t\n", owner.IsActive)
+		return false, nil
+	}
 }
 
-func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterface , Name string) error {
-
-    ownerJSON, err := ctx.GetStub().GetState( Prefix + Name)
-    if err != nil {
-    return fmt.Errorf("Failed to read from world state: %v", err)
-    }
-    var owner OwnerAsset
-    err2 := json.Unmarshal([]byte(ownerJSON), &owner)
-    if err != nil {
-    fmt.Errorf("Failed conversion to JSON in checking active status")
-        return err2
-    }
-    owner.IsActive = true
-    return nil
+func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterface, Name string) error {
+	ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
+	if err != nil {
+		return fmt.Errorf("Failed to read from world state: %v", err)
+	}
+	var owner OwnerAsset
+	err2 := json.Unmarshal([]byte(ownerJSON), &owner)
+	if err2 != nil {
+		return fmt.Errorf("Failed conversion to JSON in checking active status: %v", err2)
+	}
+	owner.IsActive = true
+	return ctx.GetStub().PutState(Prefix+Name, ownerJSON)
 }
 
-func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInterface , Name string) error {
-
-    ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
-    if err != nil {
-    return fmt.Errorf("Failed to read from world state: %v", err)
-    }
-    var owner OwnerAsset
-    err2 := json.Unmarshal([]byte(ownerJSON), &owner)
-    if err != nil {
-    fmt.Errorf("Failed conversion to JSON in checking active status")
-        return err2
-    }
-    owner.IsActive = false
-    return nil
+func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInterface, Name string) error {
+	ownerJSON, err := ctx.GetStub().GetState(Prefix + Name)
+	if err != nil {
+		return fmt.Errorf("Failed to read from world state: %v", err)
+	}
+	var owner OwnerAsset
+	err2 := json.Unmarshal([]byte(ownerJSON), &owner)
+	if err2 != nil {
+		return fmt.Errorf("Failed conversion to JSON in checking active status: %v", err2)
+	}
+	owner.IsActive = false
+	return ctx.GetStub().PutState(Prefix+Name, ownerJSON)
 }
 
 
