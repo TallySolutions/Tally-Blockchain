@@ -149,3 +149,29 @@ func (s *SmartContract) RegisterOwner(ctx TransactionContextInterface, Name stri
 
 
 }
+
+func(s *SmartContract) UnregisterOwner(ctx contractapi.TransactionContextInterface, Name string) error{
+
+	ownerexists, err := s.OwnerExistence(ctx, Name)
+
+	if err != nil {
+		return err
+	}
+	if ownerexists{
+		owneractive, err := s.IsOwnerActive(ctx, Name)
+				if err != nil {
+					return err
+				}
+			if owneractive{		// if owner is active i.e. existing and active, the owner is made inactive
+				err := s.MakeOwnerInactive(ctx, Name)
+					if err != nil {
+						return fmt.Errorf("error in changing owner's status")
+					}
+					fmt.Printf("Owner is active")
+					return nil
+			} else{	
+				fmt.Printf("ERRROR : Owner is already unregistered!")
+				return fmt.Errorf("Owner is already unregistered")
+			}
+	}
+}
