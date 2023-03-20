@@ -8,7 +8,7 @@ import (
 	"log"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"tallysolutions.com/integerKey/chaincodes/owner/chaincode"
+	// "tallysolutions.com/integerKey/chaincodes/owner/chaincode"
 )
 
 func main() {
