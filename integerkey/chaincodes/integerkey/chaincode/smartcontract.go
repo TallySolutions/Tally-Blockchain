@@ -240,3 +240,6 @@ if !exists {
     fmt.Printf("Message received on deletion: %s", delop)
     return nil
 }
+
+
+// trasnfer( asset id, destination owner)

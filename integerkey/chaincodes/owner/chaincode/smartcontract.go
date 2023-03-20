@@ -54,7 +54,12 @@ func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("Failed conversion to JSON in checking active status: %v", err2)
 	}
 	owner.IsActive = true
-	return ctx.GetStub().PutState(Prefix+Name, ownerJSON)
+	updatedOwnerJSON, err := json.Marshal(owner)
+	if err != nil {
+		return fmt.Errorf("failed to marshal updated owner: %v", err)
+	}
+
+	return ctx.GetStub().PutState(Prefix+Name, updatedOwnerJSON)
 }
 
 func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInterface, Name string) error {
@@ -67,8 +72,13 @@ func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInte
 	if err2 != nil {
 		return fmt.Errorf("Failed conversion to JSON in checking active status: %v", err2)
 	}
-	owner.IsActive = false
-	return ctx.GetStub().PutState(Prefix+Name, ownerJSON)
+    owner.IsActive = false
+	updatedOwnerJSON, err := json.Marshal(owner)
+	if err != nil {
+		return fmt.Errorf("failed to marshal updated owner: %v", err)
+	}
+
+	return ctx.GetStub().PutState(Prefix+Name, updatedOwnerJSON)
 }
 
 
@@ -84,7 +94,7 @@ func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterfa
     return ownerJSON != nil, nil
 }
 
-func (s *SmartContract) RegisterOwner(ctx TransactionContextInterface, Name string) error {
+func (s *SmartContract) RegisterOwner(ctx contractapi.TransactionContextInterface, Name string) error {
     // id generation happens in this function- on creation of an owner
     ownerexists, err := s.OwnerExistence(ctx, Name)
 
@@ -156,9 +166,11 @@ if ownerexists{
             return fmt.Errorf("Owner is already unregistered")
         }
     }
+
+    return nil
 }
 
-func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface) ([] *Owner, error) {
+func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface) ([] *OwnerAsset, error) {
     iteratorVar, err := ctx.GetStub().GetStateByRange("","")
 
     if err !=nil {
@@ -170,7 +182,7 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 defer iteratorVar.Close()
 
 
-    var owners []*Owner
+    var owners []*OwnerAsset
     var ownerCount = 0
 
     for iteratorVar.HasNext() {
@@ -179,12 +191,12 @@ defer iteratorVar.Close()
         return nil, err
     }
 
-    var owner Owner
-    err = json.Unmarshal(queryResponse.Value, &asset)
+    var owner OwnerAsset
+    err = json.Unmarshal(queryResponse.Value, &owner)
         if err != nil {
         return nil, err
     }
-    owners = append(assets, &asset)
+    owners = append(owners, &owner)
                  ownerCount++
     }
 
