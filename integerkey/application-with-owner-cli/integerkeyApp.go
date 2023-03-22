@@ -32,6 +32,7 @@ const (
 	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
 	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
 	intkeyccName       = "integerkey"
+	ccName = "integerkey"
 	ownerccName = "owner"
 	channelName  = "tally"
 
@@ -45,8 +46,8 @@ var tlsCertPath string
 
 func printUsage()  {
 	panic("Usage: \n" +
-	"      integerKeyApp <peer_node> reg_owner <var_name> <owner_name>\n" +
-	"      integerKeyApp <peer_node> unreg_owner <var_name>\n" +
+	"      integerKeyApp <peer_node> reg_owner <owner_id> <owner_name>\n" +
+	"      integerKeyApp <peer_node> unreg_owner <owner_id>\n" +
 	"      integerKeyApp <peer_node> new <var_name>\n" +
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
@@ -90,27 +91,27 @@ func main() {
 	}
 
 	if ops == "reg_owner" {
-       var_name := os.Args[3]
+       owner_id := os.Args[3]
 	   owner_name := os.Args[4]
-	   fmt.Printf("Registering owner %s \n", var_name)
+	   fmt.Printf("Registering owner %s \n", owner_id)
 	   client,gw := connect()
 	   ownercontract := getContract(gw, ownerccName)
-	   RegisterOwner(ownercontract,var_name, owner_name)
+	   RegisterOwner(ownercontract,owner_id, owner_name)
 	   gw.Close()
 	   client.Close()
 	} else if ops == "unreg_owner" {
-		var_name := os.Args[3]
-		fmt.Printf("Unregistering owner %s \n", var_name)
+		owner_id := os.Args[3]
+		fmt.Printf("Unregistering owner %s \n", owner_id)
 		client,gw := connect()
 		ownercontract := getContract(gw, ownerccName)
-		UnregisterOwner(ownercontract,var_name)
+		UnregisterOwner(ownercontract,owner_id)
 		gw.Close()
 		client.Close()
 	 } else if ops == "new" {
 		var_name := os.Args[3]
 		fmt.Printf("Creating new owner %s \n", var_name)
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		createAsset(contract,var_name)
 		gw.Close()
 		client.Close()
@@ -118,7 +119,7 @@ func main() {
 		var_name := os.Args[3]
 		fmt.Printf("Reading variable %s \n", var_name)
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		readAsset(contract,var_name)
 		gw.Close()
 		client.Close()
@@ -126,7 +127,7 @@ func main() {
 		var_name := os.Args[3]
 		fmt.Printf("Deleting variable %s \n", var_name)
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		deleteAsset(contract,var_name)
 		gw.Close()
 		client.Close()
@@ -135,7 +136,7 @@ func main() {
 		inc_by := os.Args[4]
 		fmt.Printf("Incrementing variable %s by %s\n", var_name, inc_by)
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		increaseValue(contract,var_name, inc_by)
 		gw.Close()
 		client.Close()
@@ -144,14 +145,14 @@ func main() {
 		dec_by := os.Args[4]
 		fmt.Printf("Decrementing variable %s by %s\n", var_name, dec_by)
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		decreaseValue(contract,var_name, dec_by)
 		gw.Close()
 		client.Close()
 	}else if ops == "list" {
 		fmt.Printf("Listing all variables\n")
 		client,gw := connect()
-		contract := getContract(gw)
+		contract := getContract(gw, ccName)
 		getAllAssets(contract)
 		gw.Close()
 		client.Close()
@@ -263,6 +264,28 @@ func newSign() identity.Sign {
 	}
 
 	return sign
+}
+
+
+
+
+
+func RegisterOwner(contract *client.Contract, owner_id string, owner_name string ) {
+	evaluateResult, err := contract.EvaluateTransaction("RegisterOwner", owner_id, owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
+	if err != nil {
+		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_name, err)
+		return
+	}
+	fmt.Printf("\n--> Registering owner : %s, %s => %s\n",owner_id, owner_name, string(evaluateResult))
+}
+
+func UnregisterOwner(contract *client.Contract, owner_id string ) {
+	evaluateResult, err := contract.EvaluateTransaction("UnregisterOwner", owner_id) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
+	if err != nil {
+		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_id, err)
+		return
+	}
+	fmt.Printf("\n--> Registering owner : %s => %s\n",owner_id, string(evaluateResult))
 }
 
 // function to call the ReadAsset function present in smartcontract.go
