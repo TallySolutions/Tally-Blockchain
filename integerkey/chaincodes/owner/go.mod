@@ -1,4 +1,4 @@
-module chaincode
+module tallysolutions.com/owner/chaincode-go
 
 go 1.20
 
