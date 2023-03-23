@@ -97,7 +97,7 @@ func main() {
        // owner_id := os.Args[3]
 	   owner_name := os.Args[3]
 	   fmt.Printf("Registering owner %s \n", owner_name)
-	   client,gw := connect()
+	   client, gw := connect()
 	   ownercontract := getContract(gw, ownerccName)
 	   RegisterOwner(ownercontract , owner_name)
 	   gw.Close()
