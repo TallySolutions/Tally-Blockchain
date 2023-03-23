@@ -48,7 +48,8 @@ func printUsage()  {
 	panic("Usage: \n" +
 	"      integerKeyApp <peer_node> reg_owner <owner_name>\n" +
 	"      integerKeyApp <peer_node> all_owners\n" +
-	"      integerKeyApp <peer_node> unreg_owner <owner_id>\n" +
+	"      integerKeyApp <peer_node> unreg_owner <owner_name>\n" +
+	"      integerKeyApp <peer_node> del_owner <owner_name>\n" +
 	"      integerKeyApp <peer_node> new <var_name>\n" +
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
@@ -109,11 +110,19 @@ func main() {
 		gw.Close()
 		client.Close()
 	 } else if ops == "unreg_owner" {
-		owner_id := os.Args[3]
-		fmt.Printf("Unregistering owner %s \n", owner_id)
+		owner_name := os.Args[3]
+		fmt.Printf("Unregistering owner %s \n", owner_name)
 		client,gw := connect()
 		ownercontract := getContract(gw, ownerccName)
-		UnregisterOwner(ownercontract,owner_id)
+		UnregisterOwner(ownercontract,owner_name)
+		gw.Close()
+		client.Close()
+	 } else if ops == "del_owner" {
+		owner_name := os.Args[3]
+		fmt.Printf("Deleting owner %s \n", owner_name)
+		client,gw := connect()
+		contract := getContract(gw, ownerccName)
+		deleteOwner(contract , owner_name)
 		gw.Close()
 		client.Close()
 	 } else if ops == "new" {
@@ -355,6 +364,13 @@ func deleteAsset(contract *client.Contract , name string){
 
 
 	_, err := contract.SubmitTransaction("DeleteAsset", name) 
+	fmt.Printf("\n------> After SubmitTransaction: %s \n",  err)
+}
+
+func deleteOwner(contract *client.Contract , name string){
+
+
+	_, err := contract.SubmitTransaction("DeleteOwner", name) 
 	fmt.Printf("\n------> After SubmitTransaction: %s \n",  err)
 }
 

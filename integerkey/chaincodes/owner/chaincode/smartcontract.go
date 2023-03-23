@@ -233,3 +233,26 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 	}
 
 }
+
+
+
+func(s *SmartContract) DeleteOwner(ctx contractapi.TransactionContextInterface, Name string) error{
+
+	owners_list, err := s.GetAllOwners(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	var owner *OwnerAsset
+	for _, iteratorVar := range owners_list{
+		if iteratorVar.OwnerName == Name{
+			owner = iteratorVar
+			break
+		}
+	}
+
+	delop:= ctx.GetStub().DelState(Prefix + owner.OwnerID)
+    fmt.Printf("Message received on deletion: %s", delop)
+    return nil
+
+}
