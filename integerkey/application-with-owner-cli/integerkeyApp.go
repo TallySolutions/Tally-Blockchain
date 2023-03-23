@@ -46,7 +46,8 @@ var tlsCertPath string
 
 func printUsage()  {
 	panic("Usage: \n" +
-	"      integerKeyApp <peer_node> reg_owner <owner_id> <owner_name>\n" +
+	"      integerKeyApp <peer_node> reg_owner <owner_name>\n" +
+	"      integerKeyApp <peer_node> all_owners\n" +
 	"      integerKeyApp <peer_node> unreg_owner <owner_id>\n" +
 	"      integerKeyApp <peer_node> new <var_name>\n" +
 	"      integerKeyApp <peer_node> read <var_name>\n" +
@@ -73,6 +74,7 @@ func main() {
 	tlsCertPath  = cryptoPath + "/peers/" + peer + "/tls/ca.crt"
 
 	ops := os.Args[2]
+	fmt.Printf("ops: %s\n", ops)
 
 	if ops == "new" && len(os.Args) < 3 {
 		printUsage()
@@ -91,15 +93,22 @@ func main() {
 	}
 
 	if ops == "reg_owner" {
-       owner_id := os.Args[3]
-	   owner_name := os.Args[4]
-	   fmt.Printf("Registering owner %s \n", owner_id)
+       // owner_id := os.Args[3]
+	   owner_name := os.Args[3]
+	   fmt.Printf("Registering owner %s \n", owner_name)
 	   client,gw := connect()
 	   ownercontract := getContract(gw, ownerccName)
-	   RegisterOwner(ownercontract,owner_id, owner_name)
+	   RegisterOwner(ownercontract , owner_name)
 	   gw.Close()
 	   client.Close()
-	} else if ops == "unreg_owner" {
+	} else if ops == "all_owners" {
+		fmt.Printf("getting all owners\n")
+		client,gw := connect()
+		ownercontract := getContract(gw, ownerccName)
+		GetAllOwners(ownercontract)
+		gw.Close()
+		client.Close()
+	 } else if ops == "unreg_owner" {
 		owner_id := os.Args[3]
 		fmt.Printf("Unregistering owner %s \n", owner_id)
 		client,gw := connect()
@@ -270,22 +279,29 @@ func newSign() identity.Sign {
 
 
 
-func RegisterOwner(contract *client.Contract, owner_id string, owner_name string ) {
-	evaluateResult, err := contract.EvaluateTransaction("RegisterOwner", owner_id, owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
+func RegisterOwner(contract *client.Contract, owner_name string ) {
+	evaluateResult, err := contract.SubmitTransaction("RegisterOwner", owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
 		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_name, err)
 		return
 	}
-	fmt.Printf("\n--> Registering owner : %s, %s => %s\n",owner_id, owner_name, string(evaluateResult))
+	fmt.Printf("\n--> Registered owner : %s . %s\n", owner_name, string(evaluateResult))
 }
 
-func UnregisterOwner(contract *client.Contract, owner_id string ) {
-	evaluateResult, err := contract.EvaluateTransaction("UnregisterOwner", owner_id) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
+func UnregisterOwner(contract *client.Contract, owner_name string ) {
+	evaluateResult, err := contract.SubmitTransaction("UnregisterOwner", owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
 	if err != nil {
-		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_id, err)
+		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_name, err)
 		return
 	}
-	fmt.Printf("\n--> Registering owner : %s => %s\n",owner_id, string(evaluateResult))
+	fmt.Printf("\n--> Unregistered owner : %s . %s\n",owner_name, string(evaluateResult))
+}
+func GetAllOwners(contract *client.Contract ) {
+
+	transactionResult, err := contract.EvaluateTransaction("GetAllOwners")
+
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(transactionResult), err)
+
 }
 
 // function to call the ReadAsset function present in smartcontract.go
