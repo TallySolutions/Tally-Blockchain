@@ -42,9 +42,6 @@ func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterfac
 	} else{
 		return false, nil
 	}
-
-	return false, fmt.Errorf("Error in checking is owner is active")
-
 }
 
 func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterface, Name string) error {
@@ -116,12 +113,9 @@ func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterfa
 
 func (s *SmartContract) RegisterOwner(ctx contractapi.TransactionContextInterface, Name string) error {
 
-	fmt.Printf("TESTING REGISTEROWNER CC CONNECTION")
 	// NAME SHOULD BE PASSED AS A PARAMETER
 	// id generation happens in this function- on creation of an owner
 	ownerexists, err := s.OwnerExistence(ctx, Name) // TODO: FIND OUT HOW TO CHECK FOR OWNER NAME INSTEAD OF ID (gen ID when registering owner- not here)
-
-
 	if err != nil {
 		return err
 	}
