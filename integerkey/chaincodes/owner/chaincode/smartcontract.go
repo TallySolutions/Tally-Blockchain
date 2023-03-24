@@ -20,7 +20,7 @@ type OwnerAsset struct {
 	IsActive  bool   `json:"IsActive"`
 }
 
-const Prefix = "Owner:"
+const OwnerPrefix = "Owner:"
 
 
 func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
@@ -63,7 +63,7 @@ func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterf
 		return fmt.Errorf("failed to marshal updated owner: %v", err)
 	}
 
-	return ctx.GetStub().PutState(Prefix + owner.OwnerID, updatedOwnerJSON)
+	return ctx.GetStub().PutState(OwnerPrefix + owner.OwnerID, updatedOwnerJSON)
 }
 
 
@@ -86,7 +86,7 @@ func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("failed to marshal updated owner: %v", err)
 	}
 
-	return ctx.GetStub().PutState(Prefix + owner.OwnerID, updatedOwnerJSON)
+	return ctx.GetStub().PutState(OwnerPrefix + owner.OwnerID, updatedOwnerJSON)
 }
 
 
@@ -154,7 +154,7 @@ func (s *SmartContract) RegisterOwner(ctx contractapi.TransactionContextInterfac
 	if err != nil {
 		return err
 	}
-	state_err := ctx.GetStub().PutState(Prefix + id, ownerJSON) // new state added
+	state_err := ctx.GetStub().PutState(OwnerPrefix + id, ownerJSON) // new state added
 	fmt.Printf("Owner creation returned : %s\n", state_err)
 
 	return state_err
@@ -209,7 +209,7 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 			return nil, err
 		}
 
-		if strings.HasPrefix(queryResponse.Key, Prefix) {
+		if strings.HasOwnerPrefix(queryResponse.Key, OwnerPrefix) {
 			var owner OwnerAsset
 			err = json.Unmarshal(queryResponse.Value, &owner)
 			if err != nil {
@@ -245,7 +245,7 @@ func(s *SmartContract) DeleteOwner(ctx contractapi.TransactionContextInterface, 
 		}
 	}
 
-	delop:= ctx.GetStub().DelState(Prefix + owner.OwnerID)
+	delop:= ctx.GetStub().DelState(OwnerPrefix + owner.OwnerID)
     fmt.Printf("Message received on deletion: %s", delop)
     return nil
 
