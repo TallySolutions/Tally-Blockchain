@@ -209,7 +209,7 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 			return nil, err
 		}
 
-		if strings.HasOwnerPrefix(queryResponse.Key, OwnerPrefix) {
+		if strings.HasPrefix(queryResponse.Key, OwnerPrefix) {
 			var owner OwnerAsset
 			err = json.Unmarshal(queryResponse.Value, &owner)
 			if err != nil {
