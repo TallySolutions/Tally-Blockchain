@@ -12,6 +12,12 @@ type SmartContract struct {
     contractapi.Contract
 }
 
+
+// type OwnerContract
+
+
+
+
 type Asset struct {
     Name  string `json:"Name"`
     Value uint   `json:"Value"`
