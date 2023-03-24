@@ -4,9 +4,9 @@ package chaincode
 import (
     "encoding/json"
     "fmt"
-    "strings"
+    // "strings"
     "strconv"
-    "github.com/google/uuid"
+    // "github.com/google/uuid"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -17,16 +17,6 @@ type Asset struct {
     Name  string `json:"Name"`
     Value uint   `json:"Value"`
     OwnerID string `json:"OwnerID"`
-}
-
-type OwnerContract struct {
-    contractapi.Contract
-}
-
-type OwnerAsset struct {
-	OwnerID   string `json:"OwnerID"`
-	OwnerName string `json:"OwnerName"`
-	IsActive  bool   `json:"IsActive"`
 }
 
 
@@ -54,26 +44,26 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
     if err != nil {
     return err
-}
-if exists {
-    return fmt.Errorf("the asset %s already exists", Prefix + Name)
-    }
+                }
+        if exists {
+            return fmt.Errorf("the asset %s already exists", Prefix + Name)
+            }
 
-    asset := Asset{ //creation of asset
-        Name: Name,
-        Value: 0,
-        OwnerID: OwnerID,
-    }
-    assetJSON, err := json.Marshal(asset)
-    if err != nil {
-    return err
-}
+            asset := Asset{ //creation of asset
+                Name: Name,
+                Value: 0,
+                OwnerID: OwnerID,
+            }
+            assetJSON, err := json.Marshal(asset)
+            if err != nil {
+            return err
+            }
 
-state_err := ctx.GetStub().PutState(Prefix + Name, assetJSON) // new state added
+        state_err := ctx.GetStub().PutState(Prefix + Name, assetJSON) // new state added
 
-    fmt.Printf("Asset creation returned : %s\n", state_err)
+        fmt.Printf("Asset creation returned : %s\n", state_err)
 
-    return state_err
+        return state_err
 }
 
 // ReadAsset returns the asset stored in the world state with given Name.
@@ -169,7 +159,7 @@ defer iteratorVar.Close()
 
 
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
-func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, owner string) (*Asset, error) {
+func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, ownerID string) (*Asset, error) {
     // NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
     // accepting owner because we will be OVERWRITING the asset
     asset_read, err := s.ReadAsset(ctx, Name) // asset is read
@@ -192,7 +182,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        OwnerID: owner,
+        OwnerID: ownerID,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -206,7 +196,7 @@ updatestate_err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 }
 
 // DecreaseAsset decreases the value of the asset by the specified value
-func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, owner string) (*Asset, error) {
+func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, ownerID string) (*Asset, error) {
     asset_read, err := s.ReadAsset(ctx, Name)
     if err != nil {
     return nil, err
@@ -227,7 +217,7 @@ intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        OwnerID: owner,
+        OwnerID: ownerID,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {

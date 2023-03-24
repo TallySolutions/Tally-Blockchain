@@ -23,6 +23,32 @@ type OwnerAsset struct {
 const OwnerPrefix = "Owner:"
 
 
+
+func (s *SmartContract) ReturnOwnerID(ctx contractapi.TransactionContextInterface, Name string)(string, error){
+	//returns ownerID to the app that calls it
+	owners_list, err := s.GetAllOwners(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from world state: %v", err)
+	}
+	var owner *OwnerAsset
+	for _, iteratorVar := range owners_list{
+		if iteratorVar.OwnerName == Name{
+			owner = iteratorVar
+			break
+		}
+	}
+	//check for existence 
+	// found and retrieved the matching owner, now we have to return the id of the owner
+	exists, err := s.OwnerExistence(ctx, Name)
+	if exists{
+		return owner.OwnerID, nil
+	}else{
+		return "", fmt.Errorf("Owner does not exist")
+	}
+	
+}
+
+
 func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
 	// returns boolean for owner status
 	owners_list, err := s.GetAllOwners(ctx)
