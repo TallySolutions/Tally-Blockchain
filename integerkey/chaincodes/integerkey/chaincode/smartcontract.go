@@ -11,20 +11,27 @@ import (
 type SmartContract struct {
     contractapi.Contract
 }
-
-
-// type OwnerContract
-
-
-
-
 type Asset struct {
     Name  string `json:"Name"`
     Value uint   `json:"Value"`
     OwnerID string `json:"OwnerID"`
 }
 
+type OwnerContract struct {
+    contractapi.Contract
+}
+
+type OwnerAsset struct {
+	OwnerID   string `json:"OwnerID"`
+	OwnerName string `json:"OwnerName"`
+	IsActive  bool   `json:"IsActive"`
+}
+
+
+
 const Prefix = "Key: "
+
+const OwnerPrefix = "Owner: "
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
