@@ -223,7 +223,7 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 	if ownerCount > 0 {
 		return owners, nil
 	} else {
-		return nil, fmt.Errorf("No owners found")
+		return []*OwnerAsset{}, nil
 	}
 
 }

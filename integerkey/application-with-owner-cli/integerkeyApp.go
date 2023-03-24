@@ -50,7 +50,7 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> all_owners\n" +
 	"      integerKeyApp <peer_node> unreg_owner <owner_name>\n" +
 	"      integerKeyApp <peer_node> del_owner <owner_name>\n" +
-	"      integerKeyApp <peer_node> new <var_name>\n" +
+	"      integerKeyApp <peer_node> new <var_name>\n" +           //add owner funtionality
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
 	"      integerKeyApp <peer_node> dec <var_name> <dec_by>\n" +
@@ -127,7 +127,7 @@ func main() {
 		client.Close()
 	 } else if ops == "new" {
 		var_name := os.Args[3]
-		fmt.Printf("Creating new owner %s \n", var_name)
+		fmt.Printf("Creating new asset %s \n", var_name)
 		client,gw := connect()
 		contract := getContract(gw, ccName)
 		createAsset(contract,var_name)
