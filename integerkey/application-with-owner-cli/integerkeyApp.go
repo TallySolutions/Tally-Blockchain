@@ -50,10 +50,10 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> all_owners\n" +
 	"      integerKeyApp <peer_node> unreg_owner <owner_name>\n" +
 	"      integerKeyApp <peer_node> del_owner <owner_name>\n" +
-	"      integerKeyApp <peer_node> new <var_name>\n" +           //add owner funtionality
+	"      integerKeyApp <peer_node> new_asset <var_name> <owner_name>\n" +           //add owner funtionality
 	"      integerKeyApp <peer_node> read <var_name>\n" +
-	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
-	"      integerKeyApp <peer_node> dec <var_name> <dec_by>\n" +
+	"      integerKeyApp <peer_node> inc <var_name> <inc_by> <owner_name>\n" +
+	"      integerKeyApp <peer_node> dec <var_name> <dec_by> <owner_name>\n" +
 	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> list<\n" +
 	"\n"+
@@ -77,7 +77,7 @@ func main() {
 	ops := os.Args[2]
 	fmt.Printf("ops: %s\n", ops)
 
-	if ops == "new" && len(os.Args) < 3 {
+	if ops == "new_asset" && len(os.Args) < 3 {
 		printUsage()
 	}
 	if ops == "read" && len(os.Args) < 3 {
@@ -125,12 +125,14 @@ func main() {
 		deleteOwner(contract , owner_name)
 		gw.Close()
 		client.Close()
-	 } else if ops == "new" {
+	 } else if ops == "new_asset" {
 		var_name := os.Args[3]
-		fmt.Printf("Creating new asset %s \n", var_name)
-		client,gw := connect()
+		owner_name := os.Args[4]
+		fmt.Printf("Initiating creation of new asset %s \n", var_name)
+		client, gw := connect()
 		contract := getContract(gw, ccName)
-		createAsset(contract,var_name)
+		ownercontract := getContract(gw,ownerccName)
+		createAsset(contract, var_name, ownercontract, owner_name)
 		gw.Close()
 		client.Close()
 	 } else if ops == "read" {
@@ -152,19 +154,23 @@ func main() {
 	  }else if ops == "inc" {
 		var_name := os.Args[3]
 		inc_by := os.Args[4]
+		owner_name:= os.Args[5]
 		fmt.Printf("Incrementing variable %s by %s\n", var_name, inc_by)
 		client,gw := connect()
 		contract := getContract(gw, ccName)
-		increaseValue(contract,var_name, inc_by)
+		ownercontract := getContract(gw, ownerccName)
+		increaseValue(contract,ownercontract, var_name, inc_by, owner_name)
 		gw.Close()
 		client.Close()
 	 }else if ops == "dec" {
 		var_name := os.Args[3]
 		dec_by := os.Args[4]
+		owner_name:= os.Args[5]
 		fmt.Printf("Decrementing variable %s by %s\n", var_name, dec_by)
-		client,gw := connect()
+		client, gw := connect()
 		contract := getContract(gw, ccName)
-		decreaseValue(contract,var_name, dec_by)
+		ownercontract := getContract(gw, ownerccName)
+		decreaseValue(contract,ownercontract, var_name, dec_by, owner_name)
 		gw.Close()
 		client.Close()
 	}else if ops == "list" {
@@ -325,29 +331,70 @@ func readAsset(contract *client.Contract , name string) {
 
 }
 
-func createAsset(contract *client.Contract , name string) {
+// func createAsset(contract *client.Contract , name string) {
+// 		fmt.Printf("\n--> Creating Asset : %s\n", name)
+// 		result, err := contract.SubmitTransaction("CreateAsset", name) // SubmitTransaction returns results of a transaction only after its commited
+// 		fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+// }
 
-	fmt.Printf("\n--> Creating Asset : %s\n", name)
+func createAsset(contract *client.Contract, name string , ownercontract *client.Contract ,  ownername string) {
 
-	result, err := contract.SubmitTransaction("CreateAsset", name) // SubmitTransaction returns results of a transaction only after its commited
+	owner_valid, err := ownercontract.EvaluateTransaction("IsOwnerActive", ownername)
+		if err !=nil{
+			fmt.Errorf("Error: %s",err)
+			return
+		}
 
-	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+	// GETTING OWNER ID 
+	ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
+	if err !=nil{
+		fmt.Errorf("Error: %s",err)
+		return
+	}
+	ownerID := string(ownerIDextract)
+		if bytes.Equal(owner_valid, []byte{116, 114, 117, 101}) {        // checking if owner is active
+				fmt.Printf("\n--> Creating Asset : %s\n", name)
+				result, err := contract.SubmitTransaction("CreateAsset", name, ownerID) // SubmitTransaction returns results of a transaction only after its commited
+				fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+				return	
+		}else{
+				// if owner is inactive
+				fmt.Printf("%v",owner_valid)
+				fmt.Printf("Owner %s is not active! Registration of owner is required \n", ownername)
+		}
+ }
 
-}
 
-func increaseValue(contract *client.Contract , name string, incVal string) {
+func increaseValue(contract *client.Contract , ownercontract *client.Contract,  name string, incVal string, ownername string) {
+
+	// GETTING OWNER ID 
+	ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
+	if err !=nil{
+		fmt.Errorf("Error: %s",err)
+		return
+	}
+	ownerID := string(ownerIDextract)
 
 	fmt.Printf("Name : %s , IncreaseValue: %s ", name, incVal)
 
-	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal)
+	evaluatedAsset, err := contract.SubmitTransaction("IncreaseAsset", name, incVal, ownerID)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 }
 
-func decreaseValue(contract *client.Contract , name string, decVal string) {
+func decreaseValue(contract *client.Contract , ownercontract *client.Contract,  name string, decVal string, ownername string) {
+
+
+	// GETTING OWNER ID 
+	ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
+	if err !=nil{
+		fmt.Errorf("Error: %s",err)
+		return
+	}
+	ownerID := string(ownerIDextract)
 
 	fmt.Printf("Name : %s , DecreaseValue: %s ", name, decVal)
 
-	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal)
+	evaluatedAsset, err := contract.SubmitTransaction("DecreaseAsset", name, decVal, ownerID)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 }
 
