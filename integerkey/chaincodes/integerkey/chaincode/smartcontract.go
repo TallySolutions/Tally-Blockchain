@@ -4,7 +4,9 @@ package chaincode
 import (
     "encoding/json"
     "fmt"
+    "strings"
     "strconv"
+    "github.com/google/uuid"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
