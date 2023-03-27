@@ -119,6 +119,7 @@ func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInte
 
 func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterface, OwnerName string) (string, error) {
 
+
 	// loop through and match based on NAME- in order to generate id using uuid
 
 	owners_list, err := s.GetAllOwners(ctx)
