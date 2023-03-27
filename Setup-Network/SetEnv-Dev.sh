@@ -88,6 +88,7 @@ function setEnv()
   
  PEER_NODE_HOME=${TALLY_HOME}/${PEER_NODE_FOLDER}
 
+ CLIENT_HOME=${TALLY_HOME}/clients
  
  #Chaincode
  

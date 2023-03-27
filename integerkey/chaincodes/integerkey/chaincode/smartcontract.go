@@ -35,6 +35,28 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
     return assetJSON != nil, nil
 }
 
+
+func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterface, Name string)(string, error){
+	//returns ownerID to the app that calls it
+	assets_list, err := s.GetAllAssets(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to read from world state: %v", err)
+	}
+	var asset *Asset
+	for _, iteratorVar := range assets_list{
+		if iteratorVar.Name == Name{
+			asset = iteratorVar
+			break
+		}
+	}
+	//check for existence 
+	// found and retrieved the matching owner, now we have to return the id of the owner
+	return string(asset.Value), nil
+	
+}
+
+
+
 // function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string, OwnerID string) error {
 
@@ -172,7 +194,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     fmt.Println(err)
     }
     incrementValueuInt := uint(intermediateUpdateval)
-                          newValue := uint(asset_read.Value) + incrementValueuInt
+    newValue := uint(asset_read.Value) + incrementValueuInt
 
     if newValue > 20 {
     return nil, fmt.Errorf("You cannot have a value more than 20.")
@@ -200,7 +222,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
     asset_read, err := s.ReadAsset(ctx, Name)
     if err != nil {
     return nil, err
-}
+    }
 
 intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     if err !=nil {
@@ -222,6 +244,39 @@ intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     assetJSON, err := json.Marshal(asset)
     if err != nil {
     return nil, err
+    }
+
+updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
+                       fmt.Printf("After decreasing asset value: %s", updatestate_Err)
+
+                       return &asset , nil
+}
+
+
+
+func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, Name string, newOwnerID string) (*Asset, error) {
+    // asset_read, err := s.ReadAsset(ctx, Name)
+    // if err != nil {
+    // return nil, err
+    // }
+    // overwriting original asset with new owner
+    val_asset, err:= s.GetAssetValue(ctx, Name)
+    if err != nil {
+        return nil, err
+    }
+    val_Assetinterm, err:= strconv.ParseUint(val_asset, 10, 32)
+    val_AssetInt:= uint(val_Assetinterm)
+    if err != nil {
+        return nil, err
+    }
+    asset := Asset {
+        Name:  Name,
+        Value: val_AssetInt,
+        OwnerID: newOwnerID,
+    }
+    assetJSON, err := json.Marshal(asset)
+    if err != nil {
+    return nil, err
 }
 
 updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
@@ -229,6 +284,11 @@ updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
                        return &asset , nil
 }
+
+
+
+
+
 
 
 // DeleteAsset deletes the state from the ledger
