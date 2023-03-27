@@ -277,10 +277,10 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
     assetJSON, err := json.Marshal(asset)
     if err != nil {
     return nil, err
-}
+    }
 
-updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
-                       fmt.Printf("After decreasing asset value: %s", updatestate_Err)
+    updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
+    fmt.Printf("After transferring asset : %s", updatestate_Err)
 
                        return &asset , nil
 }
