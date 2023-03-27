@@ -260,6 +260,8 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
     // return nil, err
     // }
     // overwriting original asset with new owner
+
+    fmt.Printf("New owner ID: %s", newOwnerID)
     val_asset, err:= s.GetAssetValue(ctx, Name)
     if err != nil {
         return nil, err
@@ -284,10 +286,6 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
                        return &asset , nil
 }
-
-
-
-
 
 
 
