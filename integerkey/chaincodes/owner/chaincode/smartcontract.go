@@ -40,7 +40,7 @@ func (s *SmartContract) ReturnOwnerID(ctx contractapi.TransactionContextInterfac
 	//check for existence 
 	// found and retrieved the matching owner, now we have to return the id of the owner
 	exists, err := s.OwnerExistence(ctx, Name)
-	if exists{
+	if exists == "true"{
 		return owner.OwnerID, nil
 	}else{
 		return "", fmt.Errorf("Owner does not exist")
@@ -49,11 +49,11 @@ func (s *SmartContract) ReturnOwnerID(ctx contractapi.TransactionContextInterfac
 }
 
 
-func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
+func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (string, error) {
 	// returns boolean for owner status
 	owners_list, err := s.GetAllOwners(ctx)
 	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
+		return "false", fmt.Errorf("failed to read from world state: %v", err)
 	}
 
 	var owner *OwnerAsset
@@ -64,9 +64,9 @@ func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterfac
 		}
 	}
 	if owner.IsActive{
-		return true, nil
+		return "true", nil
 	} else{
-		return false, nil
+		return "false", nil
 	}
 }
 
@@ -117,22 +117,22 @@ func (s *SmartContract) MakeOwnerInactive(ctx contractapi.TransactionContextInte
 
 
 
-func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterface, OwnerName string) (bool, error) {
+func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterface, OwnerName string) (string, error) {
 
 	// loop through and match based on NAME- in order to generate id using uuid
 
 	owners_list, err := s.GetAllOwners(ctx)
 	if err != nil {
-		return false, fmt.Errorf("Failed to get current existing owners %v", err)
+		return "false", fmt.Errorf("Failed to get current existing owners %v", err)
 	}
 
 	for _, iteratorVar := range owners_list{
 		if iteratorVar.OwnerName == OwnerName{
-			return true, nil
+			return "true", nil
 		}
 		}
 
-	return false, nil
+	return "false", nil
 }
 
 
@@ -148,13 +148,13 @@ func (s *SmartContract) RegisterOwner(ctx contractapi.TransactionContextInterfac
 
 	// if owner exists already
 
-	if ownerexists {
+	if ownerexists == "true"{
 		// now there are 2 possible scenarios- active, the other is inactive
 		owneractive, err := s.IsOwnerActive(ctx, Name)
 		if err != nil {
 			return err
 		}
-		if owneractive { // if owner is active i.e. existing and active, a statement is returned that the user is already registered
+		if owneractive == "true" { // if owner is active i.e. existing and active, a statement is returned that the user is already registered
 			fmt.Printf("ERRROR : Owner is already registered!")
 			return fmt.Errorf("Owner is already registered")
 		} else {
@@ -194,12 +194,12 @@ func (s *SmartContract) UnregisterOwner(ctx contractapi.TransactionContextInterf
 	if err != nil {
 		return err
 	}
-	if ownerexists {
+	if ownerexists == "true" {
 		owneractive, err := s.IsOwnerActive(ctx, Name)
 		if err != nil {
 			return err
 		}
-		if owneractive { // if owner is active i.e. existing and active, the owner is made inactive
+		if owneractive == "true" { // if owner is active i.e. existing and active, the owner is made inactive
 			err := s.MakeOwnerInactive(ctx, Name)
 			if err != nil {
 				return fmt.Errorf("error in changing owner's status")
