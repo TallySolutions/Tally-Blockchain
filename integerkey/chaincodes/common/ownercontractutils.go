@@ -1,4 +1,4 @@
-package chaincode
+package ownercontractutils
 
 import (
 	"encoding/json"
@@ -20,31 +20,22 @@ type OwnerAsset struct {
 	IsActive  bool   `json:"IsActive"`
 }
 
-const OwnerPrefix = "Owner: "
+const Prefix = "Owner:"
 
-
-
-func (s *SmartContract) ReturnOwnerID(ctx contractapi.TransactionContextInterface, Name string)(string, error){
+func GetOwnerID(ctx contractapi.TransactionContextInterface, Name string)(string, error){
 	//returns ownerID to the app that calls it
 	owners_list, err := s.GetAllOwners(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to read from world state: %v", err)
 	}
-	var owner *OwnerAsset
-	for _, iteratorVar := range owners_list{
-		if iteratorVar.OwnerName == Name{
-			owner = iteratorVar
-			break
+
+	for _, owner := range owners_list{
+		if owner.OwnerName == Name{
+			return owner.OwnerID
 		}
 	}
-	//check for existence 
-	// found and retrieved the matching owner, now we have to return the id of the owner
-	exists, err := s.OwnerExistence(ctx, Name)
-	if exists == "true"{
-		return owner.OwnerID, nil
-	}else{
-		return "", fmt.Errorf("Owner does not exist")
-	}
+
+    return "", fmt.Errorf("Owner does not exist")
 	
 }
 
@@ -57,18 +48,13 @@ func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterfac
 	}
 
 	var owner *OwnerAsset
-	for _, iteratorVar := range owners_list{
-		if iteratorVar.OwnerName == Name{
-			owner= iteratorVar
-			break
+	for _, owner := range owners_list{
+		if owner.OwnerName == Name {
+			return owner.IsActive?"true":"false", nil
 		}
-		return "owner does not exist", nil
 	}
-	if owner.IsActive{
-		return "true", nil
-	} else{
-		return "false", nil
-	}
+    return "false", nil
+
 }
 
 func (s *SmartContract) MakeOwnerActive(ctx contractapi.TransactionContextInterface, Name string) error {
