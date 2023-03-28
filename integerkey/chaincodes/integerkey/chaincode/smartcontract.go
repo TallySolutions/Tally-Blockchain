@@ -4,7 +4,7 @@ package chaincode
 import (
     "encoding/json"
     "fmt"
-    // "strings"
+    "strings"
     "strconv"
     // "github.com/google/uuid"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -20,10 +20,16 @@ type Asset struct {
 }
 
 
+type OwnerAsset struct {
+	OwnerID   string `json:"OwnerID"`
+	OwnerName string `json:"OwnerName"`
+	IsActive  bool   `json:"IsActive"`
+}
+
+
 
 const Prefix = "Key: "
-
-const OwnerPrefix = "Owner: "
+const OwnerPrefix="Owner: "
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
@@ -261,30 +267,79 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
     // }
     // overwriting original asset with new owner
 
-    fmt.Printf("New owner ID: %s", newOwnerID)
-    val_asset, err:= s.GetAssetValue(ctx, Name)
+    // finding the asset with Name provided as param
+    // assetJSON, err:= ctx.GetStub().GetState(Prefix + Name)
+    // if err != nil {
+    //     return nil, err
+    // }
+    // println(assetJSON)
+    // var asset Asset
+    // err = json.Unmarshal(assetJSON, &asset)
+    // if err != nil {
+    // return nil, err
+    // }
+
+    iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+	defer iteratorVar.Close()
+
+	for iteratorVar.HasNext() {
+		queryResponse, err := iteratorVar.Next()
+		if err != nil {
+			return nil, err
+		}
+        println(queryResponse.Value)
+    }
+
+    asset, err:= s.ReadAsset(ctx, Name)
     if err != nil {
         return nil, err
     }
-    val_Assetinterm, err:= strconv.ParseUint(val_asset, 10, 32)
-    val_AssetInt:= uint(val_Assetinterm)
+    println(asset.OwnerID)
+    ownerassetJSON, err:= ctx.GetStub().GetState(OwnerPrefix + asset.OwnerID)
     if err != nil {
         return nil, err
     }
-    asset := Asset {
+    println(string(ownerassetJSON))
+    var ownerasset OwnerAsset
+    err = json.Unmarshal(ownerassetJSON, &ownerasset)
+    if err != nil {
+    return nil, err
+    }
+    currownerName:= ownerasset.OwnerName
+    println("Current owner Name:"+ currownerName)
+
+    // we have retrived the current owner name.. now we have to verify if it is active
+    if !ownerasset.IsActive{
+        return nil, fmt.Errorf("PROBLEM: %s", "not active")
+    }
+
+    // if current owner is active, continue
+
+    println("New owner ID:" + newOwnerID)
+    
+    // overwriting current asset with new owner id
+    val_AssetInt:= asset.Value
+    new_asset := Asset {
         Name:  Name,
         Value: val_AssetInt,
         OwnerID: newOwnerID,
     }
-    assetJSON, err := json.Marshal(asset)
+
+    assetJSON, err := json.Marshal(new_asset)
     if err != nil {
     return nil, err
     }
 
-    updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
-    fmt.Printf("After transferring asset : %s", updatestate_Err)
+    ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
-                       return &asset , nil
+    return &new_asset , nil
 }
 
 
@@ -306,3 +361,66 @@ if !exists {
 
 
 // trasnfer( asset id, destination owner)
+
+func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (string, error) {
+	// returns boolean for owner status
+	owners_list, err := s.GetAllOwners(ctx)
+	if err != nil {
+		return "false", fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	var owner *OwnerAsset
+	for _, iteratorVar := range owners_list{
+		if iteratorVar.OwnerName == Name{
+			owner= iteratorVar
+			break
+		}
+		return "owner does not exist", nil
+	}
+	if owner.IsActive{
+		return "true", nil
+	} else{
+		return "false", nil
+	}
+}
+
+
+
+func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface) ([]*OwnerAsset, error) {
+	iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+	defer iteratorVar.Close()
+
+	var owners []*OwnerAsset
+	var ownerCount = 0
+
+	for iteratorVar.HasNext() {
+		queryResponse, err := iteratorVar.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasPrefix(queryResponse.Key, OwnerPrefix) {
+			var owner OwnerAsset
+			err = json.Unmarshal(queryResponse.Value, &owner)
+			if err != nil {
+				return nil, err
+			}
+			owners = append(owners, &owner)
+			ownerCount++
+		}
+	}
+
+	if ownerCount > 0 {
+		return owners, nil
+	} else {
+		return []*OwnerAsset{}, nil
+	}
+
+}

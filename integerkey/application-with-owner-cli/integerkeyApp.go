@@ -54,7 +54,7 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> new_asset <var_name> <owner_name>\n" +           //add owner funtionality
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by> <owner_name>\n" +
-	"      integerKeyApp <peer_node> transfer_asset <var_name> <owner_name> <new_owner_name>\n" +
+	"      integerKeyApp <peer_node> transfer_asset <var_name> <new_owner_name>\n" +
 	"      integerKeyApp <peer_node> dec <var_name> <dec_by> <owner_name>\n" +
 	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> list<\n" +
@@ -177,13 +177,12 @@ func main() {
 		client.Close()
 	}else if ops == "transfer_asset" {
 		var_name := os.Args[3]
-		owner_name:= os.Args[4]
-		new_owner_name := os.Args[5]
-		fmt.Printf("Transferring asset %s from %s to %s\n", var_name, owner_name, new_owner_name)
+		new_owner_name := os.Args[4]
+		fmt.Printf("Transferring asset %s to %s\n", var_name, new_owner_name)
 		client, gw := connect()
 		contract := getContract(gw, ccName)
 		ownercontract := getContract(gw, ownerccName)
-		transferAsset(contract,ownercontract, var_name, owner_name, new_owner_name)
+		transferAsset(contract,ownercontract, var_name, new_owner_name)
 		gw.Close()
 		client.Close()
 	}else if ops == "list" {
@@ -428,28 +427,28 @@ func decreaseValue(contract *client.Contract , ownercontract *client.Contract,  
 
 
 
-func transferAsset(contract *client.Contract , ownercontract *client.Contract,  name string, owner_name string, new_owner_name string) {
+func transferAsset(contract *client.Contract , ownercontract *client.Contract,  name string, new_owner_name string) {
 
-	// verifying owner existence
-	owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", owner_name)
-	if err !=nil{
-		fmt.Printf("Error: %s \n",err)
-		return
-	}
-	new_owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", new_owner_name)
-	if err !=nil{
-		fmt.Printf("Error: %s \n",err)
-		return
-	}
+	// // verifying owner existence
+	// owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", owner_name)
+	// if err !=nil{
+	// 	fmt.Printf("Error: %s \n",err)
+	// 	return
+	// }
+	// new_owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", new_owner_name)
+	// if err !=nil{
+	// 	fmt.Printf("Error: %s \n",err)
+	// 	return
+	// }
 
-	if string(owner_exists) == "false"{
-		fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", owner_name )
-		return
-	}
-	if string(new_owner_exists) == "false" {
-		fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", new_owner_name)
-		return
-	}
+	// if string(owner_exists) == "false"{
+	// 	fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", owner_name )
+	// 	return
+	// }
+	// if string(new_owner_exists) == "false" {
+	// 	fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", new_owner_name)
+	// 	return
+	// }
 	
 	// if owners exist---->
 
@@ -462,7 +461,7 @@ func transferAsset(contract *client.Contract , ownercontract *client.Contract,  
 	}
 	newownerID := string(newownerIDextract)
 
-	fmt.Printf("Name : %s , Transfer asset from: %s , to: %s ", name, owner_name, new_owner_name)
+	fmt.Printf("Name : %s , Transfer asset to: %s ", name, new_owner_name)
 
 	evaluatedAsset, err := contract.SubmitTransaction("TransferAsset", name, newownerID)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
