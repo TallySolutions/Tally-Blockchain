@@ -6,6 +6,8 @@ package main
 
 
 import (
+
+	//"encoding/asn1"
 	"bytes"
 	"crypto/x509"
 	"encoding/json"
@@ -15,6 +17,7 @@ import (
 	"time"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -26,12 +29,13 @@ import (
 const (
 	mspID        = "Tally"
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
+	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user         = "Admin"
+	user         = "user2"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
-	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
-	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
+	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
+	keyPath      = users_common_path + "/" + user + "/msp/keystore/"
 	intkeyccName       = "integerkey"
 	ccName = "integerkey"
 	ownerccName = "owner"
@@ -114,7 +118,8 @@ func main() {
 	 } else if ops == "unreg_owner" {
 		owner_name := os.Args[3]
 		fmt.Printf("Unregistering owner %s \n", owner_name)
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		ownercontract := getContract(gw, ownerccName)
 		UnregisterOwner(ownercontract,owner_name)
 		gw.Close()
@@ -122,7 +127,8 @@ func main() {
 	 } else if ops == "del_owner" {
 		owner_name := os.Args[3]
 		fmt.Printf("Deleting owner %s \n", owner_name)
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ownerccName)
 		deleteOwner(contract , owner_name)
 		gw.Close()
@@ -131,7 +137,8 @@ func main() {
 		var_name := os.Args[3]
 		owner_name := os.Args[4]
 		fmt.Printf("Initiating creation of new asset %s \n", var_name)
-		client, gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		ownercontract := getContract(gw,ownerccName)
 		createAsset(contract, var_name, ownercontract, owner_name)
@@ -140,7 +147,8 @@ func main() {
 	 } else if ops == "read" {
 		var_name := os.Args[3]
 		fmt.Printf("Reading variable %s \n", var_name)
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		readAsset(contract,var_name)
 		gw.Close()
@@ -148,7 +156,8 @@ func main() {
 	  }else if ops == "del" {
 		var_name := os.Args[3]
 		fmt.Printf("Deleting variable %s \n", var_name)
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		deleteAsset(contract,var_name)
 		gw.Close()
@@ -158,7 +167,8 @@ func main() {
 		inc_by := os.Args[4]
 		owner_name:= os.Args[5]
 		fmt.Printf("Incrementing variable %s by %s\n", var_name, inc_by)
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		ownercontract := getContract(gw, ownerccName)
 		increaseValue(contract,ownercontract, var_name, inc_by, owner_name)
@@ -169,7 +179,8 @@ func main() {
 		dec_by := os.Args[4]
 		owner_name:= os.Args[5]
 		fmt.Printf("Decrementing variable %s by %s\n", var_name, dec_by)
-		client, gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		ownercontract := getContract(gw, ownerccName)
 		decreaseValue(contract,ownercontract, var_name, dec_by, owner_name)
@@ -179,7 +190,8 @@ func main() {
 		var_name := os.Args[3]
 		new_owner_name := os.Args[4]
 		fmt.Printf("Transferring asset %s to %s\n", var_name, new_owner_name)
-		client, gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		ownercontract := getContract(gw, ownerccName)
 		transferAsset(contract,ownercontract, var_name, new_owner_name)
@@ -187,7 +199,8 @@ func main() {
 		client.Close()
 	}else if ops == "list" {
 		fmt.Printf("Listing all variables\n")
-		client,gw := connect()
+		client, gw, clientID := connect()
+		fmt.Printf("CLIENTID: %s", clientID)
 		contract := getContract(gw, ccName)
 		getAllAssets(contract)
 		gw.Close()
@@ -206,7 +219,7 @@ func connect() (*grpc.ClientConn, *client.Gateway) {
 	clientConnection := newGrpcConnection()
 
 	//creating client identity, signing implementation
-	id := newIdentity()
+	id := newIdentity()              // stores client id
 	sign := newSign()
 
 	gw, err := client.Connect(
@@ -223,7 +236,19 @@ func connect() (*grpc.ClientConn, *client.Gateway) {
 	if err != nil {
 		panic(err)
 	}
+
+	// clientID:=id.Mspid
+	// idBytes := id.Identifier().Id
+	// idString := string(idBytes)
+	// fmt.Println("ID:", idString)
+
+	// idBytes := id.Identifier.Id
+	// idString := string(idBytes)
+	// fmt.Println("ID:", idString)
+
+	fmt.Printf("TYPE OF ID: %T \n", id)
 	
+	// return clientConnection, gw, string(clientID)
 	return clientConnection, gw
 
 
@@ -255,7 +280,7 @@ func newGrpcConnection() *grpc.ClientConn {
 }
 
 // newIdentity creates a client identity for this Gateway connection using an X.509 certificate.
-func newIdentity() *identity.X509Identity {
+func newIdentity() *identity.X509Identity { 
 	certificate, err := loadCertificate(certPath)
 	if err != nil {
 		panic(err)
@@ -267,6 +292,23 @@ func newIdentity() *identity.X509Identity {
 	}
 
 	return id
+
+	// enrollmentID := ""
+    // for _, ext := range certificate.Extensions {
+    //     if ext.Id.Equal(asn1.ObjectIdentifier{1,2,3,4,5,6,7,8,1}) { // OID for hf.EnrollmentID
+    //         var value string
+    //         _, err := asn1.Unmarshal(ext.Value, &value)
+    //         if err != nil {
+    //             return nil, err
+    //         }
+    //         enrollmentID = value
+    //         break
+    //     }
+    // }
+
+	// id, err := identity.NewX509Identity(mspID, certificate)   
+	// id.EnrollmentID= enrollmentID
+
 }
 
 func loadCertificate(filename string) (*x509.Certificate, error) {

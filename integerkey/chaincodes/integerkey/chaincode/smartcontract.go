@@ -20,6 +20,10 @@ type Asset struct {
 }
 
 
+
+// ADD REQUESTED OWNER to struct- WHEN IMPLMENTING FUNC
+
+
 type OwnerAsset struct {
 	OwnerID   string `json:"OwnerID"`
 	OwnerName string `json:"OwnerName"`
@@ -64,8 +68,14 @@ func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterfac
 
 
 // function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
-func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string, OwnerID string) error {
+func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string) error {
 
+
+    OwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return err
+	}
+    // get id from func
     exists, err := s.AssetExists(ctx, Prefix + Name) // exists-> boolean value, err-> can be nil or the error, if present
 
     fmt.Printf("Asset exists returned : %t, %s\n", exists, err)
@@ -187,13 +197,14 @@ defer iteratorVar.Close()
 
 
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
-func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string, ownerID string) (*Asset, error) {
+func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
     // NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
     // accepting owner because we will be OVERWRITING the asset
     asset_read, err := s.ReadAsset(ctx, Name) // asset is read
     if err != nil {
     return nil, err
 }
+
 
 intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     if err !=nil {
@@ -210,7 +221,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        OwnerID: ownerID,
+        // OwnerID: ownerID,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -224,7 +235,7 @@ updatestate_err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 }
 
 // DecreaseAsset decreases the value of the asset by the specified value
-func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string, ownerID string) (*Asset, error) {
+func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) (*Asset, error) {
     asset_read, err := s.ReadAsset(ctx, Name)
     if err != nil {
     return nil, err
@@ -245,7 +256,7 @@ intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        OwnerID: ownerID,
+        // OwnerID: ownerID,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -260,7 +271,7 @@ updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
 
 
-func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, Name string, newOwnerID string) (*Asset, error) {
+func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
     // asset_read, err := s.ReadAsset(ctx, Name)
     // if err != nil {
     // return nil, err
@@ -278,6 +289,14 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
     // if err != nil {
     // return nil, err
     // }
+
+    newOwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+
+    // REMOVE OWNERID AS PARAM-- GET OWNERID FROM CONTEXT(USER CALLING IT)
 
     iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
 
@@ -424,3 +443,46 @@ func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface
 	}
 
 }
+
+
+
+func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+        b64ID, err := ctx.GetClientIdentity().GetID()
+        if err != nil {
+            return "", fmt.Errorf("Failed to read clientID: %v", err)
+        }
+        decodeID, err := base64.StdEncoding.DecodeString(b64ID)
+        if err != nil {
+            return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
+        }
+        return string(decodeID), nil     // returns clientID as a string
+}
+
+
+
+
+
+
+// REQUEST TRANSFER- req transanction
+
+// two modes- automatic or requires approval(based on condition- asset value<10 or >=10)
+
+
+
+
+
+
+
+
+// APPROVE TRANSFER- for the user who owns the asset
+
+
+
+
+
+
+
+
+
+
+// AFTER THESE TWO, READ THROUGH ABAC        (access control)
