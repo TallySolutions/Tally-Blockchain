@@ -2,6 +2,7 @@ package chaincode
 
 
 import (
+    "encoding/base64"
     "encoding/json"
     "fmt"
     "strings"
@@ -292,7 +293,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
     newOwnerID, err := submittingClientIdentity(ctx)
 	if err != nil {
-		return err
+		return nil,err
 	}
 
 
