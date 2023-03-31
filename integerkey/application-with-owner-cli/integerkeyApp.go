@@ -1,13 +1,6 @@
 package main
 
-
-// HANDLES BOTH OWNER ASSET OPERATIONS, AS WELL AS INTEGER KEY ASSET OPERATIONS
-
-
-
 import (
-
-	//"encoding/asn1"
 	"bytes"
 	"crypto/x509"
 	"encoding/json"
@@ -100,7 +93,6 @@ func main() {
 	}
 
 	if ops == "reg_owner" {
-       // owner_id := os.Args[3]
 	   owner_name := os.Args[3]
 	   fmt.Printf("Registering owner %s \n", owner_name)
 	   client, gw := connect()
@@ -220,18 +212,8 @@ func connect() (*grpc.ClientConn, *client.Gateway) {
 		panic(err)
 	}
 
-	// clientID:=id.Mspid
-	// idBytes := id.Identifier().Id
-	// idString := string(idBytes)
-	// fmt.Println("ID:", idString)
-
-	// idBytes := id.Identifier.Id
-	// idString := string(idBytes)
-	// fmt.Println("ID:", idString)
-
 	fmt.Printf("TYPE OF ID: %T \n", id)
 	
-	// return clientConnection, gw, string(clientID)
 	return clientConnection, gw
 
 
@@ -275,22 +257,6 @@ func newIdentity() *identity.X509Identity {
 	}
 
 	return id
-
-	// enrollmentID := ""
-    // for _, ext := range certificate.Extensions {
-    //     if ext.Id.Equal(asn1.ObjectIdentifier{1,2,3,4,5,6,7,8,1}) { // OID for hf.EnrollmentID
-    //         var value string
-    //         _, err := asn1.Unmarshal(ext.Value, &value)
-    //         if err != nil {
-    //             return nil, err
-    //         }
-    //         enrollmentID = value
-    //         break
-    //     }
-    // }
-
-	// id, err := identity.NewX509Identity(mspID, certificate)   
-	// id.EnrollmentID= enrollmentID
 
 }
 
@@ -374,57 +340,9 @@ func createAsset(contract *client.Contract , name string) {
 		fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 }
 
-// func createAsset(contract *client.Contract, name string) {
-
-// 	owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", ownername)
-// 	if err !=nil{
-// 		fmt.Printf("Error: %s \n",err)
-// 		return
-// 	}
-// 	if string(owner_exists) == "false"{
-// 		fmt.Printf("Owner does not exist! Owner has to be registered.\n")
-// 		return
-// 	}
-
-// 	owner_valid, err := ownercontract.EvaluateTransaction("IsOwnerActive", ownername)
-// 		if err !=nil{
-// 			fmt.Printf("Error: %s \n",err)
-// 			return
-// 		}
-// 	owner_valid_str:=string(owner_valid)
-// 	fmt.Printf("OWNER VALID VALUE= %s", owner_valid_str)
-
-// 	if owner_valid_str =="false"{
-// 		fmt.Printf("%s",owner_valid_str)
-// 		fmt.Printf("Owner %s is not active! Registration of owner is required \n", ownername)
-// 		return
-// 	}
-// 	// GETTING OWNER ID 
-// 	ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
-// 	if err !=nil{
-// 		fmt.Errorf("Error: %s",err)
-// 		return
-// 	}
-// 	ownerID := string(ownerIDextract)
-	
-	
-// 		fmt.Printf("\n--> Creating Asset : %s\n", name)
-// 		result, err := contract.SubmitTransaction("CreateAsset", name) // SubmitTransaction returns results of a transaction only after its commited
-// 		fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
-// 		return	
-		
-//  }
 
 
 func increaseValue(contract *client.Contract, name string, incVal string) {
-
-	// GETTING OWNER ID 
-	// ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
-	// if err !=nil{
-	// 	fmt.Errorf("Error: %s",err)
-	// 	return
-	// }
-	// ownerID := string(ownerIDextract)
 
 	fmt.Printf("Name : %s , IncreaseValue: %s ", name, incVal)
 
@@ -433,15 +351,6 @@ func increaseValue(contract *client.Contract, name string, incVal string) {
 }
 
 func decreaseValue(contract *client.Contract, name string, decVal string) {
-
-
-	// GETTING OWNER ID 
-	// ownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", ownername)
-	// if err !=nil{
-	// 	fmt.Errorf("Error: %s",err)
-	// 	return
-	// }
-	// ownerID := string(ownerIDextract)
 
 	fmt.Printf("Name : %s , DecreaseValue: %s ", name, decVal)
 
@@ -453,38 +362,6 @@ func decreaseValue(contract *client.Contract, name string, decVal string) {
 
 
 func transferAsset(contract *client.Contract,  name string) {
-
-	// // verifying owner existence
-	// owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", owner_name)
-	// if err !=nil{
-	// 	fmt.Printf("Error: %s \n",err)
-	// 	return
-	// }
-	// new_owner_exists, err := ownercontract.EvaluateTransaction("OwnerExistence", new_owner_name)
-	// if err !=nil{
-	// 	fmt.Printf("Error: %s \n",err)
-	// 	return
-	// }
-
-	// if string(owner_exists) == "false"{
-	// 	fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", owner_name )
-	// 	return
-	// }
-	// if string(new_owner_exists) == "false" {
-	// 	fmt.Printf("Owner %s does not exist! Owner has to be registered.\n", new_owner_name)
-	// 	return
-	// }
-	
-	// if owners exist---->
-
-	// GETTING OWNER IDs : ReturnOwnerID() 
-
-	// newownerIDextract, err:= ownercontract.EvaluateTransaction("ReturnOwnerID", new_owner_name)
-	// if err !=nil{
-	// 	fmt.Errorf("Error: %s",err)
-	// 	return
-	// }
-	// newownerID := string(newownerIDextract)
 
 	fmt.Printf("Asset name : %s , Transfer asset to: %s ", name, user)
 
