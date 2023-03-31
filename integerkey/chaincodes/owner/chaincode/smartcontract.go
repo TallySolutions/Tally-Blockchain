@@ -141,6 +141,8 @@ func (s *SmartContract) OwnerExistence(ctx contractapi.TransactionContextInterfa
 
 func (s *SmartContract) RegisterOwner(ctx contractapi.TransactionContextInterface, Name string) error {
 
+
+
 	// NAME SHOULD BE PASSED AS A PARAMETER
 	// id generation happens in this function- on creation of an owner
 	ownerexists, err := s.OwnerExistence(ctx, Name) // TODO: FIND OUT HOW TO CHECK FOR OWNER NAME INSTEAD OF ID (gen ID when registering owner- not here)
@@ -278,3 +280,5 @@ func(s *SmartContract) DeleteOwner(ctx contractapi.TransactionContextInterface, 
     return nil
 
 }
+
+
