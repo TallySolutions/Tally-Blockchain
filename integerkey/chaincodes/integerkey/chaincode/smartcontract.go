@@ -384,68 +384,9 @@ if !exists {
 
 // trasnfer( asset id, destination owner)
 
-func (s *SmartContract) IsOwnerActive(ctx contractapi.TransactionContextInterface, Name string) (string, error) {
-	// returns boolean for owner status
-	owners_list, err := s.GetAllOwners(ctx)
-	if err != nil {
-		return "false", fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	var owner *OwnerAsset
-	for _, iteratorVar := range owners_list{
-		if iteratorVar.OwnerName == Name{
-			owner= iteratorVar
-			break
-		}
-		return "owner does not exist", nil
-	}
-	if owner.IsActive{
-		return "true", nil
-	} else{
-		return "false", nil
-	}
-}
 
 
 
-func (s *SmartContract) GetAllOwners(ctx contractapi.TransactionContextInterface) ([]*OwnerAsset, error) {
-	iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
-
-	if err != nil {
-
-		return nil, err
-
-	}
-
-	defer iteratorVar.Close()
-
-	var owners []*OwnerAsset
-	var ownerCount = 0
-
-	for iteratorVar.HasNext() {
-		queryResponse, err := iteratorVar.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		if strings.HasPrefix(queryResponse.Key, OwnerPrefix) {
-			var owner OwnerAsset
-			err = json.Unmarshal(queryResponse.Value, &owner)
-			if err != nil {
-				return nil, err
-			}
-			owners = append(owners, &owner)
-			ownerCount++
-		}
-	}
-
-	if ownerCount > 0 {
-		return owners, nil
-	} else {
-		return []*OwnerAsset{}, nil
-	}
-
-}
 
 
 
