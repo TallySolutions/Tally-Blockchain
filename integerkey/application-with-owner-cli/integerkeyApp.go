@@ -31,7 +31,6 @@ const (
 	keyPath      = users_common_path + "/" + user + "/msp/keystore/"
 	intkeyccName       = "integerkey"
 	ccName = "integerkey"
-	ownerccName = "owner"
 	channelName  = "tally"
 
 )
@@ -44,10 +43,6 @@ var tlsCertPath string
 
 func printUsage()  {
 	panic("Usage: \n" +
-	"      integerKeyApp <peer_node> reg_owner <owner_name>\n" +
-	"      integerKeyApp <peer_node> all_owners\n" +
-	"      integerKeyApp <peer_node> unreg_owner <owner_name>\n" +
-	"      integerKeyApp <peer_node> del_owner <owner_name>\n" +
 	"      integerKeyApp <peer_node> new_asset <var_name>\n" +           
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
@@ -91,39 +86,8 @@ func main() {
 	if ops == "dec" && len(os.Args) < 4 {
 		printUsage()
 	}
-
-	if ops == "reg_owner" {
-	   owner_name := os.Args[3]
-	   fmt.Printf("Registering owner %s \n", owner_name)
-	   client, gw := connect()
-	   ownercontract := getContract(gw, ownerccName)
-	   RegisterOwner(ownercontract , owner_name)
-	   gw.Close()
-	   client.Close()
-	} else if ops == "all_owners" {
-		fmt.Printf("getting all owners\n")
-		client,gw := connect()
-		ownercontract := getContract(gw, ownerccName)
-		GetAllOwners(ownercontract)
-		gw.Close()
-		client.Close()
-	 } else if ops == "unreg_owner" {
-		owner_name := os.Args[3]
-		fmt.Printf("Unregistering owner %s \n", owner_name)
-		client, gw := connect()
-		ownercontract := getContract(gw, ownerccName)
-		UnregisterOwner(ownercontract,owner_name)
-		gw.Close()
-		client.Close()
-	 } else if ops == "del_owner" {
-		owner_name := os.Args[3]
-		fmt.Printf("Deleting owner %s \n", owner_name)
-		client, gw := connect()
-		contract := getContract(gw, ownerccName)
-		deleteOwner(contract , owner_name)
-		gw.Close()
-		client.Close()
-	 } else if ops == "new_asset" {
+	
+	if ops == "new_asset" {
 		var_name := os.Args[3]
 		fmt.Printf("Initiating creation of new asset %s \n", var_name)
 		client, gw := connect()
@@ -295,33 +259,6 @@ func newSign() identity.Sign {
 
 
 
-
-
-func RegisterOwner(contract *client.Contract, owner_name string ) {
-	evaluateResult, err := contract.SubmitTransaction("RegisterOwner", owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
-	if err != nil {
-		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_name, err)
-		return
-	}
-	fmt.Printf("\n--> Registered owner : %s . %s\n", owner_name, string(evaluateResult))
-}
-
-func UnregisterOwner(contract *client.Contract, owner_name string ) {
-	evaluateResult, err := contract.SubmitTransaction("UnregisterOwner", owner_name) // EvaluateTransaction evaluates a transaction in the scope of the specified context and returns its context
-	if err != nil {
-		fmt.Printf("\n--> Error in reading Asset : %s => %s\n", owner_name, err)
-		return
-	}
-	fmt.Printf("\n--> Unregistered owner : %s . %s\n",owner_name, string(evaluateResult))
-}
-func GetAllOwners(contract *client.Contract ) {
-
-	transactionResult, err := contract.EvaluateTransaction("GetAllOwners")
-
-	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(transactionResult), err)
-
-}
-
 // function to call the ReadAsset function present in smartcontract.go
 func readAsset(contract *client.Contract , name string) {
 
@@ -385,12 +322,6 @@ func deleteAsset(contract *client.Contract , name string){
 	fmt.Printf("\n------> After SubmitTransaction: %s \n",  err)
 }
 
-func deleteOwner(contract *client.Contract , name string){
-
-
-	_, err := contract.SubmitTransaction("DeleteOwner", name) 
-	fmt.Printf("\n------> After SubmitTransaction: %s \n",  err)
-}
 
 
 func formatJSON(data []byte) string {
