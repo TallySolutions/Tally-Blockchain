@@ -204,8 +204,8 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
     asset_read, err := s.ReadAsset(ctx, Name) // asset is read
     if err != nil {
     return nil, err
-}
-
+    }
+    owner_asset:= asset_read.OwnerID
 
 intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     if err !=nil {
@@ -222,7 +222,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        // OwnerID: ownerID,
+        OwnerID: owner_asset,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -242,7 +242,9 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
     return nil, err
     }
 
-intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
+    owner_asset:= asset_read.OwnerID
+
+    intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     if err !=nil {
     fmt.Println(err)
     }
@@ -257,7 +259,7 @@ intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     asset := Asset {
         Name:  Name,
         Value: newValue,
-        // OwnerID: ownerID,
+        OwnerID: owner_asset,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -299,50 +301,50 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
     // REMOVE OWNERID AS PARAM-- GET OWNERID FROM CONTEXT(USER CALLING IT)
 
-    iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
+    // iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
 
-	if err != nil {
+	// if err != nil {
 
-		return nil, err
+	// 	return nil, err
 
-	}
+	// }
 
-	defer iteratorVar.Close()
+	// defer iteratorVar.Close()
 
-	for iteratorVar.HasNext() {
-		queryResponse, err := iteratorVar.Next()
-		if err != nil {
-			return nil, err
-		}
-        println(queryResponse.Value)
-    }
+	// for iteratorVar.HasNext() {
+	// 	queryResponse, err := iteratorVar.Next()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+    //     println(queryResponse.Value)
+    // }
 
     asset, err:= s.ReadAsset(ctx, Name)
     if err != nil {
         return nil, err
     }
-    println(asset.OwnerID)
-    ownerassetJSON, err:= ctx.GetStub().GetState(OwnerPrefix + asset.OwnerID)
-    if err != nil {
-        return nil, err
-    }
-    println(string(ownerassetJSON))
-    var ownerasset OwnerAsset
-    err = json.Unmarshal(ownerassetJSON, &ownerasset)
-    if err != nil {
-    return nil, err
-    }
-    currownerName:= ownerasset.OwnerName
-    println("Current owner Name:"+ currownerName)
+    // println(asset.OwnerID)
+    // ownerassetJSON, err:= ctx.GetStub().GetState(OwnerPrefix + asset.OwnerID)
+    // if err != nil {
+    //     return nil, err
+    // }
+    // println(string(ownerassetJSON))
+    // var ownerasset OwnerAsset
+    // err = json.Unmarshal(ownerassetJSON, &ownerasset)
+    // if err != nil {
+    // return nil, err
+    // }
+    // currownerName:= ownerasset.OwnerName
+    // println("Current owner Name:"+ currownerName)
 
-    // we have retrived the current owner name.. now we have to verify if it is active
-    if !ownerasset.IsActive{
-        return nil, fmt.Errorf("PROBLEM: %s", "not active")
-    }
+    // // we have retrived the current owner name.. now we have to verify if it is active
+    // if !ownerasset.IsActive{
+    //     return nil, fmt.Errorf("PROBLEM: %s", "not active")
+    // }
 
-    // if current owner is active, continue
+    // // if current owner is active, continue
 
-    println("New owner ID:" + newOwnerID)
+    // println("New owner ID:" + newOwnerID)
     
     // overwriting current asset with new owner id
     val_AssetInt:= asset.Value
