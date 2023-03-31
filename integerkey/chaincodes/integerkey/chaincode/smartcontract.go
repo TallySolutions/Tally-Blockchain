@@ -7,7 +7,6 @@ import (
     "fmt"
     "strings"
     "strconv"
-    // "github.com/google/uuid"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
@@ -48,7 +47,6 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 
 func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterface, Name string)(string, error){
-	//returns ownerID to the app that calls it
 	assets_list, err := s.GetAllAssets(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to read from world state: %v", err)
@@ -59,9 +57,7 @@ func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterfac
 			asset = iteratorVar
 			break
 		}
-	}
-	//check for existence 
-	// found and retrieved the matching owner, now we have to return the id of the owner
+    }
 	return string(asset.Value), nil
 	
 }
@@ -129,10 +125,6 @@ return &asset, nil
 func (s *SmartContract )GetAssetsPagination(ctx contractapi.TransactionContextInterface, startname string, endname string, bookmark string) ([] *Asset, error) {
 
     // NOTE: BOOKMARK HAS TO BE SENT AS AN EMPTY STRING WHEN SENT AS A PARAMETER
-    // pageSizeInt, e := strconv.Atoi(pageSize)
-    // if e != nil {
-    // 	return nil, e
-    //   }
     pageSizeInt := 5
                    iteratorVar, midvar, err:= ctx.GetStub().GetStateByRangeWithPagination(Prefix + startname, Prefix + endname, int32(pageSizeInt), bookmark)
     if err !=nil && midvar!=nil {
@@ -200,7 +192,6 @@ defer iteratorVar.Close()
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
     // NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
-    // accepting owner because we will be OVERWRITING the asset
     asset_read, err := s.ReadAsset(ctx, Name) // asset is read
     if err != nil {
     return nil, err
@@ -275,23 +266,6 @@ updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
 
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
-    // asset_read, err := s.ReadAsset(ctx, Name)
-    // if err != nil {
-    // return nil, err
-    // }
-    // overwriting original asset with new owner
-
-    // finding the asset with Name provided as param
-    // assetJSON, err:= ctx.GetStub().GetState(Prefix + Name)
-    // if err != nil {
-    //     return nil, err
-    // }
-    // println(assetJSON)
-    // var asset Asset
-    // err = json.Unmarshal(assetJSON, &asset)
-    // if err != nil {
-    // return nil, err
-    // }
 
     newOwnerID, err := submittingClientIdentity(ctx)
 	if err != nil {
@@ -299,52 +273,10 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 
-    // REMOVE OWNERID AS PARAM-- GET OWNERID FROM CONTEXT(USER CALLING IT)
-
-    // iteratorVar, err := ctx.GetStub().GetStateByRange("", "")
-
-	// if err != nil {
-
-	// 	return nil, err
-
-	// }
-
-	// defer iteratorVar.Close()
-
-	// for iteratorVar.HasNext() {
-	// 	queryResponse, err := iteratorVar.Next()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-    //     println(queryResponse.Value)
-    // }
-
     asset, err:= s.ReadAsset(ctx, Name)
     if err != nil {
         return nil, err
     }
-    // println(asset.OwnerID)
-    // ownerassetJSON, err:= ctx.GetStub().GetState(OwnerPrefix + asset.OwnerID)
-    // if err != nil {
-    //     return nil, err
-    // }
-    // println(string(ownerassetJSON))
-    // var ownerasset OwnerAsset
-    // err = json.Unmarshal(ownerassetJSON, &ownerasset)
-    // if err != nil {
-    // return nil, err
-    // }
-    // currownerName:= ownerasset.OwnerName
-    // println("Current owner Name:"+ currownerName)
-
-    // // we have retrived the current owner name.. now we have to verify if it is active
-    // if !ownerasset.IsActive{
-    //     return nil, fmt.Errorf("PROBLEM: %s", "not active")
-    // }
-
-    // // if current owner is active, continue
-
-    // println("New owner ID:" + newOwnerID)
     
     // overwriting current asset with new owner id
     val_AssetInt:= asset.Value
