@@ -5,7 +5,6 @@ import (
     "encoding/base64"
     "encoding/json"
     "fmt"
-    "strings"
     "strconv"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
