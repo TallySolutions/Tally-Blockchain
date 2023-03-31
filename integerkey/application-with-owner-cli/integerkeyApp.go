@@ -31,7 +31,7 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user         = "user2"
+	user         = "user1"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
