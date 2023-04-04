@@ -16,23 +16,14 @@ type Asset struct {
     Name  string `json:"Name"`
     Value uint   `json:"Value"`
     OwnerID string `json:"OwnerID"`
+    TransferStatus string `json:"TransferStatus"`
 }
 
 
 
-// ADD REQUESTED OWNER to struct- WHEN IMPLMENTING FUNC
-
-
-type OwnerAsset struct {
-	OwnerID   string `json:"OwnerID"`
-	OwnerName string `json:"OwnerName"`
-	IsActive  bool   `json:"IsActive"`
-}
-
-
+// ADD REQUESTED OWNER to struct- WHEN IMPLEMENTING FUNC
 
 const Prefix = "Key: "
-const OwnerPrefix="Owner: "
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
@@ -87,6 +78,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
                 Name: Name,
                 Value: 0,
                 OwnerID: OwnerID,
+                TransferStatus: "NA",   // default value; can be "NA", "approved" or "requested"
             }
             assetJSON, err := json.Marshal(asset)
             if err != nil {
@@ -196,6 +188,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
     return nil, err
     }
     owner_asset:= asset_read.OwnerID
+    transferstatus:= asset_read.TransferStatus
 
 intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     if err !=nil {
@@ -213,6 +206,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
         Name:  Name,
         Value: newValue,
         OwnerID: owner_asset,
+        TransferStatus: transferstatus,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -233,6 +227,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
     }
 
     owner_asset:= asset_read.OwnerID
+    transferstatus:= asset_read.TransferStatus
 
     intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     if err !=nil {
@@ -250,6 +245,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
         Name:  Name,
         Value: newValue,
         OwnerID: owner_asset,
+        TransferStatus: transferstatus,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -270,7 +266,6 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	if err != nil {
 		return nil,err
 	}
-
 
     asset, err:= s.ReadAsset(ctx, Name)
     if err != nil {
@@ -338,12 +333,55 @@ func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (stri
 
 
 
-// REQUEST TRANSFER- req transanction
+// REQUEST TRANSFER- req transaction
+
+
+func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error){
+
+    // extracting the id of the requesting owner
+
+    requestingOwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+
+    // acquiring the asset that is to be transferred
+
+    asset, err:= s.ReadAsset(ctx, Name)
+    if err != nil {
+        return nil, err
+    }
+
+    asset_value:= asset.Value
+    asset_ownerID:= asset.OwnerID
+
+    if asset_ownerID == requestingOwnerID{
+        println("This owner already owns the asset")
+        return nil, fmt.Errorf("This owner already owns the asset")
+    }
+    
+    // changing asset's transfer status from "NA" to "requested"
+
+    new_asset := Asset {
+        Name:  Name,
+        Value: asset_value,
+        OwnerID:  asset_ownerID,
+        TransferStatus: "requested",
+    }
+
+    assetJSON, err := json.Marshal(new_asset)
+    if err != nil {
+    return nil, err
+    }
+
+    ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+    return &new_asset , nil
+
+}
+
 
 // two modes- automatic or requires approval(based on condition- asset value<10 or >=10)
-
-
-
 
 
 
@@ -353,6 +391,58 @@ func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (stri
 
 
 
+func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error){
+
+    // extracting the id of the owner that is supposed to perform the approval
+
+    approvingOwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+
+    // acquiring the asset that is to be transferred
+
+    asset, err:= s.ReadAsset(ctx, Name)
+    if err != nil {
+        return nil, err
+    }
+
+    asset_value:= asset.Value
+    asset_ownerID:= asset.OwnerID
+    asset_status:= asset.TransferStatus
+    
+    // if the "approving" owner is not the same as current asset owner
+
+    if asset_ownerID != approvingOwnerID{
+        println("This owner cannot approve of the transfer")
+        return nil, fmt.Errorf("This owner cannot approve of the transfer")
+    }
+
+    // if the asset is not being requested for transfer
+    if asset_status != "requested"{
+        println("This asset has not been requested")
+        return nil, fmt.Errorf("This asset has not been requested")
+    }
+
+    // changing asset's transfer status from "requested" to "approved"
+
+    new_asset := Asset {
+        Name:  Name,
+        Value: asset_value,
+        OwnerID:  asset_ownerID,
+        TransferStatus: "approved",
+    }
+
+    assetJSON, err := json.Marshal(new_asset)
+    if err != nil {
+    return nil, err
+    }
+
+    ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+    return &new_asset , nil
+
+}
 
 
 

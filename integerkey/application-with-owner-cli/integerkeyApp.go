@@ -17,14 +17,14 @@ import (
 
 )
 
-
+// var user string = "Admin"
 
 const (
 	mspID        = "Tally"
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user         = "user1"
+	user         = "user2"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
@@ -46,6 +46,8 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> new_asset <var_name>\n" +           
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
+	"      integerKeyApp <peer_node> request_transfer <var_name>\n" +
+	"      integerKeyApp <peer_node> approve_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> transfer_asset <var_name>\n" +
 	"      integerKeyApp <peer_node> dec <var_name> <dec_by> \n" +
 	"      integerKeyApp <peer_node> del <var_name>\n" +
@@ -127,6 +129,22 @@ func main() {
 		client, gw := connect()
 		contract := getContract(gw, ccName)
 		decreaseValue(contract, var_name, dec_by)
+		gw.Close()
+		client.Close()
+	}else if ops == "request_transfer" {
+		var_name := os.Args[3]
+		fmt.Printf("Requesting to transfer asset %s to user %s \n", var_name, user)
+		client, gw := connect()
+		contract := getContract(gw, ccName)
+		RequestTransfer(contract, var_name)
+		gw.Close()
+		client.Close()
+	}else if ops == "approve_transfer" {
+		var_name := os.Args[3]
+		// fmt.Printf("Transfer of asset %s is now to be approved by %s \n", var_name, user)
+		client, gw := connect()
+		contract := getContract(gw, ccName)
+		ApproveTransfer(contract, var_name)
 		gw.Close()
 		client.Close()
 	}else if ops == "transfer_asset" {
@@ -296,6 +314,22 @@ func decreaseValue(contract *client.Contract, name string, decVal string) {
 }
 
 
+
+func RequestTransfer(contract *client.Contract,  name string) {
+
+	fmt.Printf("Asset name : %s , Requesting transfer of asset to: %s ", name, user)
+
+	evaluatedAsset, err := contract.SubmitTransaction("RequestTransfer", name)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+}
+
+func ApproveTransfer(contract *client.Contract,  name string) {
+
+	fmt.Printf("Asset name : %s ", name)
+
+	evaluatedAsset, err := contract.SubmitTransaction("ApproveTransfer", name)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+}
 
 
 func transferAsset(contract *client.Contract,  name string) {
