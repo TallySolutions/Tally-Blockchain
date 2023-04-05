@@ -272,12 +272,21 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
         return nil, err
     }
     
+
+    if asset.TransferStatus != "approved"{
+        println("Not accepted")
+        return nil, fmt.Errorf("Transfer has not been approved")
+    }
+
+
+    // if transfer has been approved
     // overwriting current asset with new owner id
     val_AssetInt:= asset.Value
     new_asset := Asset {
         Name:  Name,
         Value: val_AssetInt,
         OwnerID: newOwnerID,
+        TransferStatus: "NA",
     }
 
     assetJSON, err := json.Marshal(new_asset)
@@ -385,11 +394,7 @@ func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterf
 
 
 
-
-
 // APPROVE TRANSFER- for the user who owns the asset
-
-
 
 func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error){
 

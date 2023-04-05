@@ -24,7 +24,7 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user         = "user2"
+	user         = "user1"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
@@ -47,6 +47,7 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
 	"      integerKeyApp <peer_node> request_transfer <var_name>\n" +
+	"      integerKeyApp <peer_node> perform_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> approve_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> transfer_asset <var_name>\n" +
 	"      integerKeyApp <peer_node> dec <var_name> <dec_by> \n" +
@@ -137,6 +138,14 @@ func main() {
 		client, gw := connect()
 		contract := getContract(gw, ccName)
 		RequestTransfer(contract, var_name)
+		gw.Close()
+		client.Close()
+	}else if ops == "perform_transfer" {
+		var_name := os.Args[3]
+		fmt.Printf("Initiating transfer of %s\n", var_name)
+		client, gw := connect()
+		contract := getContract(gw, ccName)
+		PerformTransfer(contract, var_name)
 		gw.Close()
 		client.Close()
 	}else if ops == "approve_transfer" {
@@ -320,6 +329,14 @@ func RequestTransfer(contract *client.Contract,  name string) {
 	fmt.Printf("Asset name : %s , Requesting transfer of asset to: %s ", name, user)
 
 	evaluatedAsset, err := contract.SubmitTransaction("RequestTransfer", name)
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
+}
+
+func PerformTransfer(contract *client.Contract,  name string) {
+
+	fmt.Printf("Asset name : %s , Performing transfer of asset to: %s ", name, user)
+
+	evaluatedAsset, err := contract.SubmitTransaction("TransferAsset", name)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 }
 
