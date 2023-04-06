@@ -24,7 +24,7 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user         = "user1"
+	user= "user1"
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
@@ -328,7 +328,7 @@ func RequestTransfer(contract *client.Contract,  name string) {
 
 	fmt.Printf("Asset name : %s , Requesting transfer of asset to: %s ", name, user)
 
-	evaluatedAsset, err := contract.SubmitTransaction("RequestTransfer", name)
+	evaluatedAsset, err := contract.SubmitTransaction("RequestTransfer", name, user)
 	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
 }
 

@@ -5,6 +5,7 @@ import (
     "encoding/base64"
     "encoding/json"
     "fmt"
+    "strings"
     "strconv"
     "github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -17,6 +18,7 @@ type Asset struct {
     Value uint   `json:"Value"`
     OwnerID string `json:"OwnerID"`
     TransferStatus string `json:"TransferStatus"`
+    RequestingUser string `json:RequestingUser`
 }
 
 
@@ -79,6 +81,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
                 Value: 0,
                 OwnerID: OwnerID,
                 TransferStatus: "NA",   // default value; can be "NA", "approved" or "requested"
+                RequestingUser: "NA",    // can be NA or the ID of the user that is requesting for transfer
             }
             assetJSON, err := json.Marshal(asset)
             if err != nil {
@@ -189,6 +192,7 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
     }
     owner_asset:= asset_read.OwnerID
     transferstatus:= asset_read.TransferStatus
+    requser:= asset_read.RequestingUser
 
 intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     if err !=nil {
@@ -207,6 +211,7 @@ intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
         Value: newValue,
         OwnerID: owner_asset,
         TransferStatus: transferstatus,
+        RequestingUser: requser,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -228,6 +233,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
 
     owner_asset:= asset_read.OwnerID
     transferstatus:= asset_read.TransferStatus
+    requser:= asset_read.RequestingUser
 
     intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     if err !=nil {
@@ -246,6 +252,7 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
         Value: newValue,
         OwnerID: owner_asset,
         TransferStatus: transferstatus,
+        RequestingUser: requser,
     }
     assetJSON, err := json.Marshal(asset)
     if err != nil {
@@ -287,6 +294,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
         Value: val_AssetInt,
         OwnerID: newOwnerID,
         TransferStatus: "NA",
+        RequestingUser: "NA",
     }
 
     assetJSON, err := json.Marshal(new_asset)
@@ -322,9 +330,6 @@ if !exists {
 
 
 
-
-
-
 func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
         b64ID, err := ctx.GetClientIdentity().GetID()
         if err != nil {
@@ -345,7 +350,7 @@ func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (stri
 // REQUEST TRANSFER- req transaction
 
 
-func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error){
+func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterface, Name string, reqUser string) (*Asset, error){
 
     // extracting the id of the requesting owner
 
@@ -369,13 +374,14 @@ func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterf
         return nil, fmt.Errorf("This owner already owns the asset")
     }
     
-    // changing asset's transfer status from "NA" to "requested"
+    // changing asset's transfer status from "NA" to "requested" and changing requesting user
 
     new_asset := Asset {
         Name:  Name,
         Value: asset_value,
         OwnerID:  asset_ownerID,
         TransferStatus: "requested",
+        RequestingUser: reqUser,
     }
 
     assetJSON, err := json.Marshal(new_asset)
@@ -415,6 +421,7 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
     asset_value:= asset.Value
     asset_ownerID:= asset.OwnerID
     asset_status:= asset.TransferStatus
+    requestingUser:= asset.RequestingUser
     
     // if the "approving" owner is not the same as current asset owner
 
@@ -429,6 +436,28 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
         return nil, fmt.Errorf("This asset has not been requested")
     }
 
+
+    // verifying requesting user --------- FOR NOW: STARTS WITH "user"
+    if !strings.HasPrefix(requestingUser, "user"){
+        println("This user cant make a transfer request")
+        // restoring asset's original conditions
+        new_asset := Asset {
+            Name:  Name,
+            Value: asset_value,
+            OwnerID:  asset_ownerID,
+            TransferStatus: "NA",
+            RequestingUser: requestingUser,
+        }
+        assetJSON, err := json.Marshal(new_asset)
+        if err != nil {
+        return nil, err
+        }
+        ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+        return nil, fmt.Errorf("This user cant make a transfer request")
+    }
+
+
     // changing asset's transfer status from "requested" to "approved"
 
     new_asset := Asset {
@@ -436,6 +465,7 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
         Value: asset_value,
         OwnerID:  asset_ownerID,
         TransferStatus: "approved",
+        RequestingUser: requestingUser,
     }
 
     assetJSON, err := json.Marshal(new_asset)
