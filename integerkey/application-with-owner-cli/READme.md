@@ -125,7 +125,7 @@ The following command alows user6 to delete asset1.
 
 ```userid=user5 go run . tbchlfdevpeer01 del asset1```
 
-### Viewing list of al assets
+### Viewing list of all assets
 
 This functionality lets us view all the assets that exist on the ledger.
 
