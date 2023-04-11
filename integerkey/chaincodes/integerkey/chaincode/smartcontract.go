@@ -327,10 +327,17 @@ if !exists {
 
 // trasnfer( asset id, destination owner)
 
-
+// create functons to check if creator= true or approver= true
 
 
 func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+
+    // add code for assertion
+    err0 := ctx.GetClientIdentity().AssertAttributeValue("approver", "true")
+	if err0 != nil {
+		return "", fmt.Errorf("submitting client not authorized to create asset, does not have necessary role")
+	}
+
         b64ID, err := ctx.GetClientIdentity().GetID()
         if err != nil {
             return "", fmt.Errorf("Failed to read clientID: %v", err)
