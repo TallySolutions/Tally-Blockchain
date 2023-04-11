@@ -132,3 +132,6 @@ This functionality lets us view all the assets that exist on the ledger.
 ```userid=user4 go run . tbchlfdevpeer01 list```
 
 The above command lets user4 view all the assets on the ledger.
+
+
+# ABAC- Attribute Based Access Control
