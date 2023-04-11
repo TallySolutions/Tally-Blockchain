@@ -330,13 +330,16 @@ if !exists {
 // create functons to check if creator= true or approver= true
 
 
-func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
-
-    // add code for assertion
-    err0 := ctx.GetClientIdentity().AssertAttributeValue("approver", "true")
-	if err0 != nil {
-		return "", fmt.Errorf("submitting client not authorized to create asset, does not have necessary role")
+func checkApprover(ctx contractapi.TransactionContextInterface) bool{
+    err := ctx.GetClientIdentity().AssertAttributeValue("approver", "true")
+	if err != nil {
+		return false
 	}
+    return true
+}
+
+
+func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 
         b64ID, err := ctx.GetClientIdentity().GetID()
         if err != nil {
@@ -417,6 +420,11 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
 	if err != nil {
 		return nil,err
 	}
+
+    Is_approver := checkApprover(ctx)
+    if !Is_approver{
+        return nil, fmt.Errorf("Not enough permissions")
+    }
 
     // acquiring the asset that is to be transferred
 
