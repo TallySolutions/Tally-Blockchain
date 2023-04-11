@@ -49,11 +49,10 @@ func printUsage()  {
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
 	"      integerKeyApp <peer_node> dec <var_name> <dec_by> \n" +
-	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> request_transfer <var_name>\n" +
-	"      integerKeyApp <peer_node> perform_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> approve_transfer <var_name>\n" +
-	"      integerKeyApp <peer_node> transfer_asset <var_name>\n" +
+	"      integerKeyApp <peer_node> perform_transfer <var_name>\n" +
+	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> list<\n" +
 	"\n"+
 	"  Where:\n" +
@@ -168,14 +167,6 @@ func main() {
 		client, gw := connect()
 		contract := getContract(gw, ccName)
 		ApproveTransfer(contract, var_name)
-		gw.Close()
-		client.Close()
-	}else if ops == "transfer_asset" {
-		var_name := os.Args[3]
-		fmt.Printf("Transferring asset %s to user %s \n", var_name, user)
-		client, gw := connect()
-		contract := getContract(gw, ccName)
-		transferAsset(contract, var_name)
 		gw.Close()
 		client.Close()
 	}else if ops == "list" {
@@ -363,13 +354,6 @@ func ApproveTransfer(contract *client.Contract,  name string) {
 }
 
 
-func transferAsset(contract *client.Contract,  name string) {
-
-	fmt.Printf("Asset name : %s , Transfer asset to: %s ", name, user)
-
-	evaluatedAsset, err := contract.SubmitTransaction("TransferAsset", name)
-	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(evaluatedAsset), err)
-}
 
 
 func getAllAssets(contract *client.Contract ) {
