@@ -42,7 +42,7 @@ For example,
 `./14_DeployChaincode.sh tally integerkey ../integerkey/chaincodes/integerkey/ -s 40`
 
 
-## Running the application
+## Running the application-with-owner-cli
 
 After the network has been set up and the chaincode has been deployed to the channel, the application can be used to call chaincode functions i.e. evaluate or submit transactions to the ledger- depending upon the function called.
 
