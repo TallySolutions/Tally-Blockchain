@@ -17,18 +17,20 @@ import (
 
 )
 
+
 // var user string = "Admin"
+
 
 const (
 	mspID        = "Tally"
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	user= "user1"
+	// user= os.Getenv("userid") // getenv varaible ---> os.Getenv(userid)
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
-	certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
-	keyPath      = users_common_path + "/" + user + "/msp/keystore/"
+	// certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
+	// keyPath      = users_common_path + "/" + user + "/msp/keystore/"
 	intkeyccName       = "integerkey"
 	ccName = "integerkey"
 	channelName  = "tally"
@@ -60,7 +62,19 @@ func printUsage()  {
 	"      <inc_by>   : increment by how much value\n" +
 	"      <dec_by>   : decrement by how much value\n")
 }
+
+	var user string
+	var certPath string
+	var keyPath string
+
 func main() {
+
+
+	user= os.Getenv("userid") // getenv varaible ---> os.Getenv(userid)
+	certPath= users_common_path + "/" + user + "/msp/signcerts/cert.pem"
+	keyPath= users_common_path + "/" + user + "/msp/keystore/"
+
+	fmt.Printf("USER:%s \n", user)
 
     if len(os.Args) < 2 {
 		printUsage()
