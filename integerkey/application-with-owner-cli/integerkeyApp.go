@@ -45,15 +45,15 @@ var tlsCertPath string
 
 func printUsage()  {
 	panic("Usage: \n" +
-	"      integerKeyApp <peer_node> new_asset <var_name>\n" +           
+	"      integerKeyApp <peer_node> new <var_name>\n" +           
 	"      integerKeyApp <peer_node> read <var_name>\n" +
 	"      integerKeyApp <peer_node> inc <var_name> <inc_by>\n" +
+	"      integerKeyApp <peer_node> dec <var_name> <dec_by> \n" +
+	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> request_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> perform_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> approve_transfer <var_name>\n" +
 	"      integerKeyApp <peer_node> transfer_asset <var_name>\n" +
-	"      integerKeyApp <peer_node> dec <var_name> <dec_by> \n" +
-	"      integerKeyApp <peer_node> del <var_name>\n" +
 	"      integerKeyApp <peer_node> list<\n" +
 	"\n"+
 	"  Where:\n" +
@@ -88,7 +88,7 @@ func main() {
 	ops := os.Args[2]
 	fmt.Printf("ops: %s\n", ops)
 
-	if ops == "new_asset" && len(os.Args) < 3 {
+	if ops == "new" && len(os.Args) < 3 {
 		printUsage()
 	}
 	if ops == "read" && len(os.Args) < 3 {
@@ -104,7 +104,7 @@ func main() {
 		printUsage()
 	}
 	
-	if ops == "new_asset" {
+	if ops == "new" {
 		var_name := os.Args[3]
 		fmt.Printf("Initiating creation of new asset %s \n", var_name)
 		client, gw := connect()
