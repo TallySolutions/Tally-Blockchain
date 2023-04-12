@@ -29,6 +29,10 @@ const Prefix = "Key: "
 
 // function that takes input as context of transaction and the name of the key, returns boolean value that implies whether the asset exists or not, otherwise- an error
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, Name string) (bool, error) {
+
+
+    // all users can access this function irrespective of their approver and creator values
+
     assetJSON, err := ctx.GetStub().GetState(Prefix + Name)
     if err != nil {
     return false, fmt.Errorf("failed to read from world state: %v", err)
@@ -39,6 +43,7 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 
 func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterface, Name string)(string, error){
+
 	assets_list, err := s.GetAllAssets(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to read from world state: %v", err)
@@ -59,6 +64,11 @@ func (s *SmartContract) GetAssetValue(ctx contractapi.TransactionContextInterfac
 // function to create an asset. Input= transaction context, name of the key to be created. Creates new asset if an asset with the name given does not exist
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, Name string) error {
 
+    // those with creator set as true can access this function
+    Is_creator := checkCreator(ctx)
+    if !Is_creator{
+        return fmt.Errorf("Not enough permissions")
+    }
 
     OwnerID, err := submittingClientIdentity(ctx)
 	if err != nil {
@@ -97,6 +107,10 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 // ReadAsset returns the asset stored in the world state with given Name.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
+
+    // all users can access this function irrespective of their approver and creator values
+
+
     assetJSON, err := ctx.GetStub().GetState(Prefix + Name)
     if err != nil {
     return nil, fmt.Errorf("failed to read from world state: %v", err)
@@ -149,6 +163,8 @@ defer iteratorVar.Close()
 
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([] *Asset, error) {
 
+    // all users can access this function irrespective of their approver and creator values
+
     iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
     if err !=nil {
     return nil, err
@@ -186,6 +202,15 @@ defer iteratorVar.Close()
 // IncreaseAsset increases the value of the asset by the specified value- with certain limits
 func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterface, Name string, incrementValue string) (*Asset, error) {
     // NOTE: incrementValue is a string because SubmitTransaction accepts string parameters as input parameters
+
+
+    // only the owner of the asset can do this
+    reqOwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+
+
     asset_read, err := s.ReadAsset(ctx, Name) // asset is read
     if err != nil {
     return nil, err
@@ -194,7 +219,11 @@ func (s *SmartContract) IncreaseAsset(ctx contractapi.TransactionContextInterfac
     transferstatus:= asset_read.TransferStatus
     requser:= asset_read.RequestingUser
 
-intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
+    if owner_asset != reqOwnerID{
+        return nil, fmt.Errorf("User does not have the authority to do this.")
+    }
+
+    intermediateUpdateval, err := strconv.ParseUint(incrementValue, 10, 32)
     if err !=nil {
     fmt.Println(err)
     }
@@ -226,6 +255,13 @@ updatestate_err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
 // DecreaseAsset decreases the value of the asset by the specified value
 func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterface, Name string, decrementValue string) (*Asset, error) {
+
+    reqOwnerID, err := submittingClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+
+
     asset_read, err := s.ReadAsset(ctx, Name)
     if err != nil {
     return nil, err
@@ -234,6 +270,10 @@ func (s *SmartContract) DecreaseAsset(ctx contractapi.TransactionContextInterfac
     owner_asset:= asset_read.OwnerID
     transferstatus:= asset_read.TransferStatus
     requser:= asset_read.RequestingUser
+
+    if owner_asset != reqOwnerID{
+        return nil, fmt.Errorf("User does not have the authority to do this.")
+    }
 
     intermediateval, err := strconv.ParseUint(decrementValue, 10, 32)
     if err !=nil {
@@ -268,6 +308,8 @@ updatestate_Err := ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
 
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
+
+    // only creators can have assets transferred to them- this will be handled in RequestTransfer function
 
     newOwnerID, err := submittingClientIdentity(ctx)
 	if err != nil {
@@ -311,17 +353,25 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 // DeleteAsset deletes the state from the ledger
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, name string) error {
-    exists, err := s.AssetExists(ctx, name)
-    if err != nil {
-    return err
-}
-if !exists {
-    return fmt.Errorf("the asset %s does not exist", name)
-    }
 
-    delop:= ctx.GetStub().DelState(Prefix + name)
-    fmt.Printf("Message received on deletion: %s", delop)
-    return nil
+    // can only be done by approvers and creators
+    Is_creator := checkCreator(ctx)
+    Is_approver := checkApprover(ctx)
+
+    if Is_creator || Is_approver{
+        exists, err := s.AssetExists(ctx, name)
+        if err != nil {
+            return err
+        }
+        if !exists {
+            return fmt.Errorf("the asset %s does not exist", name)
+        }
+
+        delop:= ctx.GetStub().DelState(Prefix + name)
+        fmt.Printf("Message received on deletion: %s", delop)
+        return nil
+    }
+    return fmt.Errorf("User does not have the authority to delete asset.")
 }
 
 
@@ -332,6 +382,14 @@ if !exists {
 
 func checkApprover(ctx contractapi.TransactionContextInterface) bool{
     err := ctx.GetClientIdentity().AssertAttributeValue("approver", "true")
+	if err != nil {
+		return false
+	}
+    return true
+}
+
+func checkCreator(ctx contractapi.TransactionContextInterface) bool{
+    err := ctx.GetClientIdentity().AssertAttributeValue("creator", "true")
 	if err != nil {
 		return false
 	}
@@ -362,47 +420,55 @@ func submittingClientIdentity(ctx contractapi.TransactionContextInterface) (stri
 
 func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterface, Name string, reqUser string) (*Asset, error){
 
-    // extracting the id of the requesting owner
+     // should only be done by appovers or creators
+     Is_creator := checkCreator(ctx)
+     Is_approver := checkApprover(ctx)
+ 
+     if Is_creator || Is_approver{
 
-    requestingOwnerID, err := submittingClientIdentity(ctx)
-	if err != nil {
-		return nil,err
-	}
+            // extracting the id of the requesting owner
 
-    // acquiring the asset that is to be transferred
+            requestingOwnerID, err := submittingClientIdentity(ctx)
+            if err != nil {
+                return nil,err
+            }
 
-    asset, err:= s.ReadAsset(ctx, Name)
-    if err != nil {
-        return nil, err
+            // acquiring the asset that is to be transferred
+
+            asset, err:= s.ReadAsset(ctx, Name)
+            if err != nil {
+                return nil, err
+            }
+
+            asset_value:= asset.Value
+            asset_ownerID:= asset.OwnerID
+
+            if asset_ownerID == requestingOwnerID{
+                println("This owner already owns the asset")
+                return nil, fmt.Errorf("This owner already owns the asset")
+            }
+            
+            // changing asset's transfer status from "NA" to "requested" and changing requesting user
+
+            new_asset := Asset {
+                Name:  Name,
+                Value: asset_value,
+                OwnerID:  asset_ownerID,
+                TransferStatus: "requested",
+                RequestingUser: reqUser,
+            }
+
+            assetJSON, err := json.Marshal(new_asset)
+            if err != nil {
+            return nil, err
+            }
+
+            ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+            return &new_asset , nil
+
     }
-
-    asset_value:= asset.Value
-    asset_ownerID:= asset.OwnerID
-
-    if asset_ownerID == requestingOwnerID{
-        println("This owner already owns the asset")
-        return nil, fmt.Errorf("This owner already owns the asset")
-    }
-    
-    // changing asset's transfer status from "NA" to "requested" and changing requesting user
-
-    new_asset := Asset {
-        Name:  Name,
-        Value: asset_value,
-        OwnerID:  asset_ownerID,
-        TransferStatus: "requested",
-        RequestingUser: reqUser,
-    }
-
-    assetJSON, err := json.Marshal(new_asset)
-    if err != nil {
-    return nil, err
-    }
-
-    ctx.GetStub().PutState(Prefix + Name, assetJSON)
-
-    return &new_asset , nil
-
+    return nil, fmt.Errorf("This user does not have the authority to do this.")
 }
 
 
@@ -414,85 +480,92 @@ func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterf
 
 func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error){
 
-    // extracting the id of the owner that is supposed to perform the approval
 
-    approvingOwnerID, err := submittingClientIdentity(ctx)
-	if err != nil {
-        
-		return nil,err
-	}
-
+    // should only be done by approver
     Is_approver := checkApprover(ctx)
-    if !Is_approver{
-        return nil, fmt.Errorf("Not enough permissions")
-    }
+ 
+    if Is_approver{
+            // extracting the id of the owner that is supposed to perform the approval
 
-    // acquiring the asset that is to be transferred
+            approvingOwnerID, err := submittingClientIdentity(ctx)
+            if err != nil {
+                
+                return nil,err
+            }
 
-    asset, err:= s.ReadAsset(ctx, Name)
-    if err != nil {
-        return nil, err
-    }
+            Is_approver := checkApprover(ctx)
+            if !Is_approver{
+                return nil, fmt.Errorf("Not enough permissions")
+            }
 
-    asset_value:= asset.Value
-    asset_ownerID:= asset.OwnerID
-    asset_status:= asset.TransferStatus
-    requestingUser:= asset.RequestingUser
-    
-    // if the "approving" owner is not the same as current asset owner
+            // acquiring the asset that is to be transferred
 
-    if asset_ownerID != approvingOwnerID{
-        println("This owner cannot approve of the transfer")
-        return nil, fmt.Errorf("This owner cannot approve of the transfer")
-    }
+            asset, err:= s.ReadAsset(ctx, Name)
+            if err != nil {
+                return nil, err
+            }
 
-    // if the asset is not being requested for transfer
-    if asset_status != "requested"{
-        println("This asset has not been requested")
-        return nil, fmt.Errorf("This asset has not been requested")
-    }
+            asset_value:= asset.Value
+            asset_ownerID:= asset.OwnerID
+            asset_status:= asset.TransferStatus
+            requestingUser:= asset.RequestingUser
+            
+            // if the "approving" owner is not the same as current asset owner
+
+            if asset_ownerID != approvingOwnerID{
+                println("This owner cannot approve of the transfer")
+                return nil, fmt.Errorf("This owner cannot approve of the transfer")
+            }
+
+            // if the asset is not being requested for transfer
+            if asset_status != "requested"{
+                println("This asset has not been requested")
+                return nil, fmt.Errorf("This asset has not been requested")
+            }
 
 
-    // verifying requesting user --------- FOR NOW: STARTS WITH "user"
-    if !strings.HasPrefix(requestingUser, "user"){
-        println("This user cant make a transfer request")
-        // restoring asset's original conditions
-        new_asset := Asset {
-            Name:  Name,
-            Value: asset_value,
-            OwnerID:  asset_ownerID,
-            TransferStatus: "NA",
-            RequestingUser: requestingUser,
+            // verifying requesting user --------- FOR NOW: STARTS WITH "user"
+            if !strings.HasPrefix(requestingUser, "user"){
+                println("This user cant make a transfer request")
+                // restoring asset's original conditions
+                new_asset := Asset {
+                    Name:  Name,
+                    Value: asset_value,
+                    OwnerID:  asset_ownerID,
+                    TransferStatus: "NA",
+                    RequestingUser: requestingUser,
+                }
+                assetJSON, err := json.Marshal(new_asset)
+                if err != nil {
+                return nil, err
+                }
+                ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+                return nil, fmt.Errorf("This user cant make a transfer request")
+            }
+
+
+            // changing asset's transfer status from "requested" to "approved"
+
+            new_asset := Asset {
+                Name:  Name,
+                Value: asset_value,
+                OwnerID:  asset_ownerID,
+                TransferStatus: "approved",
+                RequestingUser: requestingUser,
+            }
+
+            assetJSON, err := json.Marshal(new_asset)
+            if err != nil {
+            return nil, err
+            }
+
+            ctx.GetStub().PutState(Prefix + Name, assetJSON)
+
+            return &new_asset , nil
         }
-        assetJSON, err := json.Marshal(new_asset)
-        if err != nil {
-        return nil, err
-        }
-        ctx.GetStub().PutState(Prefix + Name, assetJSON)
 
-        return nil, fmt.Errorf("This user cant make a transfer request")
-    }
-
-
-    // changing asset's transfer status from "requested" to "approved"
-
-    new_asset := Asset {
-        Name:  Name,
-        Value: asset_value,
-        OwnerID:  asset_ownerID,
-        TransferStatus: "approved",
-        RequestingUser: requestingUser,
-    }
-
-    assetJSON, err := json.Marshal(new_asset)
-    if err != nil {
-    return nil, err
-    }
-
-    ctx.GetStub().PutState(Prefix + Name, assetJSON)
-
-    return &new_asset , nil
-
+        return nil, fmt.Errorf("This user cannot approve of asset transfer")
 }
 
 
