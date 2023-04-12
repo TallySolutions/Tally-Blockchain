@@ -418,6 +418,7 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
 
     approvingOwnerID, err := submittingClientIdentity(ctx)
 	if err != nil {
+        
 		return nil,err
 	}
 
