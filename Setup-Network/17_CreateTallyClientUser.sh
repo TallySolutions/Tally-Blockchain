@@ -23,7 +23,7 @@ function RegisterUser()
         CREATOR=$5
         export FABRIC_CA_CLIENT_HOME=${CA_HOME}/client
         infoln "Registering user ${USER} for ${CA_HOME} [${TYPE}] \n Is approver?= ${APPROVER} \n Is creator?= ${CREATOR}"
-        fabric-ca-client register --id.name ${USER} --id.type ${TYPE} --id.affiliation tally --id.attrs 'approver='$APPROVER':ecert, creator:'$CREATOR':ecert' --tls.certfiles "${CA_HOME}/ca-cert.pem"  # added attributes for id affiliations and other attrs
+        fabric-ca-client register --id.name ${USER} --id.type ${TYPE} --id.affiliation tally --id.attrs 'approver='$APPROVER':ecert' --id.attrs 'creator='$CREATOR':ecert' --tls.certfiles "${CA_HOME}/ca-cert.pem"  # added attributes for id affiliations and other attrs
         res=$?
         verifyResult $res "Unable to register user for ${CA_HOME} [${TYPE}]. (Are you trying to re-register a user or CA server is stopped?)"
 

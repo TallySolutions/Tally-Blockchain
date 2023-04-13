@@ -66,7 +66,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
     // those with creator set as true can access this function
     Is_creator := checkCreator(ctx)
-    if !Is_creator{
+    if Is_creator==false{
         return fmt.Errorf("Not enough permissions")
     }
 
@@ -80,7 +80,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
     fmt.Printf("Asset exists returned : %t, %s\n", exists, err)
 
     if err != nil {
-    return err
+        return err
                 }
         if exists {
             return fmt.Errorf("the asset %s already exists", Prefix + Name)
@@ -109,7 +109,6 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, Name string) (*Asset, error) {
 
     // all users can access this function irrespective of their approver and creator values
-
 
     assetJSON, err := ctx.GetStub().GetState(Prefix + Name)
     if err != nil {
@@ -167,9 +166,9 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
     iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
     if err !=nil {
-    return nil, err
-}
-defer iteratorVar.Close()
+        return nil, err
+    }
+    defer iteratorVar.Close()
 
     var assets []*Asset
 
@@ -358,7 +357,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
     Is_creator := checkCreator(ctx)
     Is_approver := checkApprover(ctx)
 
-    if Is_creator || Is_approver{
+    if Is_creator==true || Is_approver==true{
         exists, err := s.AssetExists(ctx, name)
         if err != nil {
             return err
@@ -424,7 +423,7 @@ func (s *SmartContract) RequestTransfer(ctx contractapi.TransactionContextInterf
      Is_creator := checkCreator(ctx)
      Is_approver := checkApprover(ctx)
  
-     if Is_creator || Is_approver{
+     if Is_creator==true || Is_approver==true{
 
             // extracting the id of the requesting owner
 
@@ -484,7 +483,7 @@ func (s *SmartContract) ApproveTransfer(ctx contractapi.TransactionContextInterf
     // should only be done by approver
     Is_approver := checkApprover(ctx)
  
-    if Is_approver{
+    if Is_approver==true{
             // extracting the id of the owner that is supposed to perform the approval
 
             approvingOwnerID, err := submittingClientIdentity(ctx)
