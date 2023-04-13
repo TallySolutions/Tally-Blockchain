@@ -18,7 +18,7 @@ function EnrollUser()
 {
         CA_HOME=$1
         URL=$2
-	MSP=$3
+	      MSP=$3
         export FABRIC_CA_CLIENT_HOME=${CA_HOME}/client
         infoln "Enrolling user for ${CA_HOME}"
         fabric-ca-client enroll -u ${URL}  --csr.names C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=client -M "${MSP}" --tls.certfiles "${CA_HOME}/ca-cert.pem"
