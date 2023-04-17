@@ -20,7 +20,7 @@ function DeleteUser()
     USER=$2
     export FABRIC_CA_CLIENT_HOME=${CA_HOME}/client
     infoln "Deleting User ${USER}"
-    fabric-ca-client identity remove --id.name ${USER}
+           
 }
 
 DeleteUser ${TALLY_CA_HOME} $1 

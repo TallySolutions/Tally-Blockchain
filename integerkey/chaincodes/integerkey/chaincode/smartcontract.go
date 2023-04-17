@@ -95,7 +95,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
             }
             assetJSON, err := json.Marshal(asset)
             if err != nil {
-            return err
+                return err
             }
 
         state_err := ctx.GetStub().PutState(Prefix + Name, assetJSON) // new state added
