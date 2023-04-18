@@ -150,7 +150,7 @@ func (s *SmartContract) DecreaseScore(ctx contractapi.TransactionContextInterfac
     }
 	newScore:= uint(companyAssetRead.score) - ((1000- companyAssetRead.score) * uint(intermediateUpdateval))/100
     if newScore < 0 {
-    	return nil, fmt.Errorf("You cannot have a value more than 1000.")
+    	return nil, fmt.Errorf("You cannot have a value lesser than 0.")
     }
 
     // overwriting original asset with new value
