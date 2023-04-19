@@ -76,6 +76,7 @@ func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInte
         if !exists {
             return fmt.Errorf("the asset %s does not exist", LicenseId)
         }
+		
 	delStateOp:= ctx.GetStub().DelState(LicenseId)
     fmt.Printf("Message received on deletion: %s", delStateOp)
     return nil
