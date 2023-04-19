@@ -99,6 +99,32 @@ func main(){
 		readCompanyAsset(contract,licenseId)
 		gw.Close()
 		client.Close()
+	} else if ops == "increment" {
+		licenseId := os.Args[3]
+		incValue:= os.Args[4]
+		fmt.Printf("Incrementing asset of company by %s \n", incValue)
+		client, gw:= connect()
+		contract := getContract(gw, ccName)
+		incrementCompanyScore(contract,licenseId, incValue)
+		gw.Close()
+		client.Close()
+	} else if ops == "decrement" {
+		licenseId := os.Args[3]
+		decValue:= os.Args[4]
+		fmt.Printf("Decrementing asset of company by %s \n", decValue)
+		client, gw:= connect()
+		contract := getContract(gw, ccName)
+		decrementCompanyScore(contract,licenseId, decValue)
+		gw.Close()
+		client.Close()
+	} else if ops == "unregister" {
+		licenseId := os.Args[3]
+		fmt.Printf("Unregistering company \n")
+		client, gw:= connect()
+		contract := getContract(gw, ccName)
+		unregisterCompany(contract,licenseId)
+		gw.Close()
+		client.Close()
 	} else{
 		printUsage()
 	}
@@ -110,6 +136,12 @@ func registerCompany(contract *client.Contract, licenseId string){
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 }
 
+func unregisterCompany(contract *client.Contract, licenseId string){
+	fmt.Printf("\n--> Initiating unregistration of Company: %s\n", licenseId)
+	result, err := contract.SubmitTransaction("UnregisterCompany", licenseId)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+}
+
 func readCompanyAsset(contract *client.Contract, licenseId string){
 	evaluateResult, err := contract.EvaluateTransaction("ReadCompanyAsset", licenseId) 
 	if err != nil {
@@ -117,6 +149,18 @@ func readCompanyAsset(contract *client.Contract, licenseId string){
 		return
 	}
 	fmt.Printf("\n--> Company asset read : %s\n", string(evaluateResult))
+}
+
+func incrementCompanyScore(contract *client.Contract, licenseId string, incValue string){
+	fmt.Printf("\n--> Initiating increment of score of Company: %s\n", licenseId)
+	result, err := contract.SubmitTransaction("IncreaseScore", licenseId, incValue)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+}
+
+func decrementCompanyScore(contract *client.Contract, licenseId string, decValue string){
+	fmt.Printf("\n--> Initiating decrement of score of Company: %s\n", licenseId)
+	result, err := contract.SubmitTransaction("DecreaseScore", licenseId, decValue)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 }
 
 func connect() (*grpc.ClientConn, *client.Gateway) {
