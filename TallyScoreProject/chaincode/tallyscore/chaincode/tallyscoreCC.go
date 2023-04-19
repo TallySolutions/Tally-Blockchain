@@ -11,23 +11,17 @@ type SmartContract struct {
     contractapi.Contract
 }
 
-type Company struct {
-	companyName string `json:companyName`
-	licenseId string `json:licenseId`
-	// address
-	// reg number
-	// gst number
-}
 
+// NOTE: Write the asset properties in CAMEL CASE- otherwise, chaincode will not get deployed 
 type TallyScoreAsset struct {
-    companyLicenseId string `json:companyLicenseId`
-	score uint `json:score`
+    LicenseId string `json:"LicenseId"`
+	Score uint `json:"Score"`
 }
 
 //function to check whether the company has already been registered
-func (s *SmartContract) companyAssetExists(ctx contractapi.TransactionContextInterface, licenseId string) (bool, error) {
+func (s *SmartContract) companyAssetExists(ctx contractapi.TransactionContextInterface, LicenseId string) (bool, error) {
 
-    companyAssetJSON, err := ctx.GetStub().GetState(licenseId)
+    companyAssetJSON, err := ctx.GetStub().GetState(LicenseId)
     if err != nil {
     	return false, fmt.Errorf("failed to read from world state: %v", err)
     }
@@ -35,11 +29,11 @@ func (s *SmartContract) companyAssetExists(ctx contractapi.TransactionContextInt
     return companyAssetJSON != nil, nil
 }
 
-// function to register company and initialize it's score to 500 
-func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterface, licenseId string) error{
+// function to register company and initialize it's Score to 500 
+func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
 
 	//checking if licenseID is valid
-	companyAssetExists,err:= s.companyAssetExists(ctx, licenseId)
+	companyAssetExists,err:= s.companyAssetExists(ctx, LicenseId)
 	if err!=nil{
 		return fmt.Errorf("error in checking whether asset exists: %v", err)
 	}
@@ -49,25 +43,25 @@ func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterf
 
 	// if the company is unregistered
 	companyScoreAsset := TallyScoreAsset{
-		companyLicenseId: licenseId,
-		score: 500,
+		LicenseId: LicenseId,
+		Score: 500,
 	}
 	companyScoreAssetJSON, err := json.Marshal(companyScoreAsset)
     if err != nil {
         return err
     }
 
-	putStateErr := ctx.GetStub().PutState(licenseId, companyScoreAssetJSON) // new state added to the tallyscore ledger
+	putStateErr := ctx.GetStub().PutState(LicenseId, companyScoreAssetJSON) // new state added to the tallyscore ledger
     fmt.Printf("Asset creation returned : %s\n", putStateErr)
     return putStateErr
 
 } 
 
-// function to unregister a company (deleting it's score asset)
-func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInterface, licenseId string) error{
+// function to unregister a company (deleting it's Score asset)
+func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
 	//checking if licenseID is valid
 	var sumOfDigits int
-	for _, charDigit:= range licenseId{
+	for _, charDigit:= range LicenseId{
 		digit:= int(charDigit- '0')
 		sumOfDigits+= digit
 	}
@@ -75,14 +69,14 @@ func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("Invalid license ID")
 	}
 
-	exists, err := s.companyAssetExists(ctx, licenseId)
+	exists, err := s.companyAssetExists(ctx, LicenseId)
         if err != nil {
             return err
         }
         if !exists {
-            return fmt.Errorf("the asset %s does not exist", licenseId)
+            return fmt.Errorf("the asset %s does not exist", LicenseId)
         }
-	delStateOp:= ctx.GetStub().DelState(licenseId)
+	delStateOp:= ctx.GetStub().DelState(LicenseId)
     fmt.Printf("Message received on deletion: %s", delStateOp)
     return nil
 }
@@ -117,15 +111,15 @@ func (s *SmartContract) IncreaseScore(ctx contractapi.TransactionContextInterfac
     if err !=nil {
     	fmt.Println(err)
     }
-	newScore:= uint(companyAssetRead.score) + ((1000- companyAssetRead.score) * uint(intermediateUpdateval))/100
+	newScore:= uint(companyAssetRead.Score) + ((1000- companyAssetRead.Score) * uint(intermediateUpdateval))/100
     if newScore > 1000 {
     	return nil, fmt.Errorf("You cannot have a value more than 1000.")
     }
 
     // overwriting original asset with new value
     companyAsset := TallyScoreAsset {
-        companyLicenseId: licenseID,
-		score: newScore,
+        LicenseId: licenseID,
+		Score: newScore,
     }
     companyAssetJSON, err := json.Marshal(companyAsset)
     if err != nil {
@@ -133,7 +127,7 @@ func (s *SmartContract) IncreaseScore(ctx contractapi.TransactionContextInterfac
 	}
 
 	updatestate_err := ctx.GetStub().PutState(licenseID, companyAssetJSON)
-	fmt.Printf("Increasing company asset score returned the following: %s ", updatestate_err)
+	fmt.Printf("Increasing company asset Score returned the following: %s ", updatestate_err)
 	return &companyAsset, nil
 }
 
@@ -148,15 +142,15 @@ func (s *SmartContract) DecreaseScore(ctx contractapi.TransactionContextInterfac
     if err !=nil {
     	fmt.Println(err)
     }
-	newScore:= uint(companyAssetRead.score) - ((1000- companyAssetRead.score) * uint(intermediateUpdateval))/100
+	newScore:= uint(companyAssetRead.Score) - ((1000- companyAssetRead.Score) * uint(intermediateUpdateval))/100
     if newScore < 0 {
     	return nil, fmt.Errorf("You cannot have a value lesser than 0.")
     }
 
     // overwriting original asset with new value
     companyAsset := TallyScoreAsset {
-        companyLicenseId: licenseID,
-		score: newScore,
+        LicenseId: licenseID,
+		Score: newScore,
     }
     companyAssetJSON, err := json.Marshal(companyAsset)
     if err != nil {
@@ -164,6 +158,6 @@ func (s *SmartContract) DecreaseScore(ctx contractapi.TransactionContextInterfac
 	}
 
 	updatestate_err := ctx.GetStub().PutState(licenseID, companyAssetJSON)
-	fmt.Printf("Decreasing company asset score returned the following: %s ", updatestate_err)
+	fmt.Printf("Decreasing company asset Score returned the following: %s ", updatestate_err)
 	return &companyAsset, nil
 }
