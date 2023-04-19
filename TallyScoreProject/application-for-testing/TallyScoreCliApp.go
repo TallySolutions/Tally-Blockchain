@@ -19,10 +19,15 @@ const (
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
 	peer_port    = "7051"
+	user= "Admin"
 	cryptoPath   = peer_home + domain 
+	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
+	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
 	TalyScoreccName       = "tallyscore"
 	ccName = "tallyscore"
 	channelName  = "tally"
+
+	// CERTPATH, KEYPATH
 )
 
 var peer string
@@ -45,14 +50,8 @@ func printUsage()  {
 	"      <dec_by>   : decrement by how much value\n")
 }
 
-	var user string
-	var certPath string
-	var keyPath string
 
 func main(){
-	user= os.Getenv("userid") // getenv varaible ---> os.Getenv(userid)
-	certPath= users_common_path + "/" + user + "/msp/signcerts/cert.pem"
-	keyPath= users_common_path + "/" + user + "/msp/keystore/"
 
 	fmt.Printf("USER:%s \n", user)
 
