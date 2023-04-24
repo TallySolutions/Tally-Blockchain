@@ -26,7 +26,6 @@ const (
 	peer_home    = "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/"
 	users_common_path = "/home/ubuntu/fabric/tally-network/clients/users"
 	domain       = "tally.tallysolutions.com"
-	// user= os.Getenv("userid") // getenv varaible ---> os.Getenv(userid)
 	peer_port    = "7051"
 	cryptoPath   = peer_home + domain 
 	// certPath     = users_common_path + "/" + user + "/msp/signcerts/cert.pem"
