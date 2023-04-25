@@ -41,6 +41,7 @@ func printUsage()  {
 	"      TallyScoreCliApp <peer_node> decrement <licenseID> <dec_by> \n" +
 	"      TallyScoreCliApp <peer_node> unregister <licenseID>\n" +
 	"      TallyScoreCliApp <peer_node> createVoucher <Voucher_ID> <Supplier_ID> <Voucher_Type> <Hashcode> <TotalValue> <Currency> <State>\n" +
+	"      TallyScoreCliApp <peer_node> readVoucher <Voucher_ID>" +
 	"\n"+
 	"  Where:\n" +
 	"      <peer_node>: peer host name\n" +
@@ -92,6 +93,9 @@ func main(){
 		printUsage()
 	}
 	if ops == "createVoucher" && len(os.Args) < 9 {
+		printUsage()
+	}
+	if ops == "readVoucher" && len(os.Args) < 3 {
 		printUsage()
 	}
 	
@@ -151,6 +155,14 @@ func main(){
 		createVoucher(contract, VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
 		gw.Close()
 		client.Close()
+	} else if ops == "readVoucher" {
+		VoucherID:= os.Args[3]
+		fmt.Printf("Reading voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		readVoucher(contract, VoucherID)
+		gw.Close()
+		client.Close()
 	} else{
 		printUsage()
 	}
@@ -174,6 +186,16 @@ func createVoucher(contract *client.Contract, VoucherID string, SupplierID strin
 	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
+}
+
+func readVoucher(contract *client.Contract, VoucherID string){
+	
+	evaluateResult, err := contract.EvaluateTransaction("ReadVoucher", VoucherID) 
+	if err != nil {
+		fmt.Printf("\n--> Error in reading Voucher's Asset => %s\n", err)
+		return
+	}
+	fmt.Printf("\n--> Voucher details : %s\n", string(evaluateResult))
 }
 
 func readCompanyAsset(contract *client.Contract, licenseId string){
