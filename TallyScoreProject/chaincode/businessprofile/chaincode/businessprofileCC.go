@@ -15,10 +15,11 @@ type SmartContract struct {
 }
 
 type VoucherAsset struct {
-	User string `json:"User"`
+	OwnerID string `json:"OwnerID"`
+	SupplierID string `json:"SupplierID"`
 	CreatedTime int64 `json:"CreatedTime"`
 	UpdatedTime int64 `json:"UpdatedTime"`
-	Id string `json:"Id"`
+	VoucherID string `json:"VoucherID"`
 	VoucherType string `json:"VoucherType"`
 	Hashcode string `json:"Hashcode"`
 	TotalValue uint `json"TotalValue"`
@@ -31,20 +32,22 @@ type VoucherAsset struct {
 
 // user= msps (client id passed in context)
 
-// id= client id
+// id= voucher id
 
 // time.Now.UnixMilli()---- get time in milli seconds
 
 //---------------------------FUNCTIONS---------------------------
 
 
+// supplier id-- passed as a param for me (only this or reject or approve or send back)
+// only the owner id -- can change the state
 
 // func (s *SmartContract) RegisterBusiness()
  
-func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, username string, VoucherType string, Hashcode string, TotalValue string, Currency string, State string ) error{
+func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string, State string ) error{
 
 	// retrieving id of asset owner (creator)
-	ID, err := getClientIdentity(ctx)
+	OwnerID, err := getClientIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -58,10 +61,11 @@ func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterfac
 
 	asset := VoucherAsset{ //creation of asset
 
-		User: username,
+		OwnerID: OwnerID,
+		SupplierID: SupplierID,
 		CreatedTime: currentTime,
 		UpdatedTime: currentTime,
-		Id: ID,
+		VoucherID: VoucherID,
 		VoucherType: VoucherType,
 		Hashcode: Hashcode,
 		TotalValue: TotalValueStr,
@@ -70,10 +74,10 @@ func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterfac
 		
 	}
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-		state_err := ctx.GetStub().PutState(ID, assetJSON) // new state added
+		if err != nil {
+			return err
+		}
+		state_err := ctx.GetStub().PutState(VoucherID, assetJSON) // new state added
 
 		fmt.Printf("Asset creation returned : %s\n", state_err)
 
@@ -116,4 +120,5 @@ func getClientIdentity(ctx contractapi.TransactionContextInterface) (string, err
 		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
 	}
 	return string(decodeID), nil     // returns clientID as a string
+
 }
