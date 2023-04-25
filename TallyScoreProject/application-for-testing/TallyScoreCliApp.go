@@ -40,7 +40,7 @@ func printUsage()  {
 	"      TallyScoreCliApp <peer_node> increment <licenseID> <inc_by>\n" +
 	"      TallyScoreCliApp <peer_node> decrement <licenseID> <dec_by> \n" +
 	"      TallyScoreCliApp <peer_node> unregister <licenseID>\n" +
-	"      TallyScoreCliApp <peer_node> createVoucher <Voucher_Type> <Hashcode> <TotalValue> <Currency> <State>\n" +
+	"      TallyScoreCliApp <peer_node> createVoucher <Voucher_ID> <Supplier_ID> <Voucher_Type> <Hashcode> <TotalValue> <Currency> <State>\n" +
 	"\n"+
 	"  Where:\n" +
 	"      <peer_node>: peer host name\n" +
@@ -91,7 +91,7 @@ func main(){
 	if ops == "unregister" && len(os.Args) < 3 {
 		printUsage()
 	}
-	if ops == "createVoucher" && len(os.Args) < 7 {
+	if ops == "createVoucher" && len(os.Args) < 9 {
 		printUsage()
 	}
 	
@@ -138,15 +138,17 @@ func main(){
 		gw.Close()
 		client.Close()
 	} else if ops == "createVoucher" {
-		VoucherType:= os.Args[3]
-		Hashcode:= os.Args[4]
-		TotalValue:= os.Args[5]
-		Currency:= os.Args[6]
-		State:= os.Args[7]
+		VoucherID:= os.Args[3]
+		SupplierID:= os.Args[4]
+		VoucherType:= os.Args[5]
+		Hashcode:= os.Args[6]
+		TotalValue:= os.Args[7]
+		Currency:= os.Args[8]
+		State:= os.Args[9]
 		fmt.Printf("Creating voucher... \n")
 		client, gw:= connect()
 		contract := getContract(gw, BusinessProfileCCName)
-		createVoucher(contract, VoucherType, Hashcode, TotalValue, Currency, State)
+		createVoucher(contract, VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
 		gw.Close()
 		client.Close()
 	} else{
@@ -166,10 +168,10 @@ func unregisterCompany(contract *client.Contract, licenseId string){
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 }
 
-func createVoucher(contract *client.Contract, VoucherType string, Hashcode string, TotalValue string, Currency string, State string){
+func createVoucher(contract *client.Contract, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string, State string){
 
 	fmt.Printf("\n--> Initiating creation of voucher of user: %s\n", user)
-	result, err := contract.SubmitTransaction("VoucherCreated", user, VoucherType, Hashcode, TotalValue, Currency, State)
+	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
 }
