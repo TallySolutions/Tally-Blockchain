@@ -108,6 +108,25 @@ func(s *SmartContract) VoucherSentBack(ctx contractapi.TransactionContextInterfa
 
 // func(s *SmartContract) UnregisterBusiness()
 
+func(s *SmartContract) ReadVoucher(ctx contractapi.TransactionContextInterface, VoucherID string) (*VoucherAsset, error){
+
+	VoucherAssetJSON, err := ctx.GetStub().GetState(VoucherID)
+    if err != nil {
+    	return nil, fmt.Errorf("Failed to read from world state: %v", err)
+    }
+    if VoucherAssetJSON == nil {
+    	return nil, fmt.Errorf("A Voucher with ID %s not found.", VoucherID)
+    }
+
+    var ReadVoucherAsset VoucherAsset
+    err = json.Unmarshal(VoucherAssetJSON, &ReadVoucherAsset)
+    if err != nil {
+    	return nil, err
+	}
+
+	return &ReadVoucherAsset, nil
+
+}
 
 func getClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 
