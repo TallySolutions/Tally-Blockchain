@@ -40,8 +40,13 @@ func printUsage()  {
 	"      TallyScoreCliApp <peer_node> increment <licenseID> <inc_by>\n" +
 	"      TallyScoreCliApp <peer_node> decrement <licenseID> <dec_by> \n" +
 	"      TallyScoreCliApp <peer_node> unregister <licenseID>\n" +
-	"      TallyScoreCliApp <peer_node> createVoucher <Voucher_ID> <Supplier_ID> <Voucher_Type> <Hashcode> <TotalValue> <Currency> <State>\n" +
+	"      TallyScoreCliApp <peer_node> createVoucher <Voucher_ID> <Supplier_ID> <Voucher_Type> <Hashcode> <TotalValue> <Currency>\n" +
 	"      TallyScoreCliApp <peer_node> readVoucher <Voucher_ID>" +
+	"      TallyScoreCliApp <peer_node> cancelVoucher <Voucher_ID>" +
+	"      TallyScoreCliApp <peer_node> approveVoucher <Voucher_ID>" +
+	"      TallyScoreCliApp <peer_node> rejectVoucher <Voucher_ID>" +
+	"      TallyScoreCliApp <peer_node> updateVoucher <Voucher_ID> <Value_to_change: Hash or Value> <New_Value>" +
+	"      TallyScoreCliApp <peer_node> sendBackVoucher <Voucher_ID>" +
 	"\n"+
 	"  Where:\n" +
 	"      <peer_node>: peer host name\n" +
@@ -92,13 +97,28 @@ func main(){
 	if ops == "unregister" && len(os.Args) < 3 {
 		printUsage()
 	}
-	if ops == "createVoucher" && len(os.Args) < 9 {
+	if ops == "createVoucher" && len(os.Args) < 8 {
 		printUsage()
 	}
 	if ops == "readVoucher" && len(os.Args) < 3 {
 		printUsage()
 	}
-	
+	if ops == "cancelVoucher" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "approveVoucher" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "rejectVoucher" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "updateVoucher" && len(os.Args) < 5 {
+		printUsage()
+	}
+	if ops == "sendBackVoucher" && len(os.Args) < 3 {
+		printUsage()
+	}
+
 	if ops == "register" {
 		licenseId := os.Args[3]
 		fmt.Printf("Initiating registration of the company %s \n", licenseId)
@@ -148,11 +168,10 @@ func main(){
 		Hashcode:= os.Args[6]
 		TotalValue:= os.Args[7]
 		Currency:= os.Args[8]
-		State:= os.Args[9]
 		fmt.Printf("Creating voucher... \n")
 		client, gw:= connect()
 		contract := getContract(gw, BusinessProfileCCName)
-		createVoucher(contract, VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
+		createVoucher(contract, VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency)
 		gw.Close()
 		client.Close()
 	} else if ops == "readVoucher" {
@@ -161,6 +180,48 @@ func main(){
 		client, gw:= connect()
 		contract := getContract(gw, BusinessProfileCCName)
 		readVoucher(contract, VoucherID)
+		gw.Close()
+		client.Close()
+	} else if ops == "cancelVoucher" {
+		VoucherID:= os.Args[3]
+		fmt.Printf("Cancelling voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		cancelVoucher(contract, VoucherID)
+		gw.Close()
+		client.Close()
+	} else if ops == "approveVoucher" {
+		VoucherID:= os.Args[3]
+		fmt.Printf("Approving voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		approveVoucher(contract, VoucherID)
+		gw.Close()
+		client.Close()
+	} else if ops == "rejectVoucher" {
+		VoucherID:= os.Args[3]
+		fmt.Printf("Rejecting voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		rejectVoucher(contract, VoucherID)
+		gw.Close()
+		client.Close()
+	} else if ops == "updateVoucher" {
+		VoucherID:= os.Args[3]
+		toChange:= os.Args[4]
+		newValue:= os.Args[5]
+		fmt.Printf("Rejecting voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		updateVoucher(contract, VoucherID, toChange, newValue)
+		gw.Close()
+		client.Close()
+	} else if ops == "sendBackVoucher" {
+		VoucherID:= os.Args[3]
+		fmt.Printf("Sending back voucher... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		sendBackVoucher(contract, VoucherID)
 		gw.Close()
 		client.Close()
 	} else{
@@ -180,10 +241,34 @@ func unregisterCompany(contract *client.Contract, licenseId string){
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 }
 
-func createVoucher(contract *client.Contract, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string, State string){
+func createVoucher(contract *client.Contract, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string){
 
 	fmt.Printf("\n--> Initiating creation of voucher of user: %s\n", user)
-	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency, State)
+	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+
+}
+
+func approveVoucher(contract *client.Contract, VoucherID string){
+
+	fmt.Printf("\n--> Initiating approval of voucher by user: %s\n", user)
+	result, err := contract.SubmitTransaction("VoucherApproved", VoucherID)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+
+}
+
+func rejectVoucher(contract *client.Contract, VoucherID string){
+
+	fmt.Printf("\n--> Initiating rejection of voucher by user: %s\n", user)
+	result, err := contract.SubmitTransaction("VoucherRejected", VoucherID)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+
+}
+
+func sendBackVoucher(contract *client.Contract, VoucherID string){
+
+	fmt.Printf("\n--> Initiating sending back of voucher by user: %s\n", user)
+	result, err := contract.SubmitTransaction("VoucherSentBack", VoucherID)
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
 }
@@ -196,6 +281,22 @@ func readVoucher(contract *client.Contract, VoucherID string){
 		return
 	}
 	fmt.Printf("\n--> Voucher details : %s\n", string(evaluateResult))
+}
+
+func cancelVoucher(contract *client.Contract, VoucherID string){
+
+	fmt.Printf("\n--> Initiating cancellation of voucher %s.\n", VoucherID)
+	result, err := contract.SubmitTransaction("VoucherCancelled", VoucherID)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+
+}
+
+func updateVoucher(contract *client.Contract, VoucherID string, toChange string, newValue string){
+
+	fmt.Printf("\n--> Initiating updation of voucher %s.\n", VoucherID)
+	result, err := contract.SubmitTransaction("VoucherUpdated", VoucherID, toChange, newValue)
+	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
+
 }
 
 func readCompanyAsset(contract *client.Contract, licenseId string){
