@@ -60,22 +60,22 @@ func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterf
 // function to unregister a company (deleting it's Score asset)
 func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
 	//checking if licenseID is valid
-	var sumOfDigits int
-	for _, charDigit:= range LicenseId{
-		digit:= int(charDigit- '0')
-		sumOfDigits+= digit
-	}
-	if sumOfDigits%9 !=0{
-		return fmt.Errorf("Invalid license ID")
-	}
+	// var sumOfDigits int
+	// for _, charDigit:= range LicenseId{
+	// 	digit:= int(charDigit- '0')
+	// 	sumOfDigits+= digit
+	// }
+	// if sumOfDigits%9 !=0{
+	// 	return fmt.Errorf("Invalid license ID")
+	// }
 
 	exists, err := s.companyAssetExists(ctx, LicenseId)
-        if err != nil {
-            return err
-        }
-        if !exists {
-            return fmt.Errorf("the asset %s does not exist", LicenseId)
-        }
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("the asset %s does not exist", LicenseId)
+	}
 		
 	delStateOp:= ctx.GetStub().DelState(LicenseId)
     fmt.Printf("Message received on deletion: %s", delStateOp)

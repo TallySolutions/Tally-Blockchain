@@ -190,7 +190,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
     if assetCount > 0 {
     return assets, nil
-} else {
+    } else {
     return nil, fmt.Errorf("No assets found")
     }
 
