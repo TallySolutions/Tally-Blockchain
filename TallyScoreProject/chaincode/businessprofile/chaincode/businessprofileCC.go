@@ -258,7 +258,7 @@ func(s *SmartContract) VoucherRejected(ctx contractapi.TransactionContextInterfa
 
 func(s *SmartContract) VoucherUpdated(ctx contractapi.TransactionContextInterface, VoucherID string, toChange string, newValue string) error{
 	// changes in hash or total amount
-
+	// NOTE: Cover both hash and total value updation
 
 	//ensuring that only the owner of the asset can update
 	updatingUserID, err := getClientIdentity(ctx)
@@ -354,9 +354,10 @@ func(s *SmartContract) VoucherSentBack(ctx contractapi.TransactionContextInterfa
 		return err
 	}
 	requestingUser:= GetUserid(requestingUserID, "x509::CN=",",OU=")
+	println(requestingUser)
 	if requestingUser != VoucherAssetRead.SupplierID{// ensuring that only the supplier can change state to "Sent Back"
 		println("You are not a supplier. You cannot perform this action.")
-		fmt.Errorf("You are not a supplier. You cannot perform this action.")
+		return fmt.Errorf("You are not a supplier. You cannot perform this action.")
 	}
 	State:= VoucherAssetRead.State
 	if State == "Modified" || State == "Created" { // Verify that the current state of the voucher is created or modified
@@ -390,8 +391,8 @@ func(s *SmartContract) VoucherSentBack(ctx contractapi.TransactionContextInterfa
 					fmt.Printf("Sending back the asset returned : %s\n", state_err)
 					return state_err
 	}
-	println("You can't send back when the state is %s", State)
-	return fmt.Errorf("You can't send back when the state is %s", State)
+	println("You can't send back when the state is %s . Requesting User is: %s . Supplier is: %s", State, requestingUser, VoucherAssetRead.SupplierID)
+	return fmt.Errorf("You can't send back when the state is %s . Requesting User is: %s . Supplier is: %s", State, requestingUser, VoucherAssetRead.SupplierID)
 }
 
 // func(s *SmartContract) UnregisterBusiness()
