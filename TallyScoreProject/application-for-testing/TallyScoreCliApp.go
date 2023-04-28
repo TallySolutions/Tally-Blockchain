@@ -47,6 +47,8 @@ func printUsage()  {
 	"      TallyScoreCliApp <peer_node> rejectVoucher <Voucher_ID>" +
 	"      TallyScoreCliApp <peer_node> updateVoucher <Voucher_ID> <Value_to_change: Hash or Value> <New_Value>" +
 	"      TallyScoreCliApp <peer_node> sendBackVoucher <Voucher_ID>" +
+	"      TallyScoreCliApp <peer_node> getSupplierVouchers" +
+	"      TallyScoreCliApp <peer_node> getOwnerVouchers" +
 	"\n"+
 	"  Where:\n" +
 	"      <peer_node>: peer host name\n" +
@@ -116,6 +118,12 @@ func main(){
 		printUsage()
 	}
 	if ops == "sendBackVoucher" && len(os.Args) < 3 {
+		printUsage()
+	}
+	if ops == "getSupplierVouchers" && len(os.Args) < 2 {
+		printUsage()
+	}
+	if ops == "getOwnerVouchers" && len(os.Args) < 2 {
 		printUsage()
 	}
 
@@ -224,6 +232,20 @@ func main(){
 		sendBackVoucher(contract, VoucherID)
 		gw.Close()
 		client.Close()
+	} else if ops == "getSupplierVouchers" {
+		fmt.Printf("Getting Vouchers with you as a supplier... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		getSupplierVouchers(contract)
+		gw.Close()
+		client.Close()
+	} else if ops == "getOwnerVouchers" {
+		fmt.Printf("Getting Vouchers with you as an owner... \n")
+		client, gw:= connect()
+		contract := getContract(gw, BusinessProfileCCName)
+		getOwnerVouchers(contract)
+		gw.Close()
+		client.Close()
 	} else{
 		printUsage()
 	}
@@ -297,6 +319,16 @@ func updateVoucher(contract *client.Contract, VoucherID string, toChange string,
 	result, err := contract.SubmitTransaction("VoucherUpdated", VoucherID, toChange, newValue)
 	fmt.Printf("\n--> Submit Transaction Returned : %s , %s\n", string(result), err)
 
+}
+
+func getSupplierVouchers(contract *client.Contract ) {
+	transactionResult, err := contract.EvaluateTransaction("GetVouchersUnderSupplier")
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(transactionResult), err)
+}
+
+func getOwnerVouchers(contract *client.Contract ) {
+	transactionResult, err := contract.EvaluateTransaction("GetOwnerVouchers")
+	fmt.Printf("\n------> After SubmitTransaction:%s , %s \n", string(transactionResult), err)
 }
 
 func readCompanyAsset(contract *client.Contract, licenseId string){

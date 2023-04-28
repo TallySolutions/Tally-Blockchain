@@ -418,9 +418,84 @@ func(s *SmartContract) ReadVoucher(ctx contractapi.TransactionContextInterface, 
 }
 
 
-// LOOKUP FUNCTION- GETVOUCHERFORSUPPPLIER() --- gives list of vouchers with a particular supplier
+// LOOKUP FUNCTION---- gives list of vouchers with a particular supplier
+func(s *SmartContract) GetVouchersUnderSupplier(ctx contractapi.TransactionContextInterface) ([] *VoucherAsset, error){
 
-// FUNCTION- GETMYVOUCHERS()- LIST OF VOUCHERS THAT A PARTICULAR OWNER OWNS
+	supplierID, err := getClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+	supplierName:= GetUserid(supplierID, "x509::CN=",",OU=")
+
+	// Now we have to extract all the vouchers with the supplier supplierName
+	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
+    if err !=nil {
+        return nil, err
+    }
+    defer iteratorVar.Close()
+
+    var VouchersList []*VoucherAsset
+
+    for iteratorVar.HasNext() {
+        queryResponse, err := iteratorVar.Next()
+        if err != nil {
+        return nil, err
+    }
+
+    var voucher VoucherAsset
+    err = json.Unmarshal(queryResponse.Value, &voucher)
+        if err != nil {
+        return nil, err
+    }
+
+	if voucher.SupplierID == supplierName{
+		VouchersList= append(VouchersList, &voucher)
+    	}
+	}
+
+    return VouchersList, nil
+
+
+}
+
+// LIST OF VOUCHERS THAT A PARTICULAR OWNER OWNS
+func(s *SmartContract) GetOwnerVouchers(ctx contractapi.TransactionContextInterface) ([] *VoucherAsset, error){
+
+	ownerID, err := getClientIdentity(ctx)
+	if err != nil {
+		return nil,err
+	}
+
+	// Now we have to extract all the vouchers with the supplier supplierName
+	iteratorVar, err := ctx.GetStub().GetStateByRange("","")   // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
+    if err !=nil {
+        return nil, err
+    }
+    defer iteratorVar.Close()
+
+    var VouchersList []*VoucherAsset
+
+    for iteratorVar.HasNext() {
+        queryResponse, err := iteratorVar.Next()
+        if err != nil {
+        return nil, err
+    }
+
+    var voucher VoucherAsset
+    err = json.Unmarshal(queryResponse.Value, &voucher)
+        if err != nil {
+        return nil, err
+    }
+
+	if voucher.OwnerID == ownerID{
+		VouchersList= append(VouchersList, &voucher)
+    	}
+	}
+
+    return VouchersList, nil
+
+
+}
 
 
 func getClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
