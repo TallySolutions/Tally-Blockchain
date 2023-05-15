@@ -4,6 +4,7 @@ import(
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // make sure to start the fabric ca servers- before running this
@@ -21,11 +22,10 @@ const(
 		tallyCAName= "tally"
 )
 
-func printUsage(){
-	panic("Format to deal with users:\n"+
-		"Register <user_id>\n"+
-		"Enroll <user_id> <password_generated_after_registering>\n"
-	)
+func printUsage() {
+	panic("Format to deal with users:\n" +
+		"Register <user_id>\n" +
+		"Enroll <user_id> <password_generated_after_registering>" + "\n")
 }
 
 func main(){
@@ -80,11 +80,11 @@ func enrollUser(userId string, password string){  // this function should take i
 
 }
 
-func getPassword(string outputString) string{ // function to extract password from the output generated in the registerUser() function
-	PasswordTextIndex := strings.Index(output, "Password: ")
-	if index == -1 {
+func getPassword(outputString string) string{ // function to extract password from the output generated in the registerUser() function
+	PasswordTextIndex := strings.Index(outputString, "Password: ")
+	if PasswordTextIndex == -1 {
 		return ""
 	}
-	password := output[index+len("Password: "):]
+	password := outputString[PasswordTextIndex+len("Password: "):]
 	return strings.TrimSpace(password)
 }
