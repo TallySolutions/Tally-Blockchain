@@ -6,6 +6,21 @@ import(
 	"os/exec"
 )
 
+// make sure to start the fabric ca servers- before running this
+
+
+var tallyHome string
+var caServerHome string
+var tallyCAHome string
+var fabric_ca_client_home string
+
+const(
+		// add the relevant env vars(from setup network) as constants
+		// var- TALLY NETWORK HOME- add the env locations with this as the common base
+		networkHome= "fabric/tally-network"
+		tallyCAName= "tally"
+)
+
 func printUsage(){
 	panic("Format to deal with users:\n"+
 		"Register <user_id>\n"+
@@ -14,6 +29,12 @@ func printUsage(){
 }
 
 func main(){
+
+	tallyHome= os.Getenv("HOME") + "/" + networkHome
+	caServerHome= tallyHome + "/fabric-ca-servers"
+	tallyCAHome= caServerHome + "/" + tallyCAName
+	fabric_ca_client_home= tallyCAHome + "/client"
+
 	if len(os.Args)<2{
 		printUsage()
 	}
@@ -36,15 +57,34 @@ func main(){
 		password:=os.Args[2]
 		enrollUser(userId, password)
 	}
+
 }
 
-func registerUser(userId string){   // this function should take in userid and print the password
-	fmt.Printf("Copy the provided password for future reference\n")
+func registerUser(userId string) error{   // this function should take in userid and print the password
+	cmdVariable := exec.Command("fabric-ca-client", "register", "--id.name", userId, "--id.type", "client", "--id.affiliation", "tally", "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
+	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
+	output, err := cmdVariable.Output()
+	if err != nil {
+		return err
+	}
+
+	password := getPassword(string(output)) // extract password from the cli's output
+	fmt.Printf("Password:%s", password)
+	return nil
 	
 
 }
 
 func enrollUser(userId string, password string){  // this function should take in userid and password, then it should return/print the public+private key msp
+	// USE ID.SECRETS FOR PASSWORD- do not make this a constant in the prog
 
+}
 
+func getPassword(string outputString) string{ // function to extract password from the output generated in the registerUser() function
+	PasswordTextIndex := strings.Index(output, "Password: ")
+	if index == -1 {
+		return ""
+	}
+	password := output[index+len("Password: "):]
+	return strings.TrimSpace(password)
 }
