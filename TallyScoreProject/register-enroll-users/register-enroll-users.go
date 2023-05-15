@@ -14,6 +14,7 @@ var tallyHome string
 var caServerHome string
 var tallyCAHome string
 var fabric_ca_client_home string
+var url string
 
 const(
 		// add the relevant env vars(from setup network) as constants
@@ -22,11 +23,17 @@ const(
 		tallyCAName= "tally"
 )
 
+
 func printUsage() {
-	panic("Format to deal with users:\n" +
-		"Register <user_id>\n" +
-		"Enroll <user_id> <password_generated_after_registering>" + "\n")
+	panic("Format to register user:\n" +
+		"Register <user_id>" + "\n")
 }
+
+// func printUsage() {
+// 	panic("Format to deal with users:\n" +
+// 		"Register <user_id>\n" +
+// 		"Enroll <user_id> <password_generated_after_registering>" + "\n")
+// }
 
 func main(){
 
@@ -43,35 +50,52 @@ func main(){
 	if operation == "Register" && len(os.Args)<2{
 		printUsage()
 	}
-	if operation == "Enroll" && len(os.Args)<3{
-		printUsage()
-	}
 
-	if operation == "Register"{
-		fmt.Printf("Intiating registration of user...\n")
+	if operation== "Register"{
 		userId:=os.Args[1]
-		registerUser(userId)
-	} else if operation == "Enroll"{
-		fmt.Printf("Intiating enrollment of user...\n")
-		userId:=os.Args[1]
-		password:=os.Args[2]
-		enrollUser(userId, password)
+		fmt.Printf("Initiating registration of user")
+		password, err := registerUser(userId)
+		if err!=nil{
+			fmt.Errorf("Error in the process of registration of user")
+		}
+
+		fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.")
+		// write code to enroll user
+
 	}
+	// if operation == "Enroll" && len(os.Args)<3{
+	// 	printUsage()
+	// }
+
+	// // userObj := User{
+	// // 	UserId: "user: "
+	// // 	Password: " "
+	// // }
+
+	// if operation == "Register"{
+	// 	fmt.Printf("Intiating registration of user...\n")
+	// 	userId:=os.Args[1]
+	// 	registerUser(userId)
+	// } else if operation == "Enroll"{
+	// 	fmt.Printf("Intiating enrollment of user...\n")
+	// 	userId:=os.Args[1]
+	// 	password:=os.Args[2]
+	// 	enrollUser(userId, password)
+	// }
+
 
 }
 
-func registerUser(userId string) error{   // this function should take in userid and print the password
+func registerUser(userId string) (string, error){   // this function should take in userid and print the password
 	cmdVariable := exec.Command("fabric-ca-client", "register", "--id.name", userId, "--id.type", "client", "--id.affiliation", "tally", "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 	output, err := cmdVariable.Output()
 	if err != nil {
-		return err
+		return "",err
 	}
-
 	password := getPassword(string(output)) // extract password from the cli's output
 	fmt.Printf("Password:%s", password)
-	return nil
-	
+	return password,nil
 
 }
 
