@@ -1,38 +1,26 @@
-import Form from './Form';
 import React, { useState } from 'react';
+import RegistrationForm from './RegistrationForm';
+import RegistrationTable from './RegistrationTable';
 
 function App() {
   const [registrations, setRegistrations] = useState([]);
 
-  const handleNewRegistration = (newRegistration) => {
+  const handleNewRegistration = (registration) => {
+    const newRegistration = {
+      ...registration,
+      userid: generateUniqueId(),
+    };
     setRegistrations([...registrations, newRegistration]);
+  };
+
+  const generateUniqueId = () => {
+    return '_' + Math.random().toString(36).substr(2, 9);
   };
 
   return (
     <div className="App">
-      <Form onNewRegistration={handleNewRegistration} />
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>PAN</th>
-            <th>License</th>
-            <th>Score</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registrations.map((registration, index) => (
-            <tr key={index}>
-              <td>{registration.name}</td>
-              <td>{registration.pan}</td>
-              <td>{registration.license}</td>
-              <td>{registration.score}</td>
-              <td>{registration.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            
+      <RegistrationTable registrations={registrations} />
     </div>
   );
 }
