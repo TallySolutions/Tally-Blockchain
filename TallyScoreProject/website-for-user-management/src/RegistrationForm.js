@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function Form({ onNewRegistration }) {
+function RegistrationForm({ onNewRegistration }) {
   const [name, setName] = useState('');
   const [pan, setPan] = useState('');
   const [license, setLicense] = useState('');
@@ -9,14 +9,14 @@ function Form({ onNewRegistration }) {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const newRegistration = {
+    const registration = {
       name: name,
       pan: pan,
       license: license,
       score: score,
-      status: status
+      status: status,
     };
-    onNewRegistration(newRegistration);
+    onNewRegistration(registration);
     setName('');
     setPan('');
     setLicense('');
@@ -51,4 +51,4 @@ function Form({ onNewRegistration }) {
   );
 }
 
-export default Form;
+export default RegistrationForm;
