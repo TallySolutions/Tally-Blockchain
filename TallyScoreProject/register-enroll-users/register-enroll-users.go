@@ -95,14 +95,16 @@ func registerUser(userId string) (string, error){   // this function should take
 func enrollUser(userId string, password string) (string, error) {  // this function should take in userid and password, then it should return/print the public+private key msp
 
 	// urlmid would be like-> <userId>:<password>
-	cmdVariable:= exec.Command("fabric-ca-client", "enroll", "-u", urlstart + userId + ":" + password + urlend)
+
+	mspPath := fmt.Sprintf("%s/users/%s", fabric_ca_client_home, userId) +"/msp"
+	cmdVariable:= exec.Command("fabric-ca-client", "enroll", "-u", urlstart + userId + ":" + password + urlend , "--csr.names", "C=IN,ST=Bengaluru,L=Bengaluru,O=Tally,OU=client", "-M", mspPath, "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 	err := cmdVariable.Run()
 	if err != nil {
 		return "", err
 	}
 	
-	mspPath := fmt.Sprintf("%s/msp", fabric_ca_client_home)
+	
 
 	return mspPath, nil
 
