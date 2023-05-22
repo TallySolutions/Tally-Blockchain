@@ -32,10 +32,11 @@ h1 {
 .integerkey-form {
   margin-bottom: 32px;
   margin-top: 10px;
+  align-content: center;
 }
 
 .integerkey-form-inputs{
-  align-items: center;
+  align-content: center;
   margin-top: 0px;
 }
 
