@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import RegistrationForm from './RegistrationForm';
 import RegistrationTable from './RegistrationTable';
+import { v4 as uuid } from 'uuid';
 
 function App() {
   const [registrations, setRegistrations] = useState([]);
@@ -14,12 +15,12 @@ function App() {
   };
 
   const generateUniqueId = () => {
-    return '_' + Math.random().toString(36).substr(2, 9);
+    return uuid();
   };
 
   return (
     <div className="App">
-            
+      <RegistrationForm onNewRegistration={handleNewRegistration} />
       <RegistrationTable registrations={registrations} />
     </div>
   );

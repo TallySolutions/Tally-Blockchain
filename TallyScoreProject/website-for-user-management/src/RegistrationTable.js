@@ -7,6 +7,7 @@ function RegistrationTable({ registrations }) {
         <tr>
           <th>User ID</th>
           <th>Name</th>
+          <th>Address</th>
           <th>PAN</th>
           <th>License</th>
           <th>Score</th>
@@ -18,6 +19,7 @@ function RegistrationTable({ registrations }) {
           <tr key={registration.userid}>
             <td>{registration.userid}</td>
             <td>{registration.name}</td>
+            <td>{registration.address}</td>
             <td>{registration.pan}</td>
             <td>{registration.license}</td>
             <td>{registration.score}</td>
