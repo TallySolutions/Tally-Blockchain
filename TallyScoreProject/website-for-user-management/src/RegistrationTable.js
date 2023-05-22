@@ -5,10 +5,10 @@ function RegistrationTable({ registrations }) {
     <table>
       <thead>
         <tr>
-          <th>User ID</th>
-          <th>Name</th>
-          <th>Address</th>
           <th>PAN</th>
+          <th>Name</th>
+          <th>Phone No.</th>
+          <th>Address</th>
           <th>License</th>
           <th>Score</th>
           <th>Status</th>
@@ -16,11 +16,11 @@ function RegistrationTable({ registrations }) {
       </thead>
       <tbody>
         {registrations.map((registration) => (
-          <tr key={registration.userid}>
-            <td>{registration.userid}</td>
-            <td>{registration.name}</td>
-            <td>{registration.address}</td>
+          <tr key={registration.pan}>
             <td>{registration.pan}</td>
+            <td>{registration.name}</td>
+            <td>{registration.phonenumber}</td>
+            <td>{registration.address}</td>
             <td>{registration.license}</td>
             <td>{registration.score}</td>
             <td>{registration.status}</td>
