@@ -5,6 +5,10 @@ import(
 	"os"
 	"os/exec"
 	"strings"
+
+	"net/http"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 )
 
 // make sure to start the fabric ca servers- before running this
@@ -41,6 +45,24 @@ func printUsage() {
 
 func main(){
 
+	// creating REST API endpoints using gin
+	
+	router := gin.New()
+	router.Use(cors.Middleware(cors.Config{
+		Origins:        "*",
+		Methods:        "GET, PUT, POST, DELETE",
+		RequestHeaders: "Origin, Authorization, Content-Type",
+		ExposedHeaders: "",
+		MaxAge: 50 * time.Second,
+		Credentials: false,
+		ValidateHeaders: false,
+	}))
+
+	router.PUT("/TallyScoreProject/register-enroll-users", performRegistraion)
+
+
+
+
 	tallyHome= os.Getenv("HOME") + "/" + networkHome
 	caServerHome= tallyHome + "/fabric-ca-servers"
 	tallyCAHome= caServerHome + "/" + tallyCAName
@@ -69,9 +91,12 @@ func main(){
 
 }
 
+
+// func performRegistraion(userId)
+
 func registerUser(userId string) (string, error){   // this function should take in userid and print the password
 
-	cmdVariable := exec.Command("fabric-ca-client", "register", "--id.name", userId, "--id.type", "client", "--id.affiliation", "tally", "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
+	cmdVariable := exec.Command("fabric-ca-client", "register", "--id.name", userId, "--id.type", "client", "--id.affiliation", "tally", "--id.maxenrollments", "1", "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 	// set max enrollments
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 
