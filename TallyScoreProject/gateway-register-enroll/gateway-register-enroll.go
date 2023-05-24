@@ -2,11 +2,13 @@ package main
 
 import(
 	"fmt"
-	// "github.com/gin-gonic/gin"
-	// "net/http"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // PRIOR TO RUNNING THIS CODE- START THE CA SERVERS: Navigate to Setup-Network and run ./2A_StartCAServer.sh 
@@ -30,13 +32,32 @@ const(
 )
 
 
+type registrationRequest struct{
+	PAN string `json:"PAN" binding:"required"`
+	Name string `json:"Name" binding:"required"`
+	PhoneNo string `json:"PhoneNo" binding:"required"`
+	Address string `json:"Address" binding:"required"`
+	LicenseType string `json:"LicenseType" binding:"required"`
+}
+
 func printUsage() {
 	panic("Format to register user:\n" +
 		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
 }
 
-
 func main(){
+
+
+	router:= gin.New()
+	router.Use(cors.Middleware(cors.Config{
+		Origins:        "*",
+		Methods:        "POST",
+		RequestHeaders: "Origin, Authorization, Content-Type",
+		ExposedHeaders: "",
+		MaxAge: 50 * time.Second,
+		Credentials: false,
+		ValidateHeaders: false,
+	}))
 
 	tallyHome= os.Getenv("HOME") + "/" + networkHome
 	caServerHome= tallyHome + "/fabric-ca-servers"
@@ -44,35 +65,46 @@ func main(){
 	fabric_ca_client_home= tallyCAHome + "/client"
 	urlend= "@" + ca_host + "." + domain + ":" + tally_ca_port
 
-		PAN:= os.Args[1]
-		name:= os.Args[2]
-		phoneNo:=os.Args[3]
-		address:= os.Args[4]
-		license:= os.Args[5]
-
-		fmt.Printf("Initiating registration of user %s\n", name)
-		password, err := registerUser(PAN, name, phoneNo, address, license)
-		if err!=nil{
-			fmt.Printf("Error in step 1\n")
-			fmt.Errorf("Error in the process of registration of user\n")
-			return
-		}
-		fmt.Printf("Password: %s\n", password)
-
-		fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
-		// write code to call enrollUser() function
-		userMSP, err:= enrollUser(PAN, password)
-		if err!= nil{
-			fmt.Errorf("Error in enrollment stage\n")
-			return
-		}
-		fmt.Printf("MSP path of User: %s \n", userMSP)
-		fmt.Printf("Registration of User successful!\n")
+	router.POST("/TallyScoreProject/performRegistration",performRegistration)
+	router.Run("0.0.0.0:8080")
 
 }
 
+func performRegistration(c *gin.Context){
 
-// func performRegistraion(PAN)
+	var request registrationRequest
+	c.BindJSON(&request)
+	PAN:=request.PAN
+	name:=request.Name
+	phoneNo:=request.PhoneNo
+	address:=request.Address
+	license:=request.LicenseType
+
+	fmt.Printf("Initiating registration of user %s\n", name)
+	password, err := registerUser(PAN, name, phoneNo, address, license)
+	if err!=nil{
+		fmt.Printf("Error in step 1\n")
+		fmt.Errorf("Error in the process of registration of user\n")
+		return
+	}
+	fmt.Printf("Password: %s\n", password)
+
+	fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
+	// write code to call enrollUser() function
+	userMSP, err:= enrollUser(PAN, password)
+	if err!= nil{
+		fmt.Errorf("Error in enrollment stage\n")
+		return
+	}
+	fmt.Printf("MSP path of User: %s \n", userMSP)
+	fmt.Printf("Registration of User successful!\n")
+
+	c.Writer.Header().Set("Content-Type","application/json")
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", userMSP))
+
+
+}
+
 
 func registerUser(PAN string, name string, phoneNo string, address string, license string) (string, error){   // this function should take in PAN and print the password
 
