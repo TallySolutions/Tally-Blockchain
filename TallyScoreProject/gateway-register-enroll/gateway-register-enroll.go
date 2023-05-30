@@ -1,9 +1,6 @@
 package main
 
 import(
-	"crypto/dsa"
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -125,7 +122,7 @@ func performRegistration(c *gin.Context){
 	fmt.Printf("REGISTRATION OF USER SUCCESSFUL!\n")
 
 	// c.Writer.Header().Set("Content-Type","application/json")
-	c.JSON(http.StatusOK, detailsAssetJSON)
+	c.Data(http.StatusOK, "application/json", detailsAssetJSON)
 
 }
 
@@ -219,24 +216,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, error) {  // th
 
 	publickey:= string(certFileread)
 
-	// decodedBlock, _ := pem.Decode(certFileread)  // decoding the cert file reaf
-	// if decodedBlock == nil {
-	// 	log.Fatal("Error in decoding PEM block")
-	// }
-	// cert, err := x509.ParseCertificate(decodedBlock.Bytes)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// publicKeyInterface := cert.PublicKey
-
-	// publickey:= getPublicKeyAlgorithm(publicKeyInterface) + "\n" + getPublicKeyDetails(publicKeyInterface)
-
-	// get the contents of cert.pem for public key and pass it to the client- in order to insert it into a cert.pem
-
-
-	//now we create a new details asset that contains the public key and private key of the registering business
-
-	// client side will be recreating private key and public key content
+	// client side will be recreating private key and public key files content
 	detailsAsset:= detailsStructure{
 		PrivateKey: privatekey,
 		PublicKey: publickey,
@@ -252,32 +232,4 @@ func getPassword(outputString string) string{ // function to extract password fr
 	}
 	password := outputString[PasswordTextIndex+len("Password: "):]
 	return strings.TrimSpace(password)
-}
-
-
-func getPublicKeyAlgorithm(publicKeyInterface interface{}) string {
-	switch publicKeyInterface.(type) {
-	case *rsa.PublicKey:
-		return "RSA"
-	case *dsa.PublicKey:
-		return "DSA"
-	case *ecdsa.PublicKey:
-		return "ECDSA"
-	default:
-		return "Unknown"
-	}
-}
-
-func getPublicKeyDetails(publicKeyInterface interface{}) string {
-	switch publicKeyInterface := publicKeyInterface.(type) {
-	case *rsa.PublicKey:
-		return fmt.Sprintf("RSA Key: Size %d bits", publicKeyInterface.Size()*8)
-	case *dsa.PublicKey:
-		return fmt.Sprintf("DSA Key: Size %d bits", publicKeyInterface.Q.BitLen())
-	case *ecdsa.PublicKey:
-		return fmt.Sprintf("ECDSA Key: Curve %s, Size %d bits", publicKeyInterface.Curve.Params().Name, publicKeyInterface.Curve.Params().BitSize)
-	default:
-		return "Unknown"
-	}
-
 }
