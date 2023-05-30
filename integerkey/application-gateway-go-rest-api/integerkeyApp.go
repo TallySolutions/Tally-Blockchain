@@ -247,7 +247,7 @@ func increaseValue(c *gin.Context) {
 
 }
 
-func  aseValue(c *gin.Context) {
+func decreaseValue(c *gin.Context) {
 
 	var request UpdateValueRequest
 	c.BindJSON(&request)

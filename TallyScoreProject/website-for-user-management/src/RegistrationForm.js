@@ -7,7 +7,7 @@ function RegistrationForm({ onNewRegistration }) {
   const [address,setAddress] = useState('');
   const [license, setLicense] = useState('');
   const [status, setStatus] = useState('');
-
+  const [userMSP,setuserMSP] = useState('');    // change to details structure
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const registration = {
@@ -20,6 +20,33 @@ function RegistrationForm({ onNewRegistration }) {
       status: status,
     };
     onNewRegistration(registration);
+
+    // const hostname = window.location.hostname
+    // const port = 8080
+    // const url = 'http://' + hostname + ':' + port
+    // const performRegendpoint = '/TallyScoreProject/performRegistration'
+
+    const forRequest = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registration),
+    };
+    fetch('http://43.204.226.103:8080/TallyScoreProject/performRegistration', forRequest)
+    .then(response => {
+      if (response.ok) {
+         return response.json()
+      }
+      else {
+        return {error: "Error in registration."}
+      }
+    }).then(data => {
+      setuserMSP(data)
+      console.log("userMSP:" + data);
+    }).catch(error => {
+      console.error('Error:', error);
+    });
     setPan('');
     setName('');
     setPhoneNumber('');

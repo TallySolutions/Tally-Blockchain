@@ -1,17 +1,27 @@
 package main
 
 import(
+	"crypto/dsa"
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
 // PRIOR TO RUNNING THIS CODE- START THE CA SERVERS: Navigate to Setup-Network and run ./2A_StartCAServer.sh 
+
+
+// DELETE THIS COMMENT WHEN DONE WITH CODE: /home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/PANofuserTestO/msp
 
 
 var(
@@ -40,13 +50,17 @@ type registrationRequest struct{
 	LicenseType string `json:"LicenseType" binding:"required"`
 }
 
+type detailsStructure struct{
+	PrivateKey string `json:"PrivateKey"`
+	PublicKey string `json:"PublicKey"`
+}
+
 func printUsage() {
 	panic("Format to register user:\n" +
 		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
 }
 
 func main(){
-
 
 	router:= gin.New()
 	router.Use(cors.Middleware(cors.Config{
@@ -85,23 +99,33 @@ func performRegistration(c *gin.Context){
 	if err!=nil{
 		fmt.Printf("Error in step 1\n")
 		fmt.Errorf("Error in the process of registration of user\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	fmt.Printf("Password: %s\n", password)
 
 	fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
 	// write code to call enrollUser() function
-	userMSP, err:= enrollUser(PAN, password)
+	detailsAsset, err:= enrollUser(PAN, password)
 	if err!= nil{
 		fmt.Errorf("Error in enrollment stage\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
-	fmt.Printf("MSP path of User: %s \n", userMSP)
-	fmt.Printf("Registration of User successful!\n")
 
-	c.Writer.Header().Set("Content-Type","application/json")
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", userMSP))
+	detailsAssetJSON, err := json.Marshal(detailsAsset)
+    if err != nil {
+		fmt.Errorf("Error in enrollment stage- error in conversion to JSON format\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+        return
+    }
 
+	fmt.Printf("Priv Key: %s \n", detailsAsset.PrivateKey)
+	fmt.Printf("Public Key: %s \n", detailsAsset.PublicKey)
+	fmt.Printf("REGISTRATION OF USER SUCCESSFUL!\n")
+
+	// c.Writer.Header().Set("Content-Type","application/json")
+	c.JSON(http.StatusOK, detailsAssetJSON)
 
 }
 
@@ -139,7 +163,7 @@ func registerUser(PAN string, name string, phoneNo string, address string, licen
 
 }
 
-func enrollUser(PAN string, password string) (string, error) {  // this function should take in PAN and password, then it should return/print the public+private key msp
+func enrollUser(PAN string, password string) (*detailsStructure, error) {  // this function should take in PAN and password, then it should return/print the public+private key msp
 
 	// urlmid would be like-> <PAN>:<password>
 
@@ -150,11 +174,75 @@ func enrollUser(PAN string, password string) (string, error) {  // this function
 	err := cmdVariable.Run()
 	fmt.Printf("%v \n", err)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	// return content of mspPath- with the signcert as a param, private key as a param, tls and ca-certs  then DELETE the mspPath folder
-	return mspPath, nil
 
+	// mspPath will have the path till the folder "msp"- which contains keystore(PRIVATE KEY location) and signcerts(containing cert.pem- from which the public key is to be extracted)
+	// Extracting the private key
+	pathKeystore:= mspPath + "/keystore"	// for private key
+	pathSigncertFile:= mspPath + "/signcerts/cert.pem"	// for public key
+	fmt.Printf("sign cert path: %s \n", pathSigncertFile)
+	
+	// below will be the default values
+	privatekey:="private_key"
+	
+	
+	files, err := ioutil.ReadDir(pathKeystore)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	for _, file := range files {
+		filename := file.Name()
+		if !file.IsDir() {
+			filePath := filepath.Join(pathKeystore, filename)
+
+			// Read the contents of the file
+			content, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				log.Println("Error reading file:", err)
+				continue
+			}
+
+			// Process the private key content as per your requirements
+			// In this example, we'll simply print it
+			privatekey=string(content)
+		}
+	}
+
+	// now to retrieve the public key
+	certFileread, err := ioutil.ReadFile(pathSigncertFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publickey:= string(certFileread)
+
+	// decodedBlock, _ := pem.Decode(certFileread)  // decoding the cert file reaf
+	// if decodedBlock == nil {
+	// 	log.Fatal("Error in decoding PEM block")
+	// }
+	// cert, err := x509.ParseCertificate(decodedBlock.Bytes)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// publicKeyInterface := cert.PublicKey
+
+	// publickey:= getPublicKeyAlgorithm(publicKeyInterface) + "\n" + getPublicKeyDetails(publicKeyInterface)
+
+	// get the contents of cert.pem for public key and pass it to the client- in order to insert it into a cert.pem
+
+
+	//now we create a new details asset that contains the public key and private key of the registering business
+
+	// client side will be recreating private key and public key content
+	detailsAsset:= detailsStructure{
+		PrivateKey: privatekey,
+		PublicKey: publickey,
+	}
+
+	return &detailsAsset,nil
 }
 
 func getPassword(outputString string) string{ // function to extract password from the output generated in the registerUser() function
@@ -164,4 +252,32 @@ func getPassword(outputString string) string{ // function to extract password fr
 	}
 	password := outputString[PasswordTextIndex+len("Password: "):]
 	return strings.TrimSpace(password)
+}
+
+
+func getPublicKeyAlgorithm(publicKeyInterface interface{}) string {
+	switch publicKeyInterface.(type) {
+	case *rsa.PublicKey:
+		return "RSA"
+	case *dsa.PublicKey:
+		return "DSA"
+	case *ecdsa.PublicKey:
+		return "ECDSA"
+	default:
+		return "Unknown"
+	}
+}
+
+func getPublicKeyDetails(publicKeyInterface interface{}) string {
+	switch publicKeyInterface := publicKeyInterface.(type) {
+	case *rsa.PublicKey:
+		return fmt.Sprintf("RSA Key: Size %d bits", publicKeyInterface.Size()*8)
+	case *dsa.PublicKey:
+		return fmt.Sprintf("DSA Key: Size %d bits", publicKeyInterface.Q.BitLen())
+	case *ecdsa.PublicKey:
+		return fmt.Sprintf("ECDSA Key: Curve %s, Size %d bits", publicKeyInterface.Curve.Params().Name, publicKeyInterface.Curve.Params().BitSize)
+	default:
+		return "Unknown"
+	}
+
 }
