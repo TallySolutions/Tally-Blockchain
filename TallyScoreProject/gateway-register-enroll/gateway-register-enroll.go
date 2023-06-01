@@ -45,6 +45,7 @@ type registrationRequest struct{
 	PhoneNo string `json:"PhoneNo" binding:"required"`
 	Address string `json:"Address" binding:"required"`
 	LicenseType string `json:"LicenseType" binding:"required"`
+	Score string `json:"Score" binding:"required"`
 }
 
 type detailsStructure struct{
@@ -86,13 +87,14 @@ func performRegistration(c *gin.Context){
 	var request registrationRequest
 	c.BindJSON(&request)
 	PAN:=request.PAN
-	name:=request.Name
-	phoneNo:=request.PhoneNo
-	address:=request.Address
-	license:=request.LicenseType
+	Name:=request.Name
+	PhoneNo:=request.PhoneNo
+	Address:=request.Address
+	LicenseType:=request.LicenseType
+	Score:= request.Score
 
-	fmt.Printf("Initiating registration of user %s\n", name)
-	password, err := registerUser(PAN, name, phoneNo, address, license)
+	fmt.Printf("Initiating registration of user %s with starting score %s\n", Name, Score)
+	password, err := registerUser(PAN, Name, PhoneNo, Address, LicenseType)
 	if err!=nil{
 		fmt.Printf("Error in step 1\n")
 		fmt.Errorf("Error in the process of registration of user\n")
@@ -120,21 +122,19 @@ func performRegistration(c *gin.Context){
 	fmt.Printf("Priv Key: %s \n", detailsAsset.PrivateKey)
 	fmt.Printf("Public Key: %s \n", detailsAsset.PublicKey)
 	fmt.Printf("REGISTRATION OF USER SUCCESSFUL!\n")
-
-	// c.Writer.Header().Set("Content-Type","application/json")
 	c.Data(http.StatusOK, "application/json", detailsAssetJSON)
 
 }
 
 
-func registerUser(PAN string, name string, phoneNo string, address string, license string) (string, error){   // this function should take in PAN and print the password
+func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error){   // this function should take in PAN and print the password
 
 	cmdVariable := exec.Command("fabric-ca-client", "register", 
 	"--id.name", PAN, 
 	"--id.type", "client", 
 	"--id.affiliation", "tally", 
 	"--id.maxenrollments", "1", 
-	"--id.attrs", fmt.Sprintf("pan=%s,name=%s,phone=%s,address=%s,license=%s", PAN, name, phoneNo, address, license),
+	"--id.attrs", fmt.Sprintf("pan=%s,name=%s,phone=%s,address=%s,license=%s", PAN, Name, PhoneNo, Address, LicenseType),
 	"--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 
 
@@ -173,8 +173,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, error) {  // th
 	if err != nil {
 		return nil, err
 	}
-	// return content of mspPath- with the signcert as a param, private key as a param, tls and ca-certs  then DELETE the mspPath folder
-
+	// return content of mspPath- with the signcert content(public key) as a param, private key as a param
 	// mspPath will have the path till the folder "msp"- which contains keystore(PRIVATE KEY location) and signcerts(containing cert.pem- from which the public key is to be extracted)
 	// Extracting the private key
 	pathKeystore:= mspPath + "/keystore"	// for private key
@@ -183,7 +182,6 @@ func enrollUser(PAN string, password string) (*detailsStructure, error) {  // th
 	
 	// below will be the default values
 	privatekey:="private_key"
-	
 	
 	files, err := ioutil.ReadDir(pathKeystore)
 	if err != nil {

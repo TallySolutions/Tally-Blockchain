@@ -16,13 +16,13 @@ function RegistrationTable({ registrations }) {
       </thead>
       <tbody>
         {registrations.map((registration) => (
-          <tr key={registration.pan}>
-            <td>{registration.pan}</td>
-            <td>{registration.name}</td>
-            <td>{registration.phonenumber}</td>
-            <td>{registration.address}</td>
-            <td>{registration.license}</td>
-            <td>{registration.score}</td>
+          <tr key={registration.PAN}>
+            <td>{registration.PAN}</td>
+            <td>{registration.Name}</td>
+            <td>{registration.PhoneNo}</td>
+            <td>{registration.Address}</td>
+            <td>{registration.LicenseType}</td>
+            <td>{registration.Score}</td>
             <td>{registration.status}</td>
           </tr>
         ))}

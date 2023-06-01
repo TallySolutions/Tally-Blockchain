@@ -1,30 +1,26 @@
 import React, { useState } from 'react';
 
 function RegistrationForm({ onNewRegistration }) {
-  const [pan, setPan] = useState('');
-  const [name, setName] = useState('');
-  const[phonenumber, setPhoneNumber] = useState('');
-  const [address,setAddress] = useState('');
-  const [license, setLicense] = useState('');
+  const [PAN, setPan] = useState('');
+  const [Name, setName] = useState('');
+  const[PhoneNo, setPhoneNumber] = useState('');
+  const [Address,setAddress] = useState('');
+  const [LicenseType, setLicense] = useState('');
+  const[Score, setScore]= useState('');
   const [status, setStatus] = useState('');
-  const [userMSP,setuserMSP] = useState('');    // change to details structure
+  const [businessCertDetails,setbusinessCertDetails] = useState('');    // change to details structure
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const registration = {
-      pan: pan,
-      name: name,
-      phonenumber: phonenumber,
-      address: address,
-      license: license,
-      score: 500,
-      status: status,
+      PAN: PAN,
+      Name: Name,
+      PhoneNo: PhoneNo,
+      Address: Address,
+      LicenseType: LicenseType,
+      Score: 500,
+      // status: status,
     };
     onNewRegistration(registration);
-
-    // const hostname = window.location.hostname
-    // const port = 8080
-    // const url = 'http://' + hostname + ':' + port
-    // const performRegendpoint = '/TallyScoreProject/performRegistration'
 
     const forRequest = {
       method: 'POST',
@@ -42,8 +38,8 @@ function RegistrationForm({ onNewRegistration }) {
         return {error: "Error in registration."}
       }
     }).then(data => {
-      setuserMSP(data)
-      console.log("userMSP:" + data);
+      setbusinessCertDetails(data)
+      console.log("businessCertDetails:" + JSON.stringify(data));
     }).catch(error => {
       console.error('Error:', error);
     });
@@ -52,6 +48,7 @@ function RegistrationForm({ onNewRegistration }) {
     setPhoneNumber('');
     setAddress('');
     setLicense('');
+    setScore('');
     setStatus('');
 
     // add GSTN
@@ -61,23 +58,23 @@ function RegistrationForm({ onNewRegistration }) {
     <form onSubmit={handleFormSubmit}>
       <label>
         Business's PAN:
-        <input type="text" value={pan} onChange={(e) => setPan(e.target.value)} />
+        <input type="text" value={PAN} onChange={(e) => setPan(e.target.value)} />
       </label>
       <label>
         Name:
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+        <input type="text" value={Name} onChange={(e) => setName(e.target.value)} />
       </label>
       <label>
         Phone Number:
-        <input type="tel" value={phonenumber} onChange={(e)=>setPhoneNumber(e.target.value)}/>
+        <input type="tel" value={PhoneNo} onChange={(e)=>setPhoneNumber(e.target.value)}/>
       </label>
       <label>
         Address:
-        <input type="text" value={address} onChange={(e)=>setAddress(e.target.value)}/>
+        <input type="text" value={Address} onChange={(e)=>setAddress(e.target.value)}/>
       </label>
       <label>
         License:
-        <select value={license} onChange={(e) => setLicense(e.target.value)}>
+        <select value={LicenseType} onChange={(e) => setLicense(e.target.value)}>
           <option value="none">Select a license type</option>
           <option name="Silver"> Silver</option>
           <option name="Gold">Gold</option>
