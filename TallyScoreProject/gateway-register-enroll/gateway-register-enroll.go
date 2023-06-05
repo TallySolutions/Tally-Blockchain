@@ -1,5 +1,7 @@
 package main
 
+// code contains definition of API endpoint for registration and enrollment of business
+
 import(
 	"encoding/json"
 	"fmt"

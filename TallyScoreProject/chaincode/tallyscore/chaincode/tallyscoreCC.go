@@ -31,7 +31,6 @@ func (s *SmartContract) companyAssetExists(ctx contractapi.TransactionContextInt
 
 // function to register company and initialize it's Score to 500 
 func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
-
 	//checking if licenseID is valid
 	companyAssetExists,err:= s.companyAssetExists(ctx, LicenseId)
 	if err!=nil{
@@ -59,15 +58,6 @@ func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterf
 
 // function to unregister a company (deleting it's Score asset)
 func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
-	//checking if licenseID is valid
-	// var sumOfDigits int
-	// for _, charDigit:= range LicenseId{
-	// 	digit:= int(charDigit- '0')
-	// 	sumOfDigits+= digit
-	// }
-	// if sumOfDigits%9 !=0{
-	// 	return fmt.Errorf("Invalid license ID")
-	// }
 
 	exists, err := s.companyAssetExists(ctx, LicenseId)
 	if err != nil {
