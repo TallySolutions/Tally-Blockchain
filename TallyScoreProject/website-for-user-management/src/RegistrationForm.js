@@ -50,8 +50,7 @@ function RegistrationForm({ onNewRegistration }) {
     setLicense('');
     setScore('');
     setStatus('');
-
-    // add GSTN
+    
   };
 
   return (
