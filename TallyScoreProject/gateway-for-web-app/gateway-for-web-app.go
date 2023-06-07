@@ -5,8 +5,13 @@ package main
 // contains gateway code for defining API endpoints for business(user) registration, scoring mechanism for businesses
 
 import(
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"io/ioutil"
@@ -14,6 +19,7 @@ import(
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,6 +40,13 @@ const(
 		domain="tally.tallysolutions.com"
 		tally_ca_port="7055"
 		urlstart= "https://"
+
+
+		// for connecting to cc:
+		mspID="Tally"  // membership service provider identifier
+		TallyScoreCCName="tallyscore"
+		channelname="tally"
+		// users_common_path="/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/"   // .../users/PANofuserTestO/msp
 )
 
 
@@ -76,6 +89,7 @@ func main(){
 	urlend= "@" + ca_host + "." + domain + ":" + tally_ca_port
 
 	router.POST("/TallyScoreProject/performRegistration",performRegistration)  // this should generate business certificates and also register the business and intialize its score to 500(through chaincode)
+	router.PUT("/TallyScoreProject/increaseTallyScore", increaseTallyScore)
 	router.Run("0.0.0.0:8080")
 
 }
@@ -109,6 +123,26 @@ func performRegistration(c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
+	// the mspPath obtained as the second return value of enrollUser() function call can be used in creating a user asset using the tallyscore chaincode
+	certPath:= mspPath + "/signcerts/cert.pem"
+	keyPath:= mspPath + "/keystore"
+	peer:= "tbchlfdevpeer01" 
+	domain:= "tally.tallysolutions.com"
+	peer_port:="7051"
+	peerEndpoint:= peer + "." + domain + ":" + peer_port
+	gatewayPeer:= peer + "." + domain
+	tlsCertPath:= "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt" 	
+
+
+	// creating company asset
+	client, gw:= connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+	contract:= getContract(gw, TallyScoreCCName)
+	createCompanyAsset(contract, PAN) // PAN will be the licenseId(i.e. unique id of the business)
+	gw.Close()
+	client.Close()
+
+
+	fmt.Printf("mspPath: %s", mspPath)
 
 	detailsAssetJSON, err := json.Marshal(detailsAsset)
     if err != nil {
@@ -122,6 +156,108 @@ func performRegistration(c *gin.Context){
 	fmt.Printf("REGISTRATION OF USER SUCCESSFUL!\n")
 	c.Data(http.StatusOK, "application/json", detailsAssetJSON)
 
+}
+
+func createCompanyAsset(contract *client.Contract, businessPAN string){
+	fmt.Printf("After registration and enrollment, the score of the business will now be initialized.\n")
+	result,err:= contract.SubmitTransaction("RegisterCompany", businessPAN)
+	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+}
+
+
+func getContract(gw *client.Gateway , ccName string) *client.Contract {
+	network := gw.GetNetwork(channelname)
+	return  network.GetContract(ccName)
+}
+
+
+
+func connect(peerEndpoint string, certPath string, keyPath string, tlsCertPath string, gatewayPeer string) (*grpc.ClientConn, *client.Gateway) {
+	fmt.Printf("\nConnecting to : %s \n", peerEndpoint)
+
+	// gRPC client conn- shared by all gateway connections to this endpoint
+	clientConnection := newGrpcConnection(tlsCertPath, gatewayPeer, peerEndpoint)
+	//creating client identity, signing implementation
+	id := newIdentity(certPath)          
+	sign := newSign(keyPath)
+
+	gw, err := client.Connect(
+		id,
+		client.WithSign(sign),
+		client.WithClientConnection(clientConnection),
+		// Default timeouts for different gRPC calls
+		client.WithEvaluateTimeout(5*time.Second),
+		client.WithEndorseTimeout(15*time.Second),
+		client.WithSubmitTimeout(5*time.Second),
+		client.WithCommitStatusTimeout(1*time.Minute),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return clientConnection, gw
+}
+
+func newGrpcConnection(tlsCertPath string, gatewayPeer string, peerEndpoint string) *grpc.ClientConn {
+
+	certificate, err := loadCertificate(tlsCertPath)
+	if err != nil {
+		panic(err)
+	}
+
+	certPool := x509.NewCertPool()
+	certPool.AddCert(certificate)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, gatewayPeer)
+
+	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
+	if err != nil {
+		panic(fmt.Errorf("failed to create gRPC connection: %w", err))
+	}
+
+	return connection
+}
+
+func newIdentity(certPath string) *identity.X509Identity { 
+	certificate, err := loadCertificate(certPath)
+	if err != nil {
+		panic(err)
+	}
+	id, err := identity.NewX509Identity(mspID, certificate)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func loadCertificate(filename string) (*x509.Certificate, error) {
+	certificatePEM, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+	return identity.CertificateFromPEM(certificatePEM)
+}
+
+func newSign(keyPath string) identity.Sign {
+	files, err := os.ReadDir(keyPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read private key directory: %w", err))
+	}
+	privateKeyPEM, err := os.ReadFile(path.Join(keyPath, files[0].Name()))
+
+	if err != nil {
+		panic(fmt.Errorf("failed to read private key file: %w", err))
+	}
+
+	privateKey, err := identity.PrivateKeyFromPEM(privateKeyPEM)
+	if err != nil {
+		panic(err)
+	}
+
+	sign, err := identity.NewPrivateKeySign(privateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	return sign
 }
 
 
@@ -169,7 +305,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 	err := cmdVariable.Run()
 	fmt.Printf("%v \n", err)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	// return content of mspPath- with the signcert content(public key) as a param, private key as a param
 	// mspPath will have the path till the folder "msp"- which contains keystore(PRIVATE KEY location) and signcerts(containing cert.pem- from which the public key is to be extracted)
@@ -184,7 +320,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 	files, err := ioutil.ReadDir(pathKeystore)
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
+		return nil, "", err
 	}
 	for _, file := range files {
 		filename := file.Name()

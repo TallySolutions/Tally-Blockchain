@@ -12,6 +12,7 @@ function RegistrationTable({ registrations }) {
           <th>License</th>
           <th>Score</th>
           <th>Status</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -22,7 +23,12 @@ function RegistrationTable({ registrations }) {
             <td>{registration.PhoneNo}</td>
             <td>{registration.Address}</td>
             <td>{registration.LicenseType}</td>
-            <td>{registration.Score}</td>
+            <td><div id ="scorerow">
+                    <button id="scorebutton">-</button>
+                    {registration.Score}
+                    <button id="scorebutton">+</button>
+              </div>
+            </td>
             <td>{registration.status}</td>
           </tr>
         ))}
