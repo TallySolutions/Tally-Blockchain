@@ -102,7 +102,7 @@ func (s *SmartContract) IncreaseScore(ctx contractapi.TransactionContextInterfac
     if err !=nil {
     	fmt.Println(err)
     }
-	newScore:= uint(companyAssetRead.Score) + ((1000- companyAssetRead.Score) * uint(intermediateUpdateval))/100
+	 
     if newScore > 1000 {
     	return nil, fmt.Errorf("You cannot have a value more than 1000.")
     }

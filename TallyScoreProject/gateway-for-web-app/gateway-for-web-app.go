@@ -64,10 +64,18 @@ type detailsStructure struct{
 	PublicKey string `json:"PublicKey"`
 }
 
+type UpdateValueRequest struct {
+	PAN  string `json:"PAN" binding:"required"`
+	IncVal string `json:"IncVal" binding:"required"`
+}
+
 func printUsage() {
 	panic("Format to register user:\n" +
 		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
 }
+
+var mspPath string
+
 
 func main(){
 
@@ -157,6 +165,43 @@ func performRegistration(c *gin.Context){
 	c.Data(http.StatusOK, "application/json", detailsAssetJSON)
 
 }
+
+func increaseTallyScore(c *gin.Context){
+
+	certPath:= mspPath + "/signcerts/cert.pem"
+	keyPath:= mspPath + "/keystore"
+	peer:= "tbchlfdevpeer01" 
+	domain:= "tally.tallysolutions.com"
+	peer_port:="7051"
+	peerEndpoint:= peer + "." + domain + ":" + peer_port
+	gatewayPeer:= peer + "." + domain
+	tlsCertPath:= "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt" 	
+
+
+	// getting the contract
+	client, gw:= connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+	contract:= getContract(gw, TallyScoreCCName)
+	gw.Close()
+	client.Close()
+
+	var request UpdateValueRequest
+	c.BindJSON(&request)
+	PAN:= request.PAN
+	incVal:= request.IncVal
+
+	fmt.Printf("PAN: %s, IncreaseValue: %s", PAN, incVal)
+	evaluatedAsset, err:= contract.SubmitTransaction("IncreaseScore", PAN, incVal)
+	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
+	if err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+		return
+	}
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
+
+}
+
+
 
 func createCompanyAsset(contract *client.Contract, businessPAN string){
 	fmt.Printf("After registration and enrollment, the score of the business will now be initialized.\n")
