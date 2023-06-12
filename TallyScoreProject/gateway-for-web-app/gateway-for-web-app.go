@@ -46,7 +46,7 @@ const(
 		mspID="Tally"  // membership service provider identifier
 		TallyScoreCCName="tallyscore"
 		channelname="tally"
-		// users_common_path="/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/"   // .../users/PANofuserTestO/msp
+		users_common_path="/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/"   // mspPath= users_common_path + "PANofuserTestO/msp"
 )
 
 
@@ -69,12 +69,18 @@ type UpdateValueRequest struct {
 	IncVal string `json:"IncVal" binding:"required"`
 }
 
+// type PathCollection struct{
+// 	mspPath string 
+// }
+
 func printUsage() {
 	panic("Format to register user:\n" +
 		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
 }
 
-var mspPath string
+// var mspPath string
+// var certPath string
+// var keyPath string
 
 
 func main(){
@@ -82,7 +88,7 @@ func main(){
 	router:= gin.New()
 	router.Use(cors.Middleware(cors.Config{
 		Origins:        "*",
-		Methods:        "POST",
+		Methods:        "POST, PUT",
 		RequestHeaders: "Origin, Authorization, Content-Type",
 		ExposedHeaders: "",
 		MaxAge: 50 * time.Second,
@@ -96,8 +102,8 @@ func main(){
 	fabric_ca_client_home= tallyCAHome + "/client"
 	urlend= "@" + ca_host + "." + domain + ":" + tally_ca_port
 
-	router.POST("/TallyScoreProject/performRegistration",performRegistration)  // this should generate business certificates and also register the business and intialize its score to 500(through chaincode)
-	router.PUT("/TallyScoreProject/increaseTallyScore", increaseTallyScore)
+	router.PUT("/TallyScoreProject/performRegistration",performRegistration)  // this should generate business certificates and also register the business and intialize its score to 500(through chaincode)
+	router.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore) // send PAN number as a parameter
 	router.Run("0.0.0.0:8080")
 
 }
@@ -166,8 +172,15 @@ func performRegistration(c *gin.Context){
 
 }
 
+
 func increaseTallyScore(c *gin.Context){
 
+	var request UpdateValueRequest
+	c.BindJSON(&request)
+	PAN:= request.PAN 
+	incVal:= request.IncVal
+
+	mspPath:= users_common_path + PAN + "/msp"
 	certPath:= mspPath + "/signcerts/cert.pem"
 	keyPath:= mspPath + "/keystore"
 	peer:= "tbchlfdevpeer01" 
@@ -177,17 +190,11 @@ func increaseTallyScore(c *gin.Context){
 	gatewayPeer:= peer + "." + domain
 	tlsCertPath:= "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt" 	
 
-
 	// getting the contract
 	client, gw:= connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 	contract:= getContract(gw, TallyScoreCCName)
 	gw.Close()
 	client.Close()
-
-	var request UpdateValueRequest
-	c.BindJSON(&request)
-	PAN:= request.PAN
-	incVal:= request.IncVal
 
 	fmt.Printf("PAN: %s, IncreaseValue: %s", PAN, incVal)
 	evaluatedAsset, err:= contract.SubmitTransaction("IncreaseScore", PAN, incVal)
@@ -202,10 +209,9 @@ func increaseTallyScore(c *gin.Context){
 }
 
 
-
 func createCompanyAsset(contract *client.Contract, businessPAN string){
 	fmt.Printf("After registration and enrollment, the score of the business will now be initialized.\n")
-	result,err:= contract.SubmitTransaction("RegisterCompany", businessPAN)
+	result,err:= contract.SubmitTransaction("RegisterCompany", businessPAN)  // don't pass the PAN. 
 	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 }
 
@@ -306,7 +312,7 @@ func newSign(keyPath string) identity.Sign {
 }
 
 
-func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error){   // this function should take in PAN and print the password
+func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error){   // this function should take in PAN and return the password
 
 	cmdVariable := exec.Command("fabric-ca-client", "register", 
 	"--id.name", PAN, 
@@ -339,7 +345,7 @@ func registerUser(PAN string, Name string, PhoneNo string, Address string, Licen
 
 }
 
-func enrollUser(PAN string, password string) (*detailsStructure, string, error) {  // this function should take in PAN and password, then it should return/print the public+private key msp
+func enrollUser(PAN string, password string) (*detailsStructure, string, error) {  // this function takes in PAN and password, then it should returns the public+private key msp as a structure
 
 	// urlmid would be like-> <PAN>:<password>
 

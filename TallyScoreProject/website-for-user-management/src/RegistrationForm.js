@@ -23,7 +23,7 @@ function RegistrationForm({ onNewRegistration }) {
     onNewRegistration(registration);
 
     const forRequest = {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
