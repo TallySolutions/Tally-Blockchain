@@ -18,7 +18,7 @@ function RegistrationForm({ onNewRegistration }) {
       Address: Address,
       LicenseType: LicenseType,
       Score: 500,
-      // status: status,
+      status: status,
     };
     onNewRegistration(registration);
 

@@ -15,9 +15,13 @@ function App() {
   return (
     <div className="App">
       <RegistrationForm onNewRegistration={handleNewRegistration} />
-      <RegistrationTable registrations={registrations} />
+      <RegistrationTable
+        registrations={registrations}
+        setRegistrations={setRegistrations} // Pass setRegistrations as a prop
+      />
     </div>
   );
 }
+
 
 export default App;
