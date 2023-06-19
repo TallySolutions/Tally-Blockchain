@@ -82,13 +82,14 @@ function RegistrationTable({ registrations, setRegistrations }) {
           <th>License</th>
           <th>Score</th>
           <th>Status</th>
-          <th>Action</th>
+          <th>Generate Voucher as Owner</th>
+          <th>Generate Voucher as Supplier</th>
         </tr>
       </thead>
       <tbody>
         {registrations.map((registration) => (
           <tr key={registration.PAN}>
-            <td>{registration.PAN}</td>
+            <td id="PAN-column">{registration.PAN}</td>
             <td>{registration.Name}</td>
             <td>{registration.PhoneNo}</td>
             <td>{registration.Address}</td>
@@ -100,6 +101,11 @@ function RegistrationTable({ registrations, setRegistrations }) {
               </div>
             </td>
             <td>{registration.status}</td>
+            <td>
+              <div id="voucher-generator">
+                <button id="voucher-generator-button">Generate</button>
+              </div>
+            </td>
           </tr>
         ))}
       </tbody>
