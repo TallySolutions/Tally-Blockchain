@@ -36,12 +36,12 @@ type VoucherAsset struct {
 
 // func (s *SmartContract) RegisterBusiness()
  
-func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) error{
+func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) (*VoucherAsset, error){
 
 	// retrieving id of asset owner (creator)
 	OwnerID, err := getClientIdentity(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	currentTime:= time.Now().UnixMilli() // time.Now.UnixMilli()---- get time in milli seconds
 
@@ -67,13 +67,13 @@ func(s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterfac
 	}
 	assetJSON, err := json.Marshal(asset)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	state_err := ctx.GetStub().PutState(VoucherID, assetJSON) // new state added
 
 	fmt.Printf("Asset creation returned : %s\n", state_err)
 
-	return state_err
+	return &asset, state_err
 
 
 }
