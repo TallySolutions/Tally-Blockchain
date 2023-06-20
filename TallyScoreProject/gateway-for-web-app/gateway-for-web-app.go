@@ -4,6 +4,8 @@ package main
 
 // contains gateway code for defining API endpoints for business(user) registration, scoring mechanism for businesses
 
+// DOES NOT contain BUSINESSPROFILE cc implementation
+
 import(
 	"crypto/x509"
 	"encoding/json"
@@ -70,18 +72,6 @@ type UpdateValueRequest struct {
 	ChangeVal string `json:"ChangeVal" binding:"required"`
 }
 
-// type PathCollection struct{
-// 	mspPath string 
-// }
-
-func printUsage() {
-	panic("Format to register user:\n" +
-		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
-}
-
-// var mspPath string
-// var certPath string
-// var keyPath string
 
 
 func main(){
