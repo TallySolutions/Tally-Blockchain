@@ -51,6 +51,10 @@ type voucherCreationRequest struct {
 	Currency    string `json:"Currency" binding:"required"`
 }
 
+type voucherCancellationRequest struct {
+	VoucherID string `json:"VoucherID" binding:"required"`
+}
+
 func printUsage() {
 	panic("Format to create Voucher:\n" +
 		"go run . <voucher_id> <supplier_id> <voucher_type> <hash_code> <total_value> <currency>" + "\n")
@@ -76,6 +80,7 @@ func main() {
 	urlend = "@" + ca_host + "." + domain + ":" + tally_ca_port
 
 	router.PUT("/TallyScoreProject/voucherCreation/:PAN", voucherCreation)
+	router.POST("/TallyScoreProject/voucherCancellation/:PAN", voucherCancellation)
 	router.Run("0.0.0.0:8080")
 
 }
@@ -95,6 +100,23 @@ func voucherCreation(c *gin.Context) {
 
 	fmt.Printf("Initiating creation of voucher %s", VoucherID)
 
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	fmt.Printf("Calling the contract named: %s \n", BusinessProfileCCName)
+	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+
+	gw.Close()
+	client.Close()
+
+	fmt.Printf("Creation OF voucher SUCCESSFUL!\n")
+}
+
+func setConnection(PAN string) (*grpc.ClientConn, *client.Gateway) {
 	mspPath := users_common_path + PAN + "/msp"
 	certPath := mspPath + "/signcerts/cert.pem"
 	keyPath := mspPath + "/keystore"
@@ -105,24 +127,7 @@ func voucherCreation(c *gin.Context) {
 	gatewayPeer := peer + "." + domain
 	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
 
-	// creating voucher asset
-	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
-	contract := getContract(gw, BusinessProfileCCName)
-	createVoucherAsset(contract, VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency)
-	gw.Close()
-	client.Close()
-
-	fmt.Printf("Creation OF voucher SUCCESSFUL!\n")
-}
-
-func createVoucherAsset(contract *client.Contract, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) {
-	result, err := contract.SubmitTransaction("VoucherCreated", VoucherID, SupplierID, VoucherType, Hashcode, TotalValue, Currency) // don't pass the PAN.
-	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
-}
-
-func getContract(gw *client.Gateway, ccName string) *client.Contract {
-	network := gw.GetNetwork(channelname)
-	return network.GetContract(ccName)
+	return connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 }
 
 func connect(peerEndpoint string, certPath string, keyPath string, tlsCertPath string, gatewayPeer string) (*grpc.ClientConn, *client.Gateway) {
@@ -211,4 +216,29 @@ func newSign(keyPath string) identity.Sign {
 	}
 
 	return sign
+}
+
+func voucherCancellation(c *gin.Context) {
+
+	var request voucherCancellationRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	PAN := c.Param("PAN")
+
+	fmt.Printf("Initiating cancellation of Voucher %s", VoucherID)
+	//(Display voucher info)(Use ReadVoucher function)
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	asset, error := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if error != nil {
+		panic(error)
+	} else {
+		println("Voucher Asset with this ID is%s", string(asset))
+	}
+	result, err := contract.SubmitTransaction("VoucherCancelled", VoucherID)
+	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+
+	gw.Close()
+	client.Close()
 }
