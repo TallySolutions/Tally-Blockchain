@@ -1,1 +1,1 @@
-ssh -i D:\TW\PrivateKeys\TDevBC-Orderer-1-keyPair.pem ubuntu@43.204.246.114 ". ./.profile && cd fabric/tally-network/organizations/ordererOrganizations/tally.tallysolutions.com/orderers/tbchlfdevord02 && orderer"
+ssh -i D:\TW\PrivateKeys\TDevBC-Orderer-1-keyPair.pem ubuntu@13.200.98.128 ". ./.profile && cd fabric/tally-network/organizations/ordererOrganizations/tally.tallysolutions.com/orderers/tbchlfdevord02 && orderer"
