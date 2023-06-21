@@ -95,3 +95,9 @@ form button[type="submit"] {
   color: black;
   border: none;
 }
+
+
+.owner-supplier-dialog{
+  background-color: #90cbff;
+  padding: 20px;
+}

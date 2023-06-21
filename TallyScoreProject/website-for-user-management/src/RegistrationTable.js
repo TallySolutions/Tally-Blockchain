@@ -1,6 +1,12 @@
 import React from 'react';
+import OwnerDialog from './DialogBoxes/OwnerDialog';
+import SupplierDialog from './DialogBoxes/SupplierDialog';
+
 
 function RegistrationTable({ registrations, setRegistrations }) {
+  
+const [openOwnerDialog, setOpenOwnerDialog] = React.useState(false);
+const [openSupplierDialog, setOpenSupplierDialog] = React.useState(false);
   const handleIncrementClick = (registration) => {
     const updateStruct = {
       PAN: registration.PAN,
@@ -102,10 +108,17 @@ function RegistrationTable({ registrations, setRegistrations }) {
             </td>
             <td>{registration.status}</td>
             <td>
-              <div id="voucher-generator">
-                <button id="voucher-generator-button">Generate</button>
-              </div>
-            </td>
+                  <div id="voucher-generator">
+                    <button id="owner-voucher-button" onClick={() => setOpenOwnerDialog(true)}>Generate</button>
+                    {openOwnerDialog && <OwnerDialog />}
+                  </div>
+              </td>
+              <td>
+                  <div id="voucher-generator">
+                    <button id="supplier-voucher-button" onClick={() => setOpenSupplierDialog(true)}>Generate</button>
+                    {openSupplierDialog && <SupplierDialog />}
+                  </div>
+              </td>
           </tr>
         ))}
       </tbody>
