@@ -55,13 +55,7 @@ type voucherCancellationRequest struct {
 	VoucherID string `json:"VoucherID" binding:"required"`
 }
 
-func printUsage() {
-	panic("Format to create Voucher:\n" +
-		"go run . <voucher_id> <supplier_id> <voucher_type> <hash_code> <total_value> <currency>" + "\n")
-}
-
 func main() {
-
 	router := gin.New()
 	router.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
