@@ -1,12 +1,31 @@
-import React from 'react';
-import OwnerDialog from './DialogBoxes/OwnerDialog';
-import SupplierDialog from './DialogBoxes/SupplierDialog';
-
+import React, { useState } from 'react';
+import OwnerVoucherDialog from './DialogBoxes/OwnerVoucherDialog';
+import SupplierVoucherDialog from './DialogBoxes/SupplierVoucherDialog';
 
 function RegistrationTable({ registrations, setRegistrations }) {
   
 const [openOwnerDialog, setOpenOwnerDialog] = React.useState(false);
 const [openSupplierDialog, setOpenSupplierDialog] = React.useState(false);
+
+const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
+const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
+
+const handleOwnerVoucherButtonClick = () => {
+  setOwnerDialogOpen(true);
+};
+
+const handleSupplierVoucherButtonClick = () => {
+  setSupplierDialogOpen(true);
+};
+
+const handleOwnerDialogClose = () => {
+  setOwnerDialogOpen(false);
+};
+
+const handleSupplierDialogClose = () => {
+  setSupplierDialogOpen(false);
+};
+
   const handleIncrementClick = (registration) => {
     const updateStruct = {
       PAN: registration.PAN,
@@ -108,17 +127,31 @@ const [openSupplierDialog, setOpenSupplierDialog] = React.useState(false);
             </td>
             <td>{registration.status}</td>
             <td>
-                  <div id="voucher-generator">
-                    <button id="owner-voucher-button" onClick={() => setOpenOwnerDialog(true)}>Generate</button>
-                    {openOwnerDialog && <OwnerDialog />}
-                  </div>
-              </td>
-              <td>
-                  <div id="voucher-generator">
-                    <button id="supplier-voucher-button" onClick={() => setOpenSupplierDialog(true)}>Generate</button>
-                    {openSupplierDialog && <SupplierDialog />}
-                  </div>
-              </td>
+        <div id="voucher-generator">
+          <button id="owner-voucher-button" className='generate-voucher-button' onClick={handleOwnerVoucherButtonClick}>Generate</button>
+        </div>
+      </td>
+      <td>
+        <div id="voucher-generator">
+          <button id="supplier-voucher-button" className='generate-voucher-button' onClick={handleSupplierVoucherButtonClick}>Generate</button>
+        </div>
+      </td>
+
+      {ownerDialogOpen && (
+        <div className="dialog-overlay">
+          <div className="dialog-container">
+            <OwnerVoucherDialog onClose={handleOwnerDialogClose} />
+          </div>
+        </div>
+      )}
+
+      {supplierDialogOpen && (
+        <div className="dialog-overlay">
+          <div className="dialog-container">
+            <SupplierVoucherDialog onClose={handleSupplierDialogClose} />
+          </div>
+        </div>
+      )}
           </tr>
         ))}
       </tbody>

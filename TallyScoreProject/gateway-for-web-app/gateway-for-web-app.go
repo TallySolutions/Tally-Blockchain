@@ -430,13 +430,11 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 				continue
 			}
 
-			// Process the private key content as per your requirements
-			// In this example, we'll simply print it
 			privatekey=string(content)
 		}
 	}
 
-	// now to retrieve the public key
+	// Now, to retrieve the public key
 	certFileread, err := ioutil.ReadFile(pathSigncertFile)
 	if err != nil {
 		log.Fatal(err)
@@ -444,7 +442,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 
 	publickey:= string(certFileread)
 
-	// client side will be recreating private key and public key files content
+	// Client side will be recreating private key and public key files content
 	detailsAsset:= detailsStructure{
 		PrivateKey: privatekey,
 		PublicKey: publickey,
