@@ -215,7 +215,6 @@ func (s *SmartContract) GetAllOptions(ctx contractapi.TransactionContextInterfac
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(queryResponse.Value)
 		var asset VotableOption
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
