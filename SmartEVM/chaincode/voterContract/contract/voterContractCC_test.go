@@ -1,4 +1,4 @@
-package chaincode_test
+package contract_test
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
 	"github.com/stretchr/testify/require"
-	"tallysolutions.com/SmartEVM/chaincode/voterContract/chaincode"
-	"tallysolutions.com/SmartEVM/chaincode/voterContract/chaincode/mocks"
+	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract"
+	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract/mocks"
 )
 
 //go:generate counterfeiter -o mocks/transaction.go -fake-name TransactionContext . transactionContext
@@ -33,7 +33,7 @@ func TestInitLedger(t *testing.T) {
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
 
-	voterContract := chaincode.SmartContract{}
+	voterContract := contract.SmartContract{}
 	err := voterContract.InitLedger(transactionContext)
 	require.NoError(t, err)
 
@@ -48,7 +48,7 @@ func TestAddVotableOption(t *testing.T) {
 	transactionContext.GetStubReturns(chaincodeStub)
 
 	//Running without initialization
-	voterContract := chaincode.SmartContract{}
+	voterContract := contract.SmartContract{}
 	err := voterContract.AddVotableOption(transactionContext, "Option1")
 	require.Error(t, err) //Expect error
 
@@ -77,7 +77,7 @@ func TestCastVote(t *testing.T) {
 	transactionContext.GetStubReturns(chaincodeStub)
 
 	//Running without initialization
-	voterContract := chaincode.SmartContract{}
+	voterContract := contract.SmartContract{}
 	err := voterContract.CastVote(transactionContext, "User1", []string{"Option1"})
 	require.Error(t, err) //Expect error
 
@@ -90,7 +90,7 @@ func TestCastVote(t *testing.T) {
 	require.Error(t, err) //Expect error - as no option Option1 present yet
 
 	//Setup the assets
-	expectedAsset := &chaincode.VotableOption{VotableId: "Option1"}
+	expectedAsset := &contract.VotableOption{VotableId: "Option1"}
 	bytes, err := json.Marshal(expectedAsset)
 	require.NoError(t, err)
 

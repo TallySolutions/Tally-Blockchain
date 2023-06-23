@@ -1,4 +1,4 @@
-package chaincode
+package contract
 
 import (
 	"encoding/json"
