@@ -6,8 +6,8 @@ require (
 	github.com/hyperledger/fabric-chaincode-go v0.0.0-20230228194215-b84622ba6a7a
 	github.com/hyperledger/fabric-contract-api-go v1.2.1
 	github.com/hyperledger/fabric-protos-go v0.3.0
-	github.com/hyperledger/fabric-samples/asset-transfer-basic/chaincode-go v0.0.0-20230620162141-7671bdd7c678
 	github.com/stretchr/testify v1.8.2
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -33,7 +33,6 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/grpc v1.53.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
