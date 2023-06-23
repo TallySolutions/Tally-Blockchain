@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: system-ui, 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif ;
+  font-family: system-ui, 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 table {
@@ -10,11 +10,11 @@ table {
   justify-content: center;
 }
 
-table td{
+table td {
   font-size: 12px;
 }
 
-#PAN-column{
+#PAN-column {
   font-size: 14px;
 }
 
@@ -25,33 +25,31 @@ table td {
   background-color: #c6e1f9;
 }
 
-#scorebutton{
+#scorebutton {
   background-color: #ffffff;
   border-radius: 5%;
-  border-color:#ffffff;
-  margin: 0 5px; 
+  border-color: #ffffff;
+  margin: 0 5px;
 }
 
-#scorerow{
-  display:flex;
+#scorerow {
+  display: flex;
   flex-direction: row;
   margin-left: 5px;
   margin-right: 5px;
 }
-
 
 table th {
   background-color: #4298e3;
   font-weight: bold;
 }
 
-
 .form-container {
   margin-bottom: 20px;
 }
 
 form {
-  margin-left:0px;
+  margin-left: 0px;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -72,13 +70,13 @@ form input {
   margin-bottom: 10px;
 }
 
-form select{
+form select {
   padding: 5px;
   margin-top: 5px;
   margin-bottom: 10px;
 }
 
-form button[type="submit"] {
+form button[type='submit'] {
   width: 60px;
   height: 40px;
   padding: 5px 10px;
@@ -87,7 +85,7 @@ form button[type="submit"] {
   border-radius: 15%;
 }
 
-#voucher-generator-button{
+#voucher-generator-button {
   width: 90px;
   height: 30px;
   font-size: 14px;
@@ -95,8 +93,6 @@ form button[type="submit"] {
   color: black;
   border: none;
 }
-
-
 
 .dialog-overlay {
   position: fixed;
@@ -115,8 +111,8 @@ form button[type="submit"] {
   background-color: #69b0ef;
   padding: 20px;
   border-radius: 4px;
-  width:600px;
-  height:600px;
+  width: 600px;
+  height: 600px;
 }
 
 .voucher-dialog-buttons {
@@ -126,71 +122,89 @@ form button[type="submit"] {
   gap: 10px;
   height: 200px;
   align-items: center;
+  justify-items: center;
 }
 
-.voucher-dialog-buttons button:nth-child(1) {
-  grid-column: 1;
-  grid-row: 1;
-  margin-top: 100px;
-  margin-left: 100px;
-  margin-right: 50px;
-  margin-bottom: 50px;
-}
-
-.voucher-dialog-buttons button:nth-child(2) {
-  grid-column: 2;
-  grid-row: 1;
-  margin-top: 100px;
-  margin-left: 50px;
-  margin-right: 100px;
-  margin-bottom: 50px;
-}
-
-.voucher-dialog-buttons button:nth-child(3) {
-  grid-column: 1;
-  grid-row: 2;
-  margin-top: 50px;
-  margin-left: 100px;
-  margin-right: 50px;
-  margin-bottom: 100px;
-}
-
-.voucher-dialog-buttons button:nth-child(4) {
-  grid-column: 2;
-  grid-row: 2;
-  margin-top: 50px;
-  margin-left: 50px;
-  margin-right: 100px;
-  margin-bottom: 100px;
-}
-
-
-.dialog-buttons{
+.voucher-dialog-buttons button {
   background-color: #b3daff;
   width: 150px;
   height: 100px;
   border: none;
   border-radius: 10%;
   font-size: medium;
-  margin-left: 25px;
-  margin-right: 25px;
   margin-top: 25px;
   margin-bottom: 25px;
 }
 
-
-.close-dialog-button{
+.close-dialog-button {
   background-color: #b3daff;
 }
 
+.generate-voucher-button {
+  border: none;
+  border-radius: 50%;
+  background-color: #84c6ff;
+  width: 80px;
+  height: 30px;
+  font-size: 15px;
+  margin-left: 18px;
+  margin-right: 10px;
+}
 
-.generate-voucher-button{
-    border: none;
-    border-radius: 50%;  
-    background-color: #84c6ff;
-    width: 80px;
-    height: 30px;
-    font-size: 15px;
-    margin-left: 18px;
-    margin-right: 10px;
+.new-voucher-form{
+  display: flex;
+  flex-direction: column;
+}
+
+.new-voucher-form-group{
+  margin-top: 25px;
+}
+
+.new-voucher-form-submit{
+  margin-top:25px;
+}
+
+.cancel-voucher-form-submit{
+  margin-top:25px;
+}
+
+.voucher-details-display{
+  width:350px;
+  height: 250px;
+  font-size: 14px;
+  font-weight: lighter ;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  margin-left: 100px;
+  border-style: dotted;
+
+}
+
+.cancel-voucher-form-group{
+  margin-top:50px;
+  margin-left: 25px;
+  align-items:normal;
+}
+
+
+#verify-voucher-button{
+  margin-left:25px;
+  height: fit-content;
+  width: fit-content;
+  border-radius: 5%;
+}
+
+.display-voucher-field{
+  display: flex;
+  align-items: center;
+}
+
+.cancel-voucher-button{
+  margin-left:425px;
+  height: 50px;
+  width: 150px;
+  border-radius: 5%;
+  background-color:#128cf6;
+  color: #ffffff;
+  font-size: 14px;
 }
