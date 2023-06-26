@@ -70,8 +70,8 @@ function UpdateVoucherDialog({ onClose }) {
             required
           >
             <option value="">Select an option</option>
-            <option value="Hash">Hash</option>
-            <option value="Value">Value</option>
+            <option value="Hashcode">Hashcode</option>
+            <option value="TotalValue">TotalValue</option>
           </select>
         </div>
         <div className="update-voucher-form-group">
