@@ -61,8 +61,14 @@ function NewVoucherDialog({ onClose }) {
             required
           >
             <option value="">Select Voucher Type</option>
-            <option value="contra">Contra</option>
-            <option value="purchase">Purchase</option>
+            <option value="contra">contra</option>
+            <option value="purchase">purchase</option>
+            <option value="receipt">receipt</option>
+            <option value="payment">payment</option>
+            <option value="sales">sales</option>
+            <option value="credit">credit</option>
+            <option value="debit">debit</option>
+            <option value="journal">journal</option>
           </select>
         </div>
         <div className="new-voucher-form-group">

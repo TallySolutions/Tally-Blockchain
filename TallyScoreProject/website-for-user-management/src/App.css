@@ -208,3 +208,46 @@ form button[type='submit'] {
   color: #ffffff;
   font-size: 14px;
 }
+
+
+.update-voucher-button{
+  margin-left:425px;
+  height: 50px;
+  width: 150px;
+  border-radius: 5%;
+  background-color:#128cf6;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.display-voucher-field-update{
+  display: flex;
+  align-items: center;
+  width:250px;
+  height:250px;
+  margin-top: 50px;
+}
+
+.update-voucher-form-group{
+  margin-top:50px;
+  margin-left: 25px;
+  align-items:normal;
+}
+
+
+.update-voucher-details-display{
+  width:350px;
+  height: 150px;
+  font-size: 14px;
+  font-weight: lighter ;
+  margin-top: 10px;
+  margin-bottom: 50px;
+  margin-left: 225px;
+  border-style: dotted;
+
+}
+
+
+.close-list-dialog-button{
+  margin-top: 25px;
+}

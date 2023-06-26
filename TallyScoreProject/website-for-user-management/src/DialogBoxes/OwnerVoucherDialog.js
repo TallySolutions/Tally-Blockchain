@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import NewVoucherDialog from './NewVoucherDialog';
 import CancelVoucherDialog from './CancelVoucherDialog';
+import UpdateVoucherDialog from './UpdateVoucherDialog';
+import ListOwnerVouchersDialog from './ListOwnerVouchersDialog';
 
 function OwnerVoucherDialog({ onClose }) {
   const [showNewVoucherDialog, setShowNewVoucherDialog] = useState(false);
   const [showCancelVoucherDialog, setShowCancelVoucherDialog] = useState(false);
+  const [showUpdateVoucherDialog, setShowUpdateVoucherDialog] = useState(false);
+  const [showListOwnerVouchersDialog, setShowListOwnerVouchersDialog] = useState(false);
 
   const handleButtonClick = (action) => {
     console.log('Owner Voucher Button Clicked:', action);
@@ -12,6 +16,10 @@ function OwnerVoucherDialog({ onClose }) {
       setShowNewVoucherDialog(true);
     } else if (action === 'Cancel Voucher') {
       setShowCancelVoucherDialog(true);
+    } else if (action === 'Update Voucher') {
+      setShowUpdateVoucherDialog(true);
+    } else if (action === 'List of all Vouchers as Owner') {
+      setShowListOwnerVouchersDialog(true);
     } else {
       onClose();
     }
@@ -19,7 +27,7 @@ function OwnerVoucherDialog({ onClose }) {
 
   return (
     <div className="voucher-dialog">
-      {!showNewVoucherDialog && !showCancelVoucherDialog && (
+      {!showNewVoucherDialog && !showCancelVoucherDialog && !showUpdateVoucherDialog && !showListOwnerVouchersDialog && (
         <>
           <button
             className="close-dialog-button"
@@ -42,9 +50,9 @@ function OwnerVoucherDialog({ onClose }) {
             </button>
             <button
               className="dialog-buttons"
-              onClick={() => handleButtonClick('Update Asset Voucher')}
+              onClick={() => handleButtonClick('Update Voucher')}
             >
-              Update Asset Voucher
+              Update Voucher
             </button>
             <button
               className="dialog-buttons"
@@ -62,6 +70,12 @@ function OwnerVoucherDialog({ onClose }) {
       )}
       {showCancelVoucherDialog && (
         <CancelVoucherDialog onClose={onClose} />
+      )}
+      {showUpdateVoucherDialog && (
+        <UpdateVoucherDialog onClose={onClose} />
+      )}
+      {showListOwnerVouchersDialog && (
+        <ListOwnerVouchersDialog onClose={() => handleButtonClick('Back')} />
       )}
     </div>
   );
