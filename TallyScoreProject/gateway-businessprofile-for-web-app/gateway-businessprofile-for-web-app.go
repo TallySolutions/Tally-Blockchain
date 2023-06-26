@@ -5,8 +5,10 @@ package main
 // contains gateway code for defining API endpoints for voucher related stuff
 
 import (
+	"context"
 	"crypto/x509"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"time"
@@ -37,7 +39,7 @@ const (
 
 	// for connecting to cc:
 	mspID                 = "Tally" // membership service provider identifier
-	BusinessProfileCCName = "BusinessProfile"
+	BusinessProfileCCName = "businessprofile"
 	channelname           = "tally"
 	users_common_path     = "/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/"
 )
@@ -51,15 +53,21 @@ type voucherCreationRequest struct {
 	Currency    string `json:"Currency" binding:"required"`
 }
 
-type voucherCancellationRequest struct {
+type voucherIDRequest struct {
 	VoucherID string `json:"VoucherID" binding:"required"`
+}
+
+type voucherUpdationRequest struct {
+	VoucherID    string `json:"VoucherID" binding:"required"`
+	Parameter    string `json:"Parameter" binding:"required"`
+	UpdatedValue string `json:"UpdatedValue" binding:"required"`
 }
 
 func main() {
 	router := gin.New()
 	router.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
-		Methods:         "POST, PUT",
+		Methods:         "GET, POST, PUT",
 		RequestHeaders:  "Origin, Authorization, Content-Type",
 		ExposedHeaders:  "",
 		MaxAge:          50 * time.Second,
@@ -73,10 +81,30 @@ func main() {
 	fabric_ca_client_home = tallyCAHome + "/client"
 	urlend = "@" + ca_host + "." + domain + ":" + tally_ca_port
 
-	router.PUT("/TallyScoreProject/voucherCreation/:PAN", voucherCreation)
-	router.POST("/TallyScoreProject/voucherCancellation/:PAN", voucherCancellation)
-	router.Run("0.0.0.0:8080")
+	timeout := 50 * time.Second
+	timeoutGroup := router.Group("/", TimeoutMiddleware(timeout))
+	{
+		timeoutGroup.PUT("/TallyScoreProject/voucherCreation/:PAN", voucherCreation)
+		timeoutGroup.POST("/TallyScoreProject/voucherCancellation/:PAN", voucherCancellation)
+		timeoutGroup.PUT("/TallyScoreProject/voucherUpdation/:PAN", voucherUpdation)
+		timeoutGroup.GET("/TallyScoreProject/listOwnerVouchers/:PAN", listOwnerVouchers)
 
+		timeoutGroup.POST("/TallyScoreProject/voucherApproval/:PAN", voucherApproval)
+		timeoutGroup.POST("/TallyScoreProject/voucherReturn/:PAN", voucherReturn)
+		timeoutGroup.POST("/TallyScoreProject/voucherRejection/:PAN", voucherRejection)
+		timeoutGroup.GET("/TallyScoreProject/listSupplierVouchers/:PAN", listSupplierVouchers)
+	}
+	router.Run("0.0.0.0:8080")
+}
+
+func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
+		defer cancel()
+
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	}
 }
 
 func voucherCreation(c *gin.Context) {
@@ -104,10 +132,197 @@ func voucherCreation(c *gin.Context) {
 	}
 	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+
 	gw.Close()
 	client.Close()
 
-	fmt.Printf("Creation OF voucher SUCCESSFUL!\n")
+	c.JSON(http.StatusOK, gin.H{"message": "Voucher created successfully"})
+}
+func voucherCancellation(c *gin.Context) {
+
+	var request voucherIDRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	PAN := c.Param("PAN")
+
+	fmt.Printf("Initiating cancellation of Voucher %s", VoucherID)
+	//(Display voucher info)(Use ReadVoucher function)
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+
+	result, err := contract.SubmitTransaction("VoucherCancelled", VoucherID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+		return
+	}
+
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+	gw.Close()
+	client.Close()
+
+	c.JSON(http.StatusOK, gin.H{"message": "Voucher cancelled successfully"})
+
+}
+func voucherUpdation(c *gin.Context) {
+
+	var request voucherUpdationRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	Parameter := request.Parameter
+	UpdatedValue := request.UpdatedValue
+
+	PAN := c.Param("PAN")
+
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+
+	result, err := contract.SubmitTransaction("VoucherUpdated", VoucherID, Parameter, UpdatedValue)
+	if err != nil {
+		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+		return
+	}
+
+	asset, err = contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+	c.JSON(http.StatusOK, gin.H{"message": "Voucher updated successfully"})
+
+	gw.Close()
+	client.Close()
+}
+
+func listOwnerVouchers(c *gin.Context) {
+
+	PAN := c.Param("PAN")
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	assetsList, err := contract.SubmitTransaction("GetOwnerVouchers")
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", assetsList)
+
+	gw.Close()
+	client.Close()
+
+}
+
+func voucherApproval(c *gin.Context) {
+
+	var request voucherIDRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	PAN := c.Param("PAN")
+
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	result, err := contract.SubmitTransaction("VoucherApproved", VoucherID)
+
+	if err != nil {
+		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+	gw.Close()
+	client.Close()
+}
+
+func voucherRejection(c *gin.Context) {
+
+	var request voucherIDRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	PAN := c.Param("PAN")
+
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	result, err := contract.SubmitTransaction("VoucherRejected", VoucherID)
+
+	if err != nil {
+		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+	c.JSON(http.StatusOK, gin.H{"message": "Voucher rejected successfully"})
+	gw.Close()
+	client.Close()
+}
+
+func voucherReturn(c *gin.Context) {
+
+	var request voucherIDRequest
+	c.BindJSON(&request)
+	VoucherID := request.VoucherID
+	PAN := c.Param("PAN")
+
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	result, err := contract.SubmitTransaction("VoucherSentBack", VoucherID)
+
+	if err != nil {
+		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", asset)
+	c.JSON(http.StatusOK, gin.H{"message": "Voucher sent back successfully"})
+	gw.Close()
+	client.Close()
+}
+
+func listSupplierVouchers(c *gin.Context) {
+
+	PAN := c.Param("PAN")
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	assetsList, err := contract.SubmitTransaction("GetSupplierVouchers")
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", assetsList)
+
+	gw.Close()
+	client.Close()
 }
 
 func setConnection(PAN string) (*grpc.ClientConn, *client.Gateway) {
@@ -210,29 +425,4 @@ func newSign(keyPath string) identity.Sign {
 	}
 
 	return sign
-}
-
-func voucherCancellation(c *gin.Context) {
-
-	var request voucherCancellationRequest
-	c.BindJSON(&request)
-	VoucherID := request.VoucherID
-	PAN := c.Param("PAN")
-
-	fmt.Printf("Initiating cancellation of Voucher %s", VoucherID)
-	//(Display voucher info)(Use ReadVoucher function)
-	client, gw := setConnection(PAN)
-	network := gw.GetNetwork(channelname)
-	contract := network.GetContract(BusinessProfileCCName)
-	asset, error := contract.SubmitTransaction("ReadVoucher", VoucherID)
-	if error != nil {
-		panic(error)
-	} else {
-		println("Voucher Asset with this ID is%s", string(asset))
-	}
-	result, err := contract.SubmitTransaction("VoucherCancelled", VoucherID)
-	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
-
-	gw.Close()
-	client.Close()
 }

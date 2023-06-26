@@ -29,8 +29,7 @@ function SetupServer()
 
     infoln "Cleaning up $CA_HOME ..."
 	/bin/rm -r ${CA_HOME}/*
-	verifyResult $? "Could not cleanup $CA_HOME."
-
+	
     infoln "Creating ${CA_HOME}/fabric-ca-server-config.yaml ..."
 	/bin/cp fabric-ca-server-config-template.yaml ${CA_HOME}/fabric-ca-server-config.yaml
 	verifyResult $? "Could not create $CA_HOME/fabric-ca-server-config.yaml."

@@ -4,7 +4,10 @@ package main
 
 // contains gateway code for defining API endpoints for business(user) registration, scoring mechanism for businesses
 
+// DOES NOT contain BUSINESSPROFILE cc implementation
+
 import (
+	"context"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
@@ -64,18 +67,9 @@ type detailsStructure struct {
 }
 
 type UpdateValueRequest struct {
-	PAN    string `json:"PAN" binding:"required"`
-	IncVal string `json:"IncVal" binding:"required"`
+	PAN       string `json:"PAN" binding:"required"`
+	ChangeVal string `json:"ChangeVal" binding:"required"`
 }
-
-func printUsage() {
-	panic("Format to register user:\n" +
-		"go run . <user_PAN> <name> <phoneNo> <address> <license_type>" + "\n")
-}
-
-// var mspPath string
-// var certPath string
-// var keyPath string
 
 func main() {
 
@@ -96,10 +90,26 @@ func main() {
 	fabric_ca_client_home = tallyCAHome + "/client"
 	urlend = "@" + ca_host + "." + domain + ":" + tally_ca_port
 
-	router.PUT("/TallyScoreProject/performRegistration", performRegistration) // this should generate business certificates and also register the business and intialize its score to 500(through chaincode)
-	router.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore)  // send PAN number as a parameter
+	timeout := 50 * time.Second
+	timeoutGroup := router.Group("/", TimeoutMiddleware(timeout))
+	{
+		timeoutGroup.PUT("/TallyScoreProject/performRegistration", performRegistration)
+		timeoutGroup.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore)
+		timeoutGroup.POST("/TallyScoreProject/decreaseTallyScore", decreaseTallyScore)
+	}
+
 	router.Run("0.0.0.0:8080")
 
+}
+
+func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
+		defer cancel()
+
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	}
 }
 
 func performRegistration(c *gin.Context) {
@@ -169,11 +179,11 @@ func increaseTallyScore(c *gin.Context) {
 	var request UpdateValueRequest
 	c.BindJSON(&request)
 	PAN := request.PAN
-	incVal := request.IncVal
+	incVal := request.ChangeVal
 
 	mspPath := users_common_path + PAN + "/msp"
 	certPath := mspPath + "/signcerts/cert.pem"
-	keyPath := mspPath + "/keystore"
+	keyPath := mspPath + "/keystore/"
 	peer := "tbchlfdevpeer01"
 	domain := "tally.tallysolutions.com"
 	peer_port := "7051"
@@ -184,12 +194,49 @@ func increaseTallyScore(c *gin.Context) {
 	// getting the contract
 	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 	contract := getContract(gw, TallyScoreCCName)
-	gw.Close()
-	client.Close()
 
-	fmt.Printf("PAN: %s, IncreaseValue: %s", PAN, incVal)
+	fmt.Printf("PAN: %s, IncreaseValue: %s\n", PAN, incVal)
+	fmt.Printf("CertPath: %s \n", certPath)
+	fmt.Printf("KeyPath: %s \n \n \n", keyPath)
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseScore", PAN, incVal)
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
+	gw.Close()
+	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
+
+}
+
+func decreaseTallyScore(c *gin.Context) {
+
+	var request UpdateValueRequest
+	c.BindJSON(&request)
+	PAN := request.PAN
+	decVal := request.ChangeVal
+
+	mspPath := users_common_path + PAN + "/msp"
+	certPath := mspPath + "/signcerts/cert.pem"
+	keyPath := mspPath + "/keystore/"
+	peer := "tbchlfdevpeer01"
+	domain := "tally.tallysolutions.com"
+	peer_port := "7051"
+	peerEndpoint := peer + "." + domain + ":" + peer_port
+	gatewayPeer := peer + "." + domain
+	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
+
+	// getting the contract
+	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+	contract := getContract(gw, TallyScoreCCName)
+
+	fmt.Printf("PAN: %s, DecreaseValue: %s\n", PAN, decVal)
+	evaluatedAsset, err := contract.SubmitTransaction("DecreaseScore", PAN, decVal)
+	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
+	gw.Close()
+	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
