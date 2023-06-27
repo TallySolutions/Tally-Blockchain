@@ -5,77 +5,65 @@ import UpdateVoucherDialog from './UpdateVoucherDialog';
 import ListOwnerVouchersDialog from './ListOwnerVouchersDialog';
 
 function OwnerVoucherDialog({ onClose }) {
-  const [showNewVoucherDialog, setShowNewVoucherDialog] = useState(false);
-  const [showCancelVoucherDialog, setShowCancelVoucherDialog] = useState(false);
-  const [showUpdateVoucherDialog, setShowUpdateVoucherDialog] = useState(false);
-  const [showListOwnerVouchersDialog, setShowListOwnerVouchersDialog] = useState(false);
+  const [activeDialog, setActiveDialog] = useState(null);
 
-  const handleButtonClick = (action) => {
-    console.log('Owner Voucher Button Clicked:', action);
-    if (action === 'New Voucher') {
-      setShowNewVoucherDialog(true);
-    } else if (action === 'Cancel Voucher') {
-      setShowCancelVoucherDialog(true);
-    } else if (action === 'Update Voucher') {
-      setShowUpdateVoucherDialog(true);
-    } else if (action === 'List of all Vouchers as Owner') {
-      setShowListOwnerVouchersDialog(true);
-    } else {
-      onClose();
-    }
+  const handleDialogOpen = (dialogName) => {
+    setActiveDialog(dialogName);
+  };
+
+  const handleDialogClose = () => {
+    setActiveDialog(null);
   };
 
   return (
     <div className="voucher-dialog">
-      {!showNewVoucherDialog && !showCancelVoucherDialog && !showUpdateVoucherDialog && !showListOwnerVouchersDialog && (
+      {activeDialog === null ? (
         <>
-          <button
-            className="close-dialog-button"
-            onClick={() => handleButtonClick('Close Dialog')}
-          >
+          <button className="close-dialog-button" onClick={onClose}>
             Back
           </button>
           <div className="voucher-dialog-buttons">
             <button
               className="dialog-buttons"
-              onClick={() => handleButtonClick('New Voucher')}
+              onClick={() => handleDialogOpen('NewVoucherDialog')}
             >
               New Voucher
             </button>
             <button
               className="dialog-buttons"
-              onClick={() => handleButtonClick('Cancel Voucher')}
+              onClick={() => handleDialogOpen('CancelVoucherDialog')}
             >
               Cancel Voucher
             </button>
             <button
               className="dialog-buttons"
-              onClick={() => handleButtonClick('Update Voucher')}
+              onClick={() => handleDialogOpen('UpdateVoucherDialog')}
             >
               Update Voucher
             </button>
             <button
               className="dialog-buttons"
-              onClick={() =>
-                handleButtonClick('List of all Vouchers as Owner')
-              }
+              onClick={() => handleDialogOpen('ListOwnerVouchersDialog')}
             >
               List of all Vouchers as Owner
             </button>
           </div>
         </>
-      )}
-      {showNewVoucherDialog && (
-        <NewVoucherDialog onClose={onClose} />
-      )}
-      {showCancelVoucherDialog && (
-        <CancelVoucherDialog onClose={onClose} />
-      )}
-      {showUpdateVoucherDialog && (
-        <UpdateVoucherDialog onClose={onClose} />
-      )}
-      {showListOwnerVouchersDialog && (
-        <ListOwnerVouchersDialog onClose={() => handleButtonClick('Back')} />
+      ) : (
+        <>
+          {activeDialog === 'NewVoucherDialog' && (
+            <NewVoucherDialog onClose={handleDialogClose} />
+          )}
+          {activeDialog === 'CancelVoucherDialog' && (
+            <CancelVoucherDialog onClose={handleDialogClose} />
+          )}
+          {activeDialog === 'UpdateVoucherDialog' && (
+            <UpdateVoucherDialog onClose={handleDialogClose} />
+          )}
+          {activeDialog === 'ListOwnerVouchersDialog' && (
+            <ListOwnerVouchersDialog onClose={handleDialogClose} />
+          )}
+        </>
       )}
     </div>
   );
