@@ -137,7 +137,8 @@ form button[type='submit'] {
 }
 
 .close-dialog-button {
-  background-color: #b3daff;
+  background-color: #ffffff;
+  border: none;
 }
 
 .generate-voucher-button {
@@ -168,6 +169,11 @@ form button[type='submit'] {
   margin-top:25px;
 }
 
+.cancel-voucher-button{
+  border: none;
+  background-color: #0088ff;
+}
+
 .voucher-details-display{
   width:350px;
   height: 250px;
@@ -192,6 +198,10 @@ form button[type='submit'] {
   height: fit-content;
   width: fit-content;
   border-radius: 5%;
+  background-color: #0088ff;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
 }
 
 .display-voucher-field{
@@ -250,4 +260,25 @@ form button[type='submit'] {
 
 .close-list-dialog-button{
   margin-top: 25px;
+}
+
+.approve-voucher-form-submit{
+  margin-top:25px;
+}
+
+.approve-voucher-button{
+  margin-left:425px;
+  height: 50px;
+  width: 150px;
+  border-radius: 5%;
+  background-color:#128cf6;
+  color: #ffffff;
+  font-size: 14px;
+  border: none;
+}
+
+.approve-voucher-form-group{
+  margin-top:50px;
+  margin-left: 25px;
+  align-items:normal;
 }
