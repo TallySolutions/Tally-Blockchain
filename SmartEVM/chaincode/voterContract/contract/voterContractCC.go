@@ -3,6 +3,7 @@ package contract
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"crypto"
@@ -18,7 +19,7 @@ import (
 const Abstained = "_Abstained_"
 
 const VOTE_OPTION_REGISTER_PREFIX = "[VOTE_OPTION]:"
-const VOTER_REGISTER_PREFIX = "[VOTE_OPTION]:"
+const VOTER_REGISTER_PREFIX = "[VOTE_REGISTER]:"
 
 type SmartContract struct {
 	contractapi.Contract
@@ -27,8 +28,6 @@ type SmartContract struct {
 	Abstainable  bool
 	SingleChoice bool
 }
-
-type DateTime time.Time
 
 // NOTE: Write the asset properties in CAMEL CASE- otherwise, chaincode will not get deployed
 
@@ -50,7 +49,7 @@ type Ballot struct {
 	Casted bool `json:"Casted"`
 
 	//When the vote is casted
-	Timestamp DateTime `json:"Timestamp"`
+	Timestamp int64 `json:"Timestamp"`
 
 	//Whch options ate voted for - it is kept empty for anonymous voting
 	Picks []string `jsno:"Picks"`
@@ -170,7 +169,7 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 		Signature: "",
 		Casted:    false,
 		PubKey:    "",
-		Timestamp: DateTime(time.Now()),
+		Timestamp: 0,
 	}
 	voterJSON, err := json.Marshal(ballot)
 	if err != nil {
@@ -363,6 +362,10 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return fmt.Errorf("This voter is not authorized, please authenticate the voter first!")
 	}
 
+	if ballot.Casted {
+		return fmt.Errorf("This voter is already voted!")
+	}
+
 	//Get the ballot's private key
 	privateKey_bytes, privateKeyGetErr := ctx.GetStub().GetPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey")
 	if privateKeyGetErr != nil {
@@ -415,8 +418,13 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	}
 
 	//Update the timestamp
-	ballot.Timestamp = DateTime(time.Now())
-	ballot.Picks = votableIds
+	ballot.Timestamp = time.Now().UnixNano()
+	if s.IsAnonymous {
+		ballot.Picks = nil
+	} else {
+		ballot.Picks = votableIds
+	}
+	ballot.Casted = true
 
 	for _, optionId := range votableIds {
 		votableOption, err := s.ReadOption(ctx, optionId)
@@ -448,7 +456,7 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	return nil
 }
 
-// GetAllAssets returns all voting options found in world state
+// GetAllOptions returns all voting options found in world state
 func (s *SmartContract) GetAllOptions(ctx contractapi.TransactionContextInterface) ([]*VotableOption, error) {
 	// range query with empty string for startKey and endKey does an
 	// open-ended query of all assets in the chaincode namespace.
@@ -470,12 +478,49 @@ func (s *SmartContract) GetAllOptions(ctx contractapi.TransactionContextInterfac
 		if err != nil {
 			return nil, err
 		}
-		var asset VotableOption
-		err = json.Unmarshal(queryResponse.Value, &asset)
+		if strings.HasPrefix(queryResponse.Key, VOTE_OPTION_REGISTER_PREFIX) {
+			var asset VotableOption
+			err = json.Unmarshal(queryResponse.Value, &asset)
+			if err != nil {
+				return nil, err
+			}
+			assets = append(assets, &asset)
+		}
+	}
+
+	return assets, nil
+}
+
+// GetAllBallots returns all voting ballots found in world state
+func (s *SmartContract) GetAllBallots(ctx contractapi.TransactionContextInterface) ([]*Ballot, error) {
+	// range query with empty string for startKey and endKey does an
+	// open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resultsIterator == nil {
+		return nil, fmt.Errorf("No result iterator found!")
+	}
+
+	defer resultsIterator.Close()
+
+	var assets []*Ballot
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
-		assets = append(assets, &asset)
+		if strings.HasPrefix(queryResponse.Key, VOTER_REGISTER_PREFIX) {
+			var asset Ballot
+			err = json.Unmarshal(queryResponse.Value, &asset)
+			if err != nil {
+				return nil, err
+			}
+			assets = append(assets, &asset)
+		}
 	}
 
 	return assets, nil

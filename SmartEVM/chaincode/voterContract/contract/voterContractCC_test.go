@@ -2,7 +2,9 @@ package contract_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"crypto"
 	"crypto/rand"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
 	"github.com/stretchr/testify/require"
 	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract"
 	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract/mocks"
@@ -95,13 +98,13 @@ type PrivateData map[string][]byte
 var collections map[string]PrivateData
 
 func GetStateStub(id string) ([]byte, error) {
-	if id == "_state_error_" {
-		return nil, fmt.Errorf("Unable to retrieve value from state")
+	if strings.HasSuffix(id, "_get_state_error_") {
+		return nil, fmt.Errorf("Unable to get value from state")
 	}
 	return states[id], nil
 }
 func AddStateStub(id string, value []byte) error {
-	if id == "_state_error_" {
+	if strings.HasSuffix(id, "_set_state_error_") {
 		return fmt.Errorf("Unable to set value from state")
 	}
 	states[id] = value
@@ -110,7 +113,7 @@ func AddStateStub(id string, value []byte) error {
 }
 
 func PutPrivateDataStub(collection string, key string, value []byte) error {
-	if collection == "_state_error_" {
+	if collection == "_set_state_error_" {
 		return fmt.Errorf("Unable to set value from state")
 	}
 	data := PrivateData{}
@@ -121,11 +124,53 @@ func PutPrivateDataStub(collection string, key string, value []byte) error {
 }
 
 func GetPrivateDataStub(collection string, key string) ([]byte, error) {
-	if collection == "_state_error_" {
+	if collection == "_get_state_error_" {
 		return nil, fmt.Errorf("Unable to get value from state")
 	}
 
 	return collections[collection][key], nil
+}
+
+var currentIndex int
+
+func HasNextStub() bool {
+	return len(states) > currentIndex
+}
+
+var iter []queryresult.KV
+
+func NextStub() (*queryresult.KV, error) {
+	if currentIndex < len(states) {
+		result := &iter[currentIndex]
+		currentIndex++
+		return result, nil
+	}
+	return nil, fmt.Errorf("No result found")
+}
+
+func CloseStub() error {
+	currentIndex = 0
+	iter = nil
+	return nil
+}
+
+func GetStateByRangeStub(arg1 string, arg2 string) (shim.StateQueryIteratorInterface, error) {
+	currentIndex = 0
+
+	iter = []queryresult.KV{}
+	for id, option := range states {
+		var result queryresult.KV
+		result.Key = id
+		result.Value = option
+		iter = append(iter, result)
+	}
+	var iterator mocks.StateQueryIterator
+
+	iterator.HasNextStub = HasNextStub
+	iterator.NextStub = NextStub
+	iterator.CloseStub = CloseStub
+
+	return shim.StateQueryIteratorInterface(&iterator), nil
 }
 
 func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, singlechoice bool, abstainable bool) (*mocks.TransactionContext, contract.SmartContract, error) {
@@ -144,6 +189,8 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 	chaincodeStub.GetPrivateDataStub = GetPrivateDataStub
 	chaincodeStub.PutPrivateDataStub = PutPrivateDataStub
 
+	chaincodeStub.GetStateByRangeStub = GetStateByRangeStub
+
 	//Initialize
 	err := voterContract.InitLedger(transactionContext, anonymous, singlechoice, abstainable)
 	require.NoError(t, err)
@@ -154,7 +201,7 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 		require.NoError(t, err)
 	}
 
-	//Set options
+	//Set voters
 	for _, voterId := range voters {
 		err = voterContract.AddVoter(transactionContext, voterId)
 		require.NoError(t, err)
@@ -163,19 +210,142 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 	return transactionContext, voterContract, err
 }
 
+func StateErrorsTests(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract) {
+	//Add option - set state error
+	err := voterContract.AddVotableOption(transactionContext, "_set_state_error_")
+	require.EqualError(t, err, "Unable to set value from state")
+
+	//Add voter - set state error
+	err = voterContract.AddVoter(transactionContext, "_set_state_error_")
+	require.EqualError(t, err, "Unable to set value from state")
+
+	//Add option - get state error
+	err = voterContract.AddVotableOption(transactionContext, "_get_state_error_")
+	require.EqualError(t, err, "Unable to get value from state")
+
+	//Add voter - get state error
+	err = voterContract.AddVoter(transactionContext, "_get_state_error_")
+	require.EqualError(t, err, "Unable to get value from state")
+}
+
+func CastVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId string) string {
+	pubkey := AuthUser(t, voterContract, transactionContext, voterId)
+
+	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId})
+	require.NoError(t, err)
+
+	return pubkey
+}
+
+func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId1 string, optionId2 string) string {
+	pubkey := AuthUser(t, voterContract, transactionContext, voterId)
+
+	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId1, optionId2})
+	if voterContract.SingleChoice {
+		require.Error(t, err) //Expect error
+	} else {
+		require.NoError(t, err)
+	}
+	return pubkey
+}
+
+func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string) string {
+	pubkey := AuthUser(t, voterContract, transactionContext, voterId)
+
+	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{})
+	if voterContract.Abstainable {
+		require.NoError(t, err)
+	} else {
+		require.Error(t, err) //Expect error
+	}
+
+	return pubkey
+}
+
+func CastVoteWithoutAuthTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId string) {
+
+	err := voterContract.CastVote(transactionContext, voterId, "", []string{optionId})
+	require.Error(t, err) //Authorization Error
+
+}
+
+func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId string) string {
+
+	pubkey := CastVoteTest(t, transactionContext, voterContract, voterId, optionId)
+
+	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId})
+	require.Error(t, err) //Revote not allowed
+
+	return pubkey
+
+}
+
+func ExpectedVotingResultTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, results map[string]int) {
+	options, err := voterContract.GetAllOptions(transactionContext)
+	require.NoError(t, err)
+
+	for i, option := range options {
+		expected := results[option.VotableId]
+		require.Equal(t, expected, option.Count, "The vote count for option '%d:%s' must be %d", i, option.VotableId, expected)
+	}
+}
+
+func contains(arr []string, val string) bool {
+	for _, v := range arr {
+		if v == val {
+			return true
+		}
+	}
+
+	return false
+}
+func ExpectedBallotDetailsTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voted []string) {
+	ballots, err := voterContract.GetAllBallots(transactionContext)
+	require.NoError(t, err)
+
+	for i, ballot := range ballots {
+		if contains(voted, ballot.VoterId) {
+			require.Equal(t, true, ballot.Casted, "The casted flag for ballot '%d:%s' must be true", i, ballot.VoterId)
+			if voterContract.IsAnonymous {
+				require.Equal(t, 0, len(ballot.Picks), "The picks for ballot '%d:%s' must be nil (anonymous voting)", i, ballot.VoterId)
+			} else {
+				require.NotEqual(t, 0, len(ballot.Picks), "The picks for ballot '%d:%s' must not be nil (public voting)", i, ballot.VoterId)
+			}
+			require.NotEqual(t, int64(0), ballot.Timestamp, "The timestamp for ballot '%d:%s' can not be zero", i, ballot.VoterId)
+			fmt.Println(time.Unix(0, ballot.Timestamp))
+		} else {
+			require.Equal(t, false, ballot.Casted, "The casted flag for ballot '%d:%s' must be true", i, ballot.VoterId)
+			require.Equal(t, int64(0), ballot.Timestamp, "The timestamp for ballot '%d:%s' must be zero", i, ballot.VoterId)
+		}
+
+	}
+}
+
 // Test Anonymous, Single-Choice and Abstainable Election
 func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
 
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, true, true)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{"option1", "option2"})
-	require.EqualError(t, err, "Number of votes can not be more than one, in case of single choice voting.") //Expect error : No voting choice
+	StateErrorsTests(t, transactionContext, voterContract)
 
-	pubkey := AuthUser(t, voterContract, transactionContext, "User1")
+	CastVoteTwiceTest(t, transactionContext, voterContract, "User1", "Option1")
 
-	err = voterContract.CastVote(transactionContext, "User1", pubkey, []string{"Option1"})
-	require.NoError(t, err)
+	CastVoteWithoutAuthTest(t, transactionContext, voterContract, "User2", "Option2") //Will not refister
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User3", "Option1", "Option2") //Will not register
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		contract.Abstained: 1,
+		"Option1":          1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User2",
+	})
+
 }
 
 // Test Anonymous, Single-Choice and Not-Abstainable Election
@@ -183,11 +353,47 @@ func TestVote_Anonymous_SingleChoice_NonAbstainable(t *testing.T) {
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, true, false)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{"option1", "option2"})
-	require.EqualError(t, err, "Number of votes can not be more than one, in case of single choice voting.") //Expect error : multiple choice
+	StateErrorsTests(t, transactionContext, voterContract)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{})
-	require.EqualError(t, err, "Number of votes to be casted can not be zero.") //Expect error : No voting choice
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User2", "Option2", "Option3") //Will not register
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2") //Will not register
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		"Option1": 1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+	})
+
+}
+
+// Test Anonymous, Multi-Choice and Not-Abstainable Election
+func TestVote_Anonymous_MultiChoice_Abstainable(t *testing.T) {
+	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, false, true)
+	require.NoError(t, err)
+
+	StateErrorsTests(t, transactionContext, voterContract)
+
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User2", "Option2", "Option3")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User3")
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		contract.Abstained: 1,
+		"Option1":          1,
+		"Option2":          1,
+		"Option3":          1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User2",
+		"User3",
+	})
 
 }
 
@@ -196,8 +402,27 @@ func TestVote_Anonymous_MultiChoice_NonAbstainable(t *testing.T) {
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, false, false)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{})
-	require.EqualError(t, err, "Number of votes to be casted can not be zero.") //Expect error : No voting choice
+	StateErrorsTests(t, transactionContext, voterContract)
+
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User2", "Option2", "Option3")
+
+	CastVoteTest(t, transactionContext, voterContract, "User3", "Option2")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		"Option1": 1,
+		"Option2": 2,
+		"Option3": 1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User2",
+		"User3",
+	})
+
 }
 
 // Test Public, Single-Choice and Abstainable Election
@@ -205,8 +430,22 @@ func TestVote_Public_SingleChoice_Abstainable(t *testing.T) {
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, true, true)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{"option1", "option2"})
-	require.EqualError(t, err, "Number of votes can not be more than one, in case of single choice voting.") //Expect error : Multiple choices
+	StateErrorsTests(t, transactionContext, voterContract)
+
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User3", "Option1", "Option2") //Will not register
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		contract.Abstained: 1,
+		"Option1":          1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User2",
+	})
 }
 
 // Test Public, Single-Choice and Not-Abstainable Election
@@ -214,11 +453,46 @@ func TestVote_Public_SingleChoice_NonAbstainable(t *testing.T) {
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, true, false)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{})
-	require.EqualError(t, err, "Number of votes to be casted can not be zero.") //Expect error : No voting choice
+	StateErrorsTests(t, transactionContext, voterContract)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{"option1", "option2"})
-	require.EqualError(t, err, "Number of votes can not be more than one, in case of single choice voting.") //Expect error :multiple choices
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User3", "Option1", "Option2") //Will fail to register
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		"Option1": 1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+	})
+
+}
+
+// Test Anonymous, Multi-Choice and Not-Abstainable Election
+func TestVote_Public_MultiChoice_Abstainable(t *testing.T) {
+	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, false, true)
+	require.NoError(t, err)
+
+	StateErrorsTests(t, transactionContext, voterContract)
+
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User3", "Option1", "Option3")
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		contract.Abstained: 1,
+		"Option1":          2,
+		"Option3":          1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User2",
+		"User3",
+	})
 
 }
 
@@ -227,8 +501,22 @@ func TestVote_Public_MultiChoice_NonAbstainable(t *testing.T) {
 	transactionContext, voterContract, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, false, false)
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, "User1", "", []string{})
-	require.EqualError(t, err, "Number of votes to be casted can not be zero.") //Expect error : No voting choice
+	StateErrorsTests(t, transactionContext, voterContract)
+
+	CastVoteTest(t, transactionContext, voterContract, "User1", "Option1")
+
+	AbstainVoteTest(t, transactionContext, voterContract, "User2")
+
+	CastVoteTestMultiChoice(t, transactionContext, voterContract, "User3", "Option1", "Option2")
+
+	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
+		"Option1": 2,
+		"Option2": 1,
+	})
+	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
+		"User1",
+		"User3",
+	})
 
 }
 
@@ -256,7 +544,10 @@ func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionCon
 
 	signature_base64 := base64.StdEncoding.EncodeToString(signature)
 
-	pub, err := voterContract.AuthVoter(transactionContext, userId, publicKey_base64, signature_base64)
+	pub, err := voterContract.AuthVoter(transactionContext, "_get_state_error_", publicKey_base64, signature_base64)
+	require.EqualError(t, err, "Unable to get ballot for voter : Failed to read from world state: Unable to get value from state") //Expect error
+
+	pub, err = voterContract.AuthVoter(transactionContext, userId, publicKey_base64, signature_base64)
 	require.NoError(t, err) //Expect No error
 
 	return pub
