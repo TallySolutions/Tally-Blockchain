@@ -1,0 +1,1 @@
+./2A_StartCAServer.sh: line 20: fabric-ca-server: command not found
