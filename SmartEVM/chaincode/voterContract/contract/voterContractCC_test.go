@@ -10,6 +10,7 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
@@ -34,17 +35,22 @@ type stateQueryIterator interface {
 	shim.StateQueryIteratorInterface
 }
 
+type KeyPair struct {
+	publicKey  *rsa.PublicKey
+	privateKey *rsa.PrivateKey
+}
+
 func TestInitLedger(t *testing.T) {
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
 
 	voterContract := contract.SmartContract{}
-	err := voterContract.InitLedger(transactionContext, true, true, true)
+	err := voterContract.InitLedger(transactionContext, true, true, true, false)
 	require.NoError(t, err)
 
 	//Again init should faile
-	err = voterContract.InitLedger(transactionContext, true, true, true)
+	err = voterContract.InitLedger(transactionContext, true, true, true, false)
 	require.ErrorContains(t, err, contract.ErrCCAlreadyInitialized.Error())
 }
 
@@ -56,7 +62,7 @@ func TestInitLedgerStateFailure(t *testing.T) {
 	voterContract := contract.SmartContract{}
 
 	chaincodeStub.PutStateReturns(contract.ErrSettingState)
-	err := voterContract.InitLedger(transactionContext, true, true, true)
+	err := voterContract.InitLedger(transactionContext, true, true, true, false)
 	require.EqualError(t, err, contract.ErrSettingState.Error())
 }
 
@@ -71,7 +77,7 @@ func TestAddVotableOption(t *testing.T) {
 	require.Error(t, err) //Expect error
 
 	//Initialize
-	err = voterContract.InitLedger(transactionContext, true, true, true)
+	err = voterContract.InitLedger(transactionContext, true, true, true, false)
 	require.NoError(t, err) //Expect No error
 
 	//Now create option
@@ -171,9 +177,9 @@ func GetStateByRangeStub(arg1 string, arg2 string) (shim.StateQueryIteratorInter
 	return shim.StateQueryIteratorInterface(&iterator), nil
 }
 
-func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, singlechoice bool, abstainable bool) (*mocks.TransactionContext, contract.SmartContract, map[string]string, error) {
+func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, singlechoice bool, abstainable bool) (*mocks.TransactionContext, contract.SmartContract, map[string]KeyPair, error) {
 
-	pubkeys := map[string]string{}
+	keys := map[string]KeyPair{}
 
 	states = map[string][]byte{}
 	collections = map[string]PrivateData{}
@@ -193,7 +199,7 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 	chaincodeStub.GetStateByRangeStub = GetStateByRangeStub
 
 	//Initialize
-	err := voterContract.InitLedger(transactionContext, anonymous, singlechoice, abstainable)
+	err := voterContract.InitLedger(transactionContext, anonymous, singlechoice, abstainable, false)
 	require.NoError(t, err)
 
 	//Set options
@@ -207,11 +213,10 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 		err = voterContract.AddVoter(transactionContext, voterId)
 		require.NoError(t, err)
 
-		pubkey := AuthUser(t, voterContract, transactionContext, voterId)
-		pubkeys[voterId] = pubkey
+		keys[voterId] = AuthUser(t, voterContract, transactionContext, voterId)
 	}
 
-	return transactionContext, voterContract, pubkeys, err
+	return transactionContext, voterContract, keys, err
 }
 
 func StateErrorsTests(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract) {
@@ -232,15 +237,49 @@ func StateErrorsTests(t *testing.T, transactionContext *mocks.TransactionContext
 	require.EqualError(t, err, contract.ErrRetrivingState.Error())
 }
 
-func CastVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]string, voterId string, optionId string) {
+func EncodePicks(t *testing.T, options []string) string {
+	picks := contract.VoterPicks{VotableIds: options}
+	picks_json, err := json.Marshal(picks)
+	require.NoError(t, err)
 
-	err := voterContract.CastVote(transactionContext, voterId, keys[voterId], []string{optionId})
+	return string(picks_json)
+}
+func EncryptOptions(t *testing.T, publicKey *rsa.PublicKey, options []string) string {
+	picks_bytes, err := contract.EncryptOAEP(publicKey, []byte(EncodePicks(t, options)))
+	require.NoError(t, err)
+
+	return base64.StdEncoding.EncodeToString(picks_bytes)
+}
+func SignData(t *testing.T, privateKey *rsa.PrivateKey, data string) string {
+
+	msgHash := sha512.New()
+	_, err := msgHash.Write([]byte(data))
+	require.NoError(t, err)
+
+	msgHashSum := msgHash.Sum(nil)
+
+	signature_byes, err := rsa.SignPSS(rand.Reader, privateKey, crypto.SHA512, msgHashSum, nil)
+	require.NoError(t, err)
+
+	return base64.StdEncoding.EncodeToString(signature_byes)
+}
+
+func CastVote(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, options []string) error {
+
+	picks := EncryptOptions(t, keys[voterId].publicKey, options)
+	signature := SignData(t, keys[voterId].privateKey, voterId+picks)
+	return voterContract.CastVote(transactionContext, voterId, picks, signature)
+}
+
+func CastVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId string) {
+
+	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId})
 	require.NoError(t, err)
 }
 
-func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]string, voterId string, optionId1 string, optionId2 string) {
+func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId1 string, optionId2 string) {
 
-	err := voterContract.CastVote(transactionContext, voterId, keys[voterId], []string{optionId1, optionId2})
+	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId1, optionId2})
 	if voterContract.SingleChoice {
 		require.ErrorContains(t, err, contract.ErrNoVoteIsMoreThanOne.Error()) //Expect error
 	} else {
@@ -248,9 +287,9 @@ func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.Transaction
 	}
 }
 
-func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]string, voterId string) {
+func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string) {
 
-	err := voterContract.CastVote(transactionContext, voterId, keys[voterId], []string{})
+	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{})
 	if voterContract.Abstainable {
 		require.NoError(t, err)
 	} else {
@@ -259,29 +298,27 @@ func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext,
 
 }
 
-func CastVoteWithoutAuthTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, optionId string) {
+func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId string) {
 
-	err := voterContract.AddVoter(transactionContext, "User4")
-
-	err = voterContract.CastVote(transactionContext, "User4", "", []string{optionId})
-	require.ErrorContains(t, err, contract.ErrNotAuthorized.Error()) //Authorization Error
-
-}
-
-func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]string, voterId string, optionId string) {
-
-	err := voterContract.CastVote(transactionContext, voterId, keys[voterId], []string{optionId})
+	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId})
 	require.NoError(t, err)
 
-	err = voterContract.CastVote(transactionContext, voterId, keys[voterId], []string{optionId})
+	err = CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId})
 	require.ErrorContains(t, err, contract.ErrAlreadyVoted.Error()) //Revote not allowed
 
 }
 
-func CastVoteWrongKey(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, wrong_pubkey string, optionId string) {
+func CastVoteWrongKey(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, wrong_id string, optionId string) {
 
-	err := voterContract.CastVote(transactionContext, voterId, wrong_pubkey, []string{optionId})
-	require.ErrorContains(t, err, contract.ErrNotAuthorized.Error()) //Revote not allowed
+	picks := EncryptOptions(t, keys[wrong_id].publicKey, []string{optionId})
+	signature := SignData(t, keys[voterId].privateKey, voterId+picks)
+	err := voterContract.CastVote(transactionContext, voterId, picks, signature)
+	require.ErrorContains(t, err, contract.ErrDecryption.Error()) //wrong pvt key used
+
+	picks = EncryptOptions(t, keys[voterId].publicKey, []string{optionId})
+	signature = SignData(t, keys[wrong_id].privateKey, voterId+picks)
+	err = voterContract.CastVote(transactionContext, voterId, picks, signature)
+	require.ErrorContains(t, err, contract.ErrSignatureValidation.Error()) //wrong pub key used
 
 }
 
@@ -335,9 +372,7 @@ func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
 
 	CastVoteTwiceTest(t, transactionContext, voterContract, keys, "User1", "Option1")
 
-	CastVoteWithoutAuthTest(t, transactionContext, voterContract, "Option1") //Will not register
-
-	CastVoteWrongKey(t, transactionContext, voterContract, "User2", keys["User1"], "Option2") //Will not refgister
+	CastVoteWrongKey(t, transactionContext, voterContract, keys, "User2", "User1", "Option2") //Will not refgister
 
 	AbstainVoteTest(t, transactionContext, voterContract, keys, "User2")
 
@@ -414,19 +449,16 @@ func TestVote_Anonymous_MultiChoice_NonAbstainable(t *testing.T) {
 
 	CastVoteTestMultiChoice(t, transactionContext, voterContract, keys, "User2", "Option2", "Option3")
 
-	CastVoteTest(t, transactionContext, voterContract, keys, "User3", "Option2")
-
-	AbstainVoteTest(t, transactionContext, voterContract, keys, "User2")
+	AbstainVoteTest(t, transactionContext, voterContract, keys, "User3") //will not register
 
 	ExpectedVotingResultTest(t, transactionContext, voterContract, map[string]int{
 		"Option1": 1,
-		"Option2": 2,
+		"Option2": 1,
 		"Option3": 1,
 	})
 	ExpectedBallotDetailsTest(t, transactionContext, voterContract, []string{
 		"User1",
 		"User2",
-		"User3",
 	})
 
 }
@@ -526,7 +558,21 @@ func TestVote_Public_MultiChoice_NonAbstainable(t *testing.T) {
 
 }
 
-func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionContext *mocks.TransactionContext, userId string) string {
+func EncodePublicKey(publicKey rsa.PublicKey) string {
+	publicKey_bytes := x509.MarshalPKCS1PublicKey(&publicKey)
+	return base64.StdEncoding.EncodeToString(publicKey_bytes)
+}
+func DecodePublicKey(t *testing.T, publicKey_base64 string) *rsa.PublicKey {
+	publicKey_bytes, err := base64.StdEncoding.DecodeString(publicKey_base64)
+	require.NoError(t, err) //Expect No error
+
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKey_bytes)
+	require.NoError(t, err) //Expect No error
+
+	return publicKey
+}
+
+func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionContext *mocks.TransactionContext, userId string) KeyPair {
 
 	//First authenticate user
 
@@ -536,8 +582,7 @@ func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionCon
 	require.NoError(t, err) //Expect No error
 
 	publicKey := privateKey.PublicKey
-	publicKey_bytes := x509.MarshalPKCS1PublicKey(&publicKey)
-	publicKey_base64 := base64.StdEncoding.EncodeToString(publicKey_bytes)
+	publicKey_base64 := EncodePublicKey(publicKey)
 
 	//Sign
 	msgHash := sha512.New()
@@ -556,6 +601,6 @@ func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionCon
 	pub, err = voterContract.AuthVoter(transactionContext, userId, publicKey_base64, signature_base64)
 	require.NoError(t, err) //Expect No error
 
-	return pub
+	return KeyPair{publicKey: DecodePublicKey(t, pub), privateKey: privateKey}
 
 }

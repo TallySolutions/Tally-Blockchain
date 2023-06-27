@@ -2,7 +2,6 @@ package contract
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -27,6 +26,7 @@ type SmartContract struct {
 	Initialized  bool
 	Abstainable  bool
 	SingleChoice bool
+	log          CCLog
 }
 
 // NOTE: Write the asset properties in CAMEL CASE- otherwise, chaincode will not get deployed
@@ -60,6 +60,10 @@ type VotableOption struct {
 	Count     int    `json:"Ballots"`
 }
 
+type VoterPicks struct {
+	VotableIds []string `json:"VotableIds"`
+}
+
 // Utility function
 func contains(s []string, e string) bool {
 	for _, a := range s {
@@ -71,7 +75,7 @@ func contains(s []string, e string) bool {
 }
 
 // Init Ledger
-func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, isAnonymous bool, singleChoice bool, abstainable bool) error {
+func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, isAnonymous bool, singleChoice bool, abstainable bool, Debug bool) error {
 	if s.Initialized {
 		return Error(ErrCCAlreadyInitialized)
 	}
@@ -79,6 +83,10 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, 
 	s.IsAnonymous = isAnonymous
 	s.SingleChoice = singleChoice
 	s.Abstainable = abstainable
+	s.log = CCLog{}
+	if Debug {
+		s.log.PrintDebug = true
+	}
 	if s.Abstainable {
 		err := s.AddVotableOption(ctx, Abstained)
 		if err != nil {
@@ -121,7 +129,8 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 	if s.Initialized != true {
 		return Error(ErrLedgerNotInitialized)
 	}
-	fmt.Printf("Adding new votable option: %s\n", votableId)
+	s.log.Debug("Adding new votable option: %s", votableId)
+
 	//checking if option already added
 	optionExists, err := s.isVotableOptionExists(ctx, votableId)
 	if err != nil {
@@ -141,7 +150,7 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 		return err
 	}
 
-	fmt.Printf("Creating new asset for this votable id in voting ledger: %s\n", votableId)
+	s.log.Debug("Creating new asset for this votable id in voting ledger: %s", votableId)
 	putStateErr := ctx.GetStub().PutState(VOTE_OPTION_REGISTER_PREFIX+votableId, votableOptionJSON) // new state added to the voting ledger
 	return putStateErr
 
@@ -153,7 +162,7 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 	if s.Initialized != true {
 		return Error(ErrLedgerNotInitialized)
 	}
-	fmt.Printf("Adding new voter: %s\n", voterId)
+	s.log.Debug("Adding new voter: %s", voterId)
 	//checking if voter already added
 	optionExists, err := s.isVoterExists(ctx, voterId)
 	if err != nil {
@@ -176,7 +185,7 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 		return err
 	}
 
-	fmt.Printf("Creating new asset for this voter %s\n", voterId)
+	s.log.Debug("Creating new asset for this voter %s", voterId)
 	putStateErr := ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, voterJSON) // new state added to the voter ledger
 	return putStateErr
 
@@ -188,7 +197,7 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	if s.Initialized != true {
 		return "", Error(ErrLedgerNotInitialized)
 	}
-	fmt.Printf("Authorizing voter: %s\n", voterId)
+	s.log.Debug("Authorizing voter: %s", voterId)
 
 	//checking if ballot exists
 	ballot, err := s.GetBallot(ctx, voterId)
@@ -200,7 +209,7 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	}
 
 	// verify signature
-	fmt.Println("Verifying signature ...")
+	s.log.Debug("Verifying signature ...")
 
 	//1. Get bytes from base64 public key
 	publicKey_bytes, err := base64.StdEncoding.DecodeString(publicKey_base64)
@@ -258,7 +267,7 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	//Store base64 encoded of encrypted signature
 	ballot.Signature = string(encryptedBytes_base64)
 
-	fmt.Printf("Creating new asset for this voter %s\n", voterId)
+	s.log.Debug("Creating new asset for this voter %s", voterId)
 	ballotJSON, err := json.Marshal(ballot)
 	if err != nil {
 		return "", WrapError(ErrJsonMarshalling, err, "[Ballot]")
@@ -331,23 +340,15 @@ func (s *SmartContract) GetBallot(ctx contractapi.TransactionContextInterface, v
 	return &ballot, nil
 }
 
-// function to cast vote, the public key of the ballot's private key must be passed.
-func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterId string, publicKey_base64 string, votableIds []string) error {
+// function to cast vote, the option must be encrypted using the user's private key and whole data must be signed using server private key
+func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterId string, votableIds_base64 string, signature_base64 string) error {
 	if s.Initialized != true {
 		return Error(ErrLedgerNotInitialized)
 	}
 
-	if len(votableIds) == 0 {
-		if s.Abstainable {
-			return s.CastVote(ctx, voterId, publicKey_base64, []string{Abstained})
-		}
-		return Error(ErrNoVoteIsZero)
-	}
-	if len(votableIds) > 1 && s.SingleChoice {
-		return Error(ErrNoVoteIsMoreThanOne)
-	}
+	//Check if user is authorized
 
-	//checking if ballot exists
+	//get ballot
 	ballot, err := s.GetBallot(ctx, voterId)
 	if err != nil {
 		return WrapError(ErrGetBallot, err)
@@ -356,51 +357,12 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return Error(ErrNoStateExists, "Ballot", voterId)
 	}
 
-	//Check if user is authorized
-
 	if ballot.PubKey == "" {
 		return Error(ErrNotAuthorized, voterId)
 	}
 
 	if ballot.Casted {
 		return Error(ErrAlreadyVoted, voterId)
-	}
-
-	//Get the ballot's private key
-	privateKey_bytes, err := ctx.GetStub().GetPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey")
-	if err != nil {
-		return WrapError(ErrRetrivingPrivate, err, VOTER_REGISTER_PREFIX+voterId, "privateKey")
-	}
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(privateKey_bytes)
-	if err != nil {
-		return WrapError(ErrParsingPvtKey, err)
-	}
-
-	//Verify the public key sent is for this pkey or not
-	passed_publicKey_bytes, err := base64.StdEncoding.DecodeString(publicKey_base64)
-	if err != nil {
-		return WrapError(ErrDecodingBase64, err, "[public key]")
-	}
-	current_publicKey_bytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
-	if !Equal(current_publicKey_bytes, passed_publicKey_bytes) {
-		return Error(ErrNotAuthorized, voterId)
-	}
-
-	//Decrypt the signature
-	signature_bytes, err := base64.StdEncoding.DecodeString(ballot.Signature)
-	if err != nil {
-		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature.Encrypted]")
-	}
-
-	decryptedBytes, err := DecryptOAEP(privateKey, signature_bytes)
-	if err != nil {
-		return WrapError(ErrDecryption, err, "[Ballot.Signature.Encrypted]")
-	}
-	signature_base64 := string(decryptedBytes)
-	signature_bytes, err = base64.StdEncoding.DecodeString(signature_base64)
-	if err != nil {
-		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature]")
 	}
 
 	//Verify signatur using public key
@@ -414,8 +376,13 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return WrapError(ErrParsingPubKey, err, "[Ballot.PubKey]")
 	}
 
+	signature_bytes, err := base64.StdEncoding.DecodeString(signature_base64)
+	if err != nil {
+		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature]")
+	}
+
 	msgHash := sha512.New()
-	_, err = msgHash.Write([]byte(voterId))
+	_, err = msgHash.Write([]byte(voterId + votableIds_base64))
 	if err != nil {
 		return WrapError(ErrHashingData, err, voterId)
 	}
@@ -427,16 +394,53 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return WrapError(ErrSignatureValidation, err)
 	}
 
+	//Get the ballot's private key
+	privateKey_bytes, err := ctx.GetStub().GetPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey")
+	if err != nil {
+		return WrapError(ErrRetrivingPrivate, err, VOTER_REGISTER_PREFIX+voterId, "privateKey")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(privateKey_bytes)
+	if err != nil {
+		return WrapError(ErrParsingPvtKey, err)
+	}
+
+	votableIds_bytes, err := base64.StdEncoding.DecodeString(votableIds_base64)
+	if err != nil {
+		return WrapError(ErrDecodingBase64, err, "[VotableIds]")
+	}
+	votableIds_json, err := DecryptOAEP(privateKey, votableIds_bytes)
+	if err != nil {
+		return WrapError(ErrDecryption, err, "[VotableIds]")
+	}
+
+	var picks VoterPicks
+	err = json.Unmarshal(votableIds_json, &picks)
+	if err != nil {
+		return WrapError(ErrJsonUnmarshalling, err, "[VotableIds]")
+	}
+
+	if len(picks.VotableIds) == 0 {
+		if s.Abstainable {
+			picks.VotableIds = append(picks.VotableIds, Abstained)
+		} else {
+			return Error(ErrNoVoteIsZero)
+		}
+	}
+	if len(picks.VotableIds) > 1 && s.SingleChoice {
+		return Error(ErrNoVoteIsMoreThanOne)
+	}
+
 	//Update the timestamp
 	ballot.Timestamp = time.Now().UnixNano()
 	if s.IsAnonymous {
 		ballot.Picks = nil
 	} else {
-		ballot.Picks = votableIds
+		ballot.Picks = picks.VotableIds
 	}
 	ballot.Casted = true
 
-	for _, optionId := range votableIds {
+	for _, optionId := range picks.VotableIds {
 		votableOption, err := s.ReadOption(ctx, optionId)
 		if err != nil {
 			return WrapError(ErrGetOption, err)
