@@ -10,6 +10,12 @@ import(
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,81 +25,78 @@ import(
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	cors "github.com/itsjamie/gin-cors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"context"
 )
 
-var (
-	tallyHome             string
-	caServerHome          string
-	tallyCAHome           string
+var(
+	tallyHome string
+	caServerHome string
+	tallyCAHome string
 	fabric_ca_client_home string
-	urlend                string
+	urlend string
 )
 
-const (
-	networkHome   = "fabric/tally-network"
-	tallyCAName   = "tally"
-	ca_host       = "tbchlfdevca01"
-	domain        = "tally.tallysolutions.com"
-	tally_ca_port = "7055"
-	urlstart      = "https://"
+const(
+		networkHome= "fabric/tally-network"
+		tallyCAName= "tally"
+		ca_host="tbchlfdevca01"
+		domain="tally.tallysolutions.com"
+		tally_ca_port="7055"
+		urlstart= "https://"
 
-	// for connecting to cc:
-	mspID             = "Tally" // membership service provider identifier
-	TallyScoreCCName  = "tallyscore"
-	channelname       = "tally"
-	users_common_path = "/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/" // mspPath= users_common_path + "PANofuserTestO/msp"
+
+		// for connecting to cc:
+		mspID="Tally"  // membership service provider identifier
+		TallyScoreCCName="tallyscore"
+		channelname="tally"
+		users_common_path="/home/ubuntu/fabric/tally-network/fabric-ca-servers/tally/client/users/"   // mspPath= users_common_path + "PANofuserTestO/msp"
 )
 
-type registrationRequest struct {
-	PAN         string `json:"PAN" binding:"required"`
-	Name        string `json:"Name" binding:"required"`
-	PhoneNo     string `json:"PhoneNo" binding:"required"`
-	Address     string `json:"Address" binding:"required"`
+
+type registrationRequest struct{
+	PAN string `json:"PAN" binding:"required"`
+	Name string `json:"Name" binding:"required"`
+	PhoneNo string `json:"PhoneNo" binding:"required"`
+	Address string `json:"Address" binding:"required"`
 	LicenseType string `json:"LicenseType" binding:"required"`
-	Score       string `json:"Score" binding:"required"`
+	Score string `json:"Score" binding:"required"`
 }
 
-type detailsStructure struct {
+type detailsStructure struct{
 	PrivateKey string `json:"PrivateKey"`
-	PublicKey  string `json:"PublicKey"`
+	PublicKey string `json:"PublicKey"`
 }
 
 type UpdateValueRequest struct {
-	PAN       string `json:"PAN" binding:"required"`
+	PAN  string `json:"PAN" binding:"required"`
 	ChangeVal string `json:"ChangeVal" binding:"required"`
 }
 
-func main() {
 
-	router := gin.New()
+
+func main(){
+
+	router:= gin.New()
 	router.Use(cors.Middleware(cors.Config{
-		Origins:         "*",
-		Methods:         "POST, PUT",
-		RequestHeaders:  "Origin, Authorization, Content-Type",
-		ExposedHeaders:  "",
-		MaxAge:          50 * time.Second,
-		Credentials:     false,
+		Origins:        "*",
+		Methods:        "POST, PUT",
+		RequestHeaders: "Origin, Authorization, Content-Type",
+		ExposedHeaders: "",
+		MaxAge: 50 * time.Second,
+		Credentials: false,
 		ValidateHeaders: false,
 	}))
 
-	tallyHome = os.Getenv("HOME") + "/" + networkHome
-	caServerHome = tallyHome + "/fabric-ca-servers"
-	tallyCAHome = caServerHome + "/" + tallyCAName
-	fabric_ca_client_home = tallyCAHome + "/client"
-	urlend = "@" + ca_host + "." + domain + ":" + tally_ca_port
+	tallyHome= os.Getenv("HOME") + "/" + networkHome
+	caServerHome= tallyHome + "/fabric-ca-servers"
+	tallyCAHome= caServerHome + "/" + tallyCAName
+	fabric_ca_client_home= tallyCAHome + "/client"
+	urlend= "@" + ca_host + "." + domain + ":" + tally_ca_port
 
 	timeout := 50 * time.Second
 	timeoutGroup := router.Group("/", TimeoutMiddleware(timeout))
 	{
-		timeoutGroup.PUT("/TallyScoreProject/performRegistration", performRegistration)
+		timeoutGroup.PUT("/TallyScoreProject/performRegistration",performRegistration)
 		timeoutGroup.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore)
 		timeoutGroup.POST("/TallyScoreProject/decreaseTallyScore", decreaseTallyScore)
 	}
@@ -113,70 +116,62 @@ func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 }
 
 
-func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
-		defer cancel()
-
-		c.Request = c.Request.WithContext(ctx)
-		c.Next()
-	}
-}
-
-func performRegistration(c *gin.Context) {
+func performRegistration(c *gin.Context){
 
 	var request registrationRequest
 	c.BindJSON(&request)
-	PAN := request.PAN
-	Name := request.Name
-	PhoneNo := request.PhoneNo
-	Address := request.Address
-	LicenseType := request.LicenseType
-	Score := request.Score
+	PAN:=request.PAN
+	Name:=request.Name
+	PhoneNo:=request.PhoneNo
+	Address:=request.Address
+	LicenseType:=request.LicenseType
+	Score:= request.Score
 
 	fmt.Printf("Initiating registration of user %s with starting score %s\n", Name, Score)
 	password, err := registerUser(PAN, Name, PhoneNo, Address, LicenseType)
-	if err != nil {
+	if err!=nil{
 		fmt.Printf("Error in step 1\n")
-		fmt.Errorf("Error in the process of registration of user\n")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		// fmt.Errorf("Error in the process of registration of user\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	fmt.Printf("Password: %s\n", password)
 
 	fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
 	// write code to call enrollUser() function
-	detailsAsset, mspPath, err := enrollUser(PAN, password)
-	if err != nil {
-		fmt.Errorf("Error in enrollment stage\n")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	detailsAsset, mspPath, err:= enrollUser(PAN, password)
+	if err!= nil{
+		// fmt.Errorf("Error in enrollment stage\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	// the mspPath obtained as the second return value of enrollUser() function call can be used in creating a user asset using the tallyscore chaincode
-	certPath := mspPath + "/signcerts/cert.pem"
-	keyPath := mspPath + "/keystore"
-	peer := "tbchlfdevpeer01"
-	domain := "tally.tallysolutions.com"
-	peer_port := "7051"
-	peerEndpoint := peer + "." + domain + ":" + peer_port
-	gatewayPeer := peer + "." + domain
-	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
+	certPath:= mspPath + "/signcerts/cert.pem"
+	keyPath:= mspPath + "/keystore"
+	peer:= "tbchlfdevpeer01" 
+	domain:= "tally.tallysolutions.com"
+	peer_port:="7051"
+	peerEndpoint:= peer + "." + domain + ":" + peer_port
+	gatewayPeer:= peer + "." + domain
+	tlsCertPath:= "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt" 	
+
 
 	// creating company asset
-	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
-	contract := getContract(gw, TallyScoreCCName)
+	client, gw:= connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+	contract:= getContract(gw, TallyScoreCCName)
 	createCompanyAsset(contract, PAN) // PAN will be the licenseId(i.e. unique id of the business)
 	gw.Close()
 	client.Close()   
 
+
 	fmt.Printf("mspPath: %s", mspPath)
 
 	detailsAssetJSON, err := json.Marshal(detailsAsset)
-	if err != nil {
-		fmt.Errorf("Error in enrollment stage- error in conversion to JSON format\n")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
+    if err != nil {
+		// fmt.Errorf("Error in enrollment stage- error in conversion to JSON format\n")
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+        return
+    }
 
 	fmt.Printf("Priv Key: %s \n", detailsAsset.PrivateKey)
 	fmt.Printf("Public Key: %s \n", detailsAsset.PublicKey)
@@ -185,69 +180,33 @@ func performRegistration(c *gin.Context) {
 
 }
 
-func increaseTallyScore(c *gin.Context) {
+
+func increaseTallyScore(c *gin.Context){
 
 	var request UpdateValueRequest
 	c.BindJSON(&request)
-	PAN := request.PAN
-	incVal := request.ChangeVal
+	PAN:= request.PAN 
+	incVal:= request.ChangeVal
 
-	mspPath := users_common_path + PAN + "/msp"
-	certPath := mspPath + "/signcerts/cert.pem"
-	keyPath := mspPath + "/keystore/"
-	peer := "tbchlfdevpeer01"
-	domain := "tally.tallysolutions.com"
-	peer_port := "7051"
-	peerEndpoint := peer + "." + domain + ":" + peer_port
-	gatewayPeer := peer + "." + domain
-	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
+	mspPath:= users_common_path + PAN + "/msp"
+	certPath:= mspPath + "/signcerts/cert.pem"
+	keyPath:= mspPath + "/keystore/"
+	peer:= "tbchlfdevpeer01" 
+	domain:= "tally.tallysolutions.com"
+	peer_port:="7051"
+	peerEndpoint:= peer + "." + domain + ":" + peer_port
+	gatewayPeer:= peer + "." + domain
+	tlsCertPath:= "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt" 	
 
 	// getting the contract
-	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
-	contract := getContract(gw, TallyScoreCCName)
+	client, gw:= connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+	contract:= getContract(gw, TallyScoreCCName)
 
 	fmt.Printf("PAN: %s, IncreaseValue: %s\n", PAN, incVal)
 	fmt.Printf("CertPath: %s \n", certPath)
 	fmt.Printf("KeyPath: %s \n \n \n", keyPath)
-	evaluatedAsset, err := contract.SubmitTransaction("IncreaseScore", PAN, incVal)
+	evaluatedAsset, err:= contract.SubmitTransaction("IncreaseScore", PAN, incVal)
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
-	gw.Close()
-	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
-
-}
-
-func decreaseTallyScore(c *gin.Context) {
-
-	var request UpdateValueRequest
-	c.BindJSON(&request)
-	PAN := request.PAN
-	decVal := request.ChangeVal
-
-	mspPath := users_common_path + PAN + "/msp"
-	certPath := mspPath + "/signcerts/cert.pem"
-	keyPath := mspPath + "/keystore/"
-	peer := "tbchlfdevpeer01"
-	domain := "tally.tallysolutions.com"
-	peer_port := "7051"
-	peerEndpoint := peer + "." + domain + ":" + peer_port
-	gatewayPeer := peer + "." + domain
-	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
-
-	// getting the contract
-	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
-	contract := getContract(gw, TallyScoreCCName)
-
-	fmt.Printf("PAN: %s, DecreaseValue: %s\n", PAN, decVal)
-	evaluatedAsset, err := contract.SubmitTransaction("DecreaseScore", PAN, decVal)
-	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
-	gw.Close()
-	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
 	gw.Close()
 	client.Close()   // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
 	if err != nil{
@@ -285,8 +244,8 @@ func decreaseTallyScore(c *gin.Context){
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
 	gw.Close()
 	client.Close()   // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	if err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		return
 	}
 	c.Writer.Header().Set("Content-Type", "application/json")
@@ -294,16 +253,20 @@ func decreaseTallyScore(c *gin.Context){
 
 }
 
-func createCompanyAsset(contract *client.Contract, businessPAN string) {
+
+func createCompanyAsset(contract *client.Contract, businessPAN string){
 	fmt.Printf("After registration and enrollment, the score of the business will now be initialized.\n")
-	result, err := contract.SubmitTransaction("RegisterCompany", businessPAN) // don't pass the PAN.
+	result,err:= contract.SubmitTransaction("RegisterCompany", businessPAN)  // don't pass the PAN. 
 	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 }
 
-func getContract(gw *client.Gateway, ccName string) *client.Contract {
+
+func getContract(gw *client.Gateway , ccName string) *client.Contract {
 	network := gw.GetNetwork(channelname)
-	return network.GetContract(ccName)
+	return  network.GetContract(ccName)
 }
+
+
 
 func connect(peerEndpoint string, certPath string, keyPath string, tlsCertPath string, gatewayPeer string) (*grpc.ClientConn, *client.Gateway) {
 	fmt.Printf("\nConnecting to : %s \n", peerEndpoint)
@@ -311,7 +274,7 @@ func connect(peerEndpoint string, certPath string, keyPath string, tlsCertPath s
 	// gRPC client conn- shared by all gateway connections to this endpoint
 	clientConnection := newGrpcConnection(tlsCertPath, gatewayPeer, peerEndpoint)
 	//creating client identity, signing implementation
-	id := newIdentity(certPath)
+	id := newIdentity(certPath)          
 	sign := newSign(keyPath)
 
 	gw, err := client.Connect(
@@ -349,7 +312,7 @@ func newGrpcConnection(tlsCertPath string, gatewayPeer string, peerEndpoint stri
 	return connection
 }
 
-func newIdentity(certPath string) *identity.X509Identity {
+func newIdentity(certPath string) *identity.X509Identity { 
 	certificate, err := loadCertificate(certPath)
 	if err != nil {
 		panic(err)
@@ -393,42 +356,46 @@ func newSign(keyPath string) identity.Sign {
 	return sign
 }
 
-func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error) { // this function should take in PAN and return the password
 
-	cmdVariable := exec.Command("fabric-ca-client", "register",
-		"--id.name", PAN,
-		"--id.type", "client",
-		"--id.affiliation", "tally",
-		"--id.maxenrollments", "1",
-		"--id.attrs", fmt.Sprintf("pan=%s,name=%s,phone=%s,address=%s,license=%s", PAN, Name, PhoneNo, Address, LicenseType),
-		"--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
+func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error){   // this function should take in PAN and return the password
+
+	cmdVariable := exec.Command("fabric-ca-client", "register", 
+	"--id.name", PAN, 
+	"--id.type", "client", 
+	"--id.affiliation", "tally", 
+	"--id.maxenrollments", "1", 
+	"--id.attrs", fmt.Sprintf("pan=%s,name=%s,phone=%s,address=%s,license=%s", PAN, Name, PhoneNo, Address, LicenseType),
+	"--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
+
 
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 
-	fmt.Printf("cmd Env: %s\n", cmdVariable.Env)
+	fmt.Printf("cmd Env: %s\n",cmdVariable.Env)
 
 	fmt.Printf("FABRIC CA CLIENT HOME PATH: %s \n", fabric_ca_client_home)
+
 
 	fmt.Printf("The command executed while registering:%s\n", cmdVariable.String())
 	fmt.Print("Value of tallyCAHome:", tallyCAHome, "\n")
 	fmt.Printf("Path to ca-certs:%s \n", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 
+
 	output, err := cmdVariable.CombinedOutput()
 	if err != nil {
-		return "", err
+		return "",err
 	}
-
+	
 	password := getPassword(string(output)) // extract password from the cli's output
-	return password, nil
+	return password,nil
 
 }
 
-func enrollUser(PAN string, password string) (*detailsStructure, string, error) { // this function takes in PAN and password, then it should returns the public+private key msp as a structure
+func enrollUser(PAN string, password string) (*detailsStructure, string, error) {  // this function takes in PAN and password, then it should returns the public+private key msp as a structure
 
 	// urlmid would be like-> <PAN>:<password>
 
-	mspPath := fmt.Sprintf("%s/users/%s", fabric_ca_client_home, PAN) + "/msp"
-	cmdVariable := exec.Command("fabric-ca-client", "enroll", "-u", urlstart+PAN+":"+password+urlend, "--csr.names", "C=IN,ST=Karnataka,L=Bengaluru,O=Tally,OU=client", "-M", mspPath, "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
+	mspPath := fmt.Sprintf("%s/users/%s", fabric_ca_client_home, PAN) +"/msp"
+	cmdVariable:= exec.Command("fabric-ca-client", "enroll", "-u", urlstart + PAN + ":" + password + urlend , "--csr.names", "C=IN,ST=Karnataka,L=Bengaluru,O=Tally,OU=client", "-M", mspPath, "--tls.certfiles", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
 	fmt.Printf("%s", cmdVariable.String())
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 	err := cmdVariable.Run()
@@ -439,13 +406,13 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 	// return content of mspPath- with the signcert content(public key) as a param, private key as a param
 	// mspPath will have the path till the folder "msp"- which contains keystore(PRIVATE KEY location) and signcerts(containing cert.pem- from which the public key is to be extracted)
 	// Extracting the private key
-	pathKeystore := mspPath + "/keystore"               // for private key
-	pathSigncertFile := mspPath + "/signcerts/cert.pem" // for public key
+	pathKeystore:= mspPath + "/keystore"	// for private key
+	pathSigncertFile:= mspPath + "/signcerts/cert.pem"	// for public key
 	fmt.Printf("sign cert path: %s \n", pathSigncertFile)
-
+	
 	// below will be the default values
-	privatekey := "private_key"
-
+	privatekey:="private_key"
+	
 	files, err := ioutil.ReadDir(pathKeystore)
 	if err != nil {
 		log.Fatal(err)
@@ -463,7 +430,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 				continue
 			}
 
-			privatekey = string(content)
+			privatekey=string(content)
 		}
 	}
 
@@ -473,18 +440,18 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 		log.Fatal(err)
 	}
 
-	publickey := string(certFileread)
+	publickey:= string(certFileread)
 
 	// Client side will be recreating private key and public key files content
-	detailsAsset := detailsStructure{
+	detailsAsset:= detailsStructure{
 		PrivateKey: privatekey,
-		PublicKey:  publickey,
+		PublicKey: publickey,
 	}
 
 	return &detailsAsset, mspPath, nil
 }
 
-func getPassword(outputString string) string { // function to extract password from the output generated in the registerUser() function
+func getPassword(outputString string) string{ // function to extract password from the output generated in the registerUser() function
 	PasswordTextIndex := strings.Index(outputString, "Password: ")
 	if PasswordTextIndex == -1 {
 		return ""
