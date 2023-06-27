@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import ApproveVoucherDialogBox from './ApproveVoucherDialogBox';
+import RejectVoucherDialogBox from './RejectVoucherDialogBox';
 
 function SupplierVoucherDialog({ onClose }) {
   const [showApproveVoucherDialog, setShowApproveVoucherDialog] = useState(false);
+  const [showRejectVoucherDialog, setShowRejectVoucherDialog] = useState(false);
 
   const handleButtonClick = (action) => {
     console.log('Supplier Voucher Button Clicked:', action);
     if (action === 'Approve Voucher') {
       setShowApproveVoucherDialog(true);
+    } else if (action === 'Reject Voucher') {
+      setShowRejectVoucherDialog(true);
     } else {
       onClose();
     }
@@ -15,7 +19,7 @@ function SupplierVoucherDialog({ onClose }) {
 
   return (
     <div className="voucher-dialog">
-      {!showApproveVoucherDialog && (
+      {!showApproveVoucherDialog && !showRejectVoucherDialog && (
         <>
           <button className="close-dialog-button" onClick={() => handleButtonClick('Close Dialog')}>
             Back
@@ -38,6 +42,9 @@ function SupplierVoucherDialog({ onClose }) {
       )}
       {showApproveVoucherDialog && (
         <ApproveVoucherDialogBox onClose={() => setShowApproveVoucherDialog(false)} />
+      )}
+      {showRejectVoucherDialog && (
+        <RejectVoucherDialogBox onClose={() => setShowRejectVoucherDialog(false)} />
       )}
     </div>
   );

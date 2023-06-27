@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function CancelVoucherDialog({ onClose }) {
+function RejectVoucherDialogBox({ onClose }) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -8,7 +8,7 @@ function CancelVoucherDialog({ onClose }) {
   const [voucherDetails, setVoucherDetails] = useState('');
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [showVoucherDetails, setShowVoucherDetails] = useState(false);
-  const [showCancelVoucherButton, setShowCancelVoucherButton] = useState(false);
+  const [showRejectVoucherButton, setShowRejectVoucherButton] = useState(false);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -22,22 +22,21 @@ function CancelVoucherDialog({ onClose }) {
     event.preventDefault();
     setIsFormSubmitted(true);
     setShowVoucherDetails(true);
-                                            // CALL READVOUCHER ENDPOINT HERE
+    // CALL READ VOUCHER ENDPOINT HERE
     console.log('Form submitted:', formData);
     setVoucherDetails('o/p generated from read voucher');
-    setShowCancelVoucherButton(true);
+    setShowRejectVoucherButton(true);
   };
 
   const handleButtonClick = (action) => {
-    console.log('Cancel Voucher Button Clicked:', action);
+    console.log('Reject Voucher Button Clicked:', action);
     if (action === 'Back') {
       onClose();
-    }
-    if (action === 'Cancel Voucher') {
+    } else if (action === 'Reject Voucher') {
       if (formData.voucherID.trim() !== '') {
         onClose();
-                                                    // REPLACE THE ABOVE LINE WITH CANCEL VOUCHER API ENDPOINT CALL
-        alert('Voucher set to cancelled.');
+        // REPLACE THE ABOVE LINE WITH REJECT VOUCHER API ENDPOINT CALL
+        alert('Voucher rejected.');
       } else {
         alert('Please enter a voucher ID.');
       }
@@ -45,12 +44,12 @@ function CancelVoucherDialog({ onClose }) {
   };
 
   return (
-    <div className="cancel-voucher-dialog">
+    <div className="reject-voucher-dialog">
       <button className="close-dialog-button" onClick={() => handleButtonClick('Back')}>
         Back
       </button>
       <form onSubmit={handleSubmit}>
-        <div className="cancel-voucher-form-group">
+        <div className="reject-voucher-form-group">
           <label htmlFor="voucherID">Voucher ID:</label>
           <input
             type="text"
@@ -61,7 +60,7 @@ function CancelVoucherDialog({ onClose }) {
             required
           />
         </div>
-        <div className="cancel-voucher-form-buttons">
+        <div className="reject-voucher-form-buttons">
           <button id="verify-voucher-button" type="submit">
             Verify Voucher
           </button>
@@ -72,13 +71,13 @@ function CancelVoucherDialog({ onClose }) {
           <input className="voucher-details-display" type="text" value={voucherDetails} readOnly />
         </div>
       )}
-      {showCancelVoucherButton && (
-        <div className="cancel-voucher-form-buttons">
+      {showRejectVoucherButton && (
+        <div className="reject-voucher-form-buttons">
           <button
-            className="cancel-voucher-button"
-            onClick={() => handleButtonClick('Cancel Voucher')}
+            className="reject-voucher-button"
+            onClick={() => handleButtonClick('Reject Voucher')}
           >
-            Cancel Voucher
+            Confirm Rejection
           </button>
         </div>
       )}
@@ -89,4 +88,4 @@ function CancelVoucherDialog({ onClose }) {
   );
 }
 
-export default CancelVoucherDialog;
+export default RejectVoucherDialogBox;
