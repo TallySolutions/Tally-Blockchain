@@ -377,6 +377,16 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return WrapError(ErrParsingPvtKey, err)
 	}
 
+	//Verify the public key sent is for this pkey or not
+	passed_publicKey_bytes, err := base64.StdEncoding.DecodeString(publicKey_base64)
+	if err != nil {
+		return WrapError(ErrDecodingBase64, err, "[public key]")
+	}
+	current_publicKey_bytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
+	if !Equal(current_publicKey_bytes, passed_publicKey_bytes) {
+		return Error(ErrNotAuthorized, voterId)
+	}
+
 	//Decrypt the signature
 	signature_bytes, err := base64.StdEncoding.DecodeString(ballot.Signature)
 	if err != nil {
@@ -454,6 +464,18 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	}
 
 	return nil
+}
+
+func Equal(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // GetAllOptions returns all voting options found in world state
