@@ -73,7 +73,7 @@ func contains(s []string, e string) bool {
 // Init Ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, isAnonymous bool, singleChoice bool, abstainable bool) error {
 	if s.Initialized {
-		return fmt.Errorf("Chaincode already initialized!")
+		return Error(ErrCCAlreadyInitialized)
 	}
 	s.Initialized = true
 	s.IsAnonymous = isAnonymous
@@ -92,7 +92,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, 
 // Is Votable Option Exists?
 func (s *SmartContract) isVotableOptionExists(ctx contractapi.TransactionContextInterface, votableId string) (bool, error) {
 	if s.Initialized != true {
-		return false, fmt.Errorf("Ledger not inialized!")
+		return false, Error(ErrLedgerNotInitialized)
 	}
 	optionBytes, err := ctx.GetStub().GetState(VOTE_OPTION_REGISTER_PREFIX + votableId)
 	if err != nil {
@@ -105,7 +105,7 @@ func (s *SmartContract) isVotableOptionExists(ctx contractapi.TransactionContext
 // Is Votable Option Exists?
 func (s *SmartContract) isVoterExists(ctx contractapi.TransactionContextInterface, voterId string) (bool, error) {
 	if s.Initialized != true {
-		return false, fmt.Errorf("Ledger not inialized!")
+		return false, Error(ErrLedgerNotInitialized)
 	}
 	optionBytes, err := ctx.GetStub().GetState(VOTER_REGISTER_PREFIX + voterId)
 	if err != nil {
@@ -119,7 +119,7 @@ func (s *SmartContract) isVoterExists(ctx contractapi.TransactionContextInterfac
 func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInterface, votableId string) error {
 
 	if s.Initialized != true {
-		return fmt.Errorf("Ledger not inialized!")
+		return Error(ErrLedgerNotInitialized)
 	}
 	fmt.Printf("Adding new votable option: %s\n", votableId)
 	//checking if option already added
@@ -128,7 +128,7 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 		return err
 	}
 	if optionExists {
-		return fmt.Errorf("This votable option is already exist!")
+		return Error(ErrVotingOptionAlreadyExists, votableId)
 	}
 
 	// if the option does not exist
@@ -151,7 +151,7 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, voterId string) error {
 
 	if s.Initialized != true {
-		return fmt.Errorf("Ledger not inialized!")
+		return Error(ErrLedgerNotInitialized)
 	}
 	fmt.Printf("Adding new voter: %s\n", voterId)
 	//checking if voter already added
@@ -160,7 +160,7 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 		return err
 	}
 	if optionExists {
-		return fmt.Errorf("This voter is already exist!")
+		return Error(ErrVoterAlreadyExists, voterId)
 	}
 
 	// if the voter does not exist
@@ -186,58 +186,58 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, voterId string, publicKey_base64 string, signature_base64 string) (string, error) {
 
 	if s.Initialized != true {
-		return "", fmt.Errorf("Ledger not inialized!")
+		return "", Error(ErrLedgerNotInitialized)
 	}
 	fmt.Printf("Authorizing voter: %s\n", voterId)
 
 	//checking if ballot exists
 	ballot, err := s.GetBallot(ctx, voterId)
 	if err != nil {
-		return "", fmt.Errorf("Unable to get ballot for voter : %v", err)
+		return "", WrapError(ErrRetrivingState, err, voterId)
 	}
 	if ballot == nil {
-		return "", fmt.Errorf("This voter does not exist!")
+		return "", Error(ErrVoterNotExists, voterId)
 	}
 
 	// verify signature
 	fmt.Println("Verifying signature ...")
 
 	//1. Get bytes from base64 public key
-	publicKey_bytes, decodeErr := base64.StdEncoding.DecodeString(publicKey_base64)
-	if decodeErr != nil {
-		return "", fmt.Errorf("Error in decoding base64 encoded public key: %v", decodeErr)
+	publicKey_bytes, err := base64.StdEncoding.DecodeString(publicKey_base64)
+	if err != nil {
+		return "", WrapError(ErrDecodingBase64, err, "[public key]")
 	}
 
 	//2. Now convert public key bytes into RSA public key
 	publicKey, err := x509.ParsePKCS1PublicKey(publicKey_bytes)
 	if err != nil {
-		return "", fmt.Errorf("Error in parsing public key: %v", err)
+		return "", WrapError(ErrParsingPubKey, err)
 	}
 
 	//3. Decode signature
-	signature_bytes, SigdecodeErr := base64.StdEncoding.DecodeString(signature_base64)
-	if SigdecodeErr != nil {
-		return "", fmt.Errorf("Error in decoding base64 encoded signature: %v", SigdecodeErr)
+	signature_bytes, err := base64.StdEncoding.DecodeString(signature_base64)
+	if err != nil {
+		return "", WrapError(ErrDecodingBase64, err, "[signature]")
 	}
 
 	//4. Verify signatur using public key
 	msgHash := sha512.New()
 	_, err = msgHash.Write([]byte(voterId))
 	if err != nil {
-		return "", fmt.Errorf("Error in hashing voter id: %v", err)
+		return "", WrapError(ErrHashingData, err, voterId)
 	}
 
 	msgHashSum := msgHash.Sum(nil)
 
-	errVerify := rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
-	if errVerify != nil {
-		return "", fmt.Errorf("Error in verifying signature: %v", errVerify)
+	err = rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
+	if err != nil {
+		return "", WrapError(ErrSignatureValidation, err)
 	}
 
 	// provision key pair
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return "", fmt.Errorf("Error in generating key: %v", err)
+		return "", WrapError(ErrKeyGeneration, err)
 	}
 
 	//1. Get bytes of privatekey
@@ -250,7 +250,7 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	enc_publicKey := privateKey.PublicKey
 	encryptedBytes, err := EncryptOAEP(&enc_publicKey, []byte(signature_base64))
 	if err != nil {
-		return "", fmt.Errorf("Error in encrypting signature: %v", err)
+		return "", WrapError(ErrEncryption, err, "[signature]")
 	}
 
 	encryptedBytes_base64 := base64.StdEncoding.EncodeToString(encryptedBytes)
@@ -261,20 +261,20 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	fmt.Printf("Creating new asset for this voter %s\n", voterId)
 	ballotJSON, err := json.Marshal(ballot)
 	if err != nil {
-		return "", fmt.Errorf("Error in marshalling ballot to json: %v", err)
+		return "", WrapError(ErrJsonMarshalling, err, "[Ballot]")
 	}
 
-	putStateErr := ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, ballotJSON) // updated state added to the voter ledger
+	err = ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, ballotJSON) // updated state added to the voter ledger
 
-	if putStateErr != nil {
-		return "", fmt.Errorf("Error in saving ballot: %v", putStateErr)
+	if err != nil {
+		return "", WrapError(ErrSettingState, err, VOTER_REGISTER_PREFIX+voterId)
 	}
 
 	//Now store the private key
-	privateErr := ctx.GetStub().PutPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey", privateKey_bytes)
+	err = ctx.GetStub().PutPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey", privateKey_bytes)
 
-	if privateErr != nil {
-		return "", fmt.Errorf("Error in saving private key: %v", privateErr)
+	if err != nil {
+		return "", WrapError(ErrSettingPrivate, err, VOTER_REGISTER_PREFIX+voterId)
 	}
 
 	//1. Get bytes of public key
@@ -290,14 +290,14 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 // function to read vote option
 func (s *SmartContract) ReadOption(ctx contractapi.TransactionContextInterface, votableId string) (*VotableOption, error) {
 	if s.Initialized != true {
-		return nil, fmt.Errorf("Ledger not inialized!")
+		return nil, Error(ErrLedgerNotInitialized)
 	}
 	votableOptionJSON, err := ctx.GetStub().GetState(VOTE_OPTION_REGISTER_PREFIX + votableId)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read from world state: %v", err)
+		return nil, WrapError(ErrRetrivingState, err, VOTE_OPTION_REGISTER_PREFIX+votableId)
 	}
 	if votableOptionJSON == nil {
-		return nil, fmt.Errorf("The votable id %s is not present.", votableId)
+		return nil, Error(ErrNoStateExists, VOTE_OPTION_REGISTER_PREFIX+votableId)
 	}
 
 	var votableOption VotableOption
@@ -312,14 +312,14 @@ func (s *SmartContract) ReadOption(ctx contractapi.TransactionContextInterface, 
 // function to read voter
 func (s *SmartContract) GetBallot(ctx contractapi.TransactionContextInterface, voterId string) (*Ballot, error) {
 	if s.Initialized != true {
-		return nil, fmt.Errorf("Ledger not inialized!")
+		return nil, Error(ErrLedgerNotInitialized)
 	}
 	voterJSON, err := ctx.GetStub().GetState(VOTER_REGISTER_PREFIX + voterId)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read from world state: %v", err)
+		return nil, WrapError(ErrRetrivingState, err, VOTER_REGISTER_PREFIX+voterId)
 	}
 	if voterJSON == nil {
-		return nil, fmt.Errorf("The voter '%s' is not present.", voterId)
+		return nil, Error(ErrNoStateExists, VOTER_REGISTER_PREFIX+voterId)
 	}
 
 	var ballot Ballot
@@ -334,87 +334,87 @@ func (s *SmartContract) GetBallot(ctx contractapi.TransactionContextInterface, v
 // function to cast vote, the public key of the ballot's private key must be passed.
 func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterId string, publicKey_base64 string, votableIds []string) error {
 	if s.Initialized != true {
-		return fmt.Errorf("Ledger not inialized!")
+		return Error(ErrLedgerNotInitialized)
 	}
 
 	if len(votableIds) == 0 {
 		if s.Abstainable {
 			return s.CastVote(ctx, voterId, publicKey_base64, []string{Abstained})
 		}
-		return fmt.Errorf("Number of votes to be casted can not be zero.")
+		return Error(ErrNoVoteIsZero)
 	}
 	if len(votableIds) > 1 && s.SingleChoice {
-		return fmt.Errorf("Number of votes can not be more than one, in case of single choice voting.")
+		return Error(ErrNoVoteIsMoreThanOne)
 	}
 
 	//checking if ballot exists
 	ballot, err := s.GetBallot(ctx, voterId)
 	if err != nil {
-		return fmt.Errorf("Unable to retrive ballot : %v", err)
+		return WrapError(ErrGetBallot, err)
 	}
 	if ballot == nil {
-		return fmt.Errorf("This voter does not exist!")
+		return Error(ErrNoStateExists, "Ballot", voterId)
 	}
 
 	//Check if user is authorized
 
 	if ballot.PubKey == "" {
-		return fmt.Errorf("This voter is not authorized, please authenticate the voter first!")
+		return Error(ErrNotAuthorized, voterId)
 	}
 
 	if ballot.Casted {
-		return fmt.Errorf("This voter is already voted!")
+		return Error(ErrAlreadyVoted, voterId)
 	}
 
 	//Get the ballot's private key
-	privateKey_bytes, privateKeyGetErr := ctx.GetStub().GetPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey")
-	if privateKeyGetErr != nil {
-		return fmt.Errorf("Unable to retrive private data : %v", privateKeyGetErr)
+	privateKey_bytes, err := ctx.GetStub().GetPrivateData(VOTER_REGISTER_PREFIX+voterId, "privateKey")
+	if err != nil {
+		return WrapError(ErrRetrivingPrivate, err, VOTER_REGISTER_PREFIX+voterId, "privateKey")
 	}
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(privateKey_bytes)
 	if err != nil {
-		return fmt.Errorf("Unable to parse private key : %v", err)
+		return WrapError(ErrParsingPvtKey, err)
 	}
 
 	//Decrypt the signature
 	signature_bytes, err := base64.StdEncoding.DecodeString(ballot.Signature)
 	if err != nil {
-		return fmt.Errorf("Unable to decode signature : %v", err)
+		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature.Encrypted]")
 	}
 
 	decryptedBytes, err := DecryptOAEP(privateKey, signature_bytes)
 	if err != nil {
-		return fmt.Errorf("Unable to decrypt signature : %v", err)
+		return WrapError(ErrDecryption, err, "[Ballot.Signature.Encrypted]")
 	}
 	signature_base64 := string(decryptedBytes)
 	signature_bytes, err = base64.StdEncoding.DecodeString(signature_base64)
 	if err != nil {
-		return fmt.Errorf("Unable to decode signature : %v", err)
+		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature]")
 	}
 
 	//Verify signatur using public key
 	publicKey_bytes, err := base64.StdEncoding.DecodeString(ballot.PubKey)
 	if err != nil {
-		return fmt.Errorf("Unable to decode public key : %v", err)
+		return WrapError(ErrDecodingBase64, err, "[Ballot.PubKey]")
 	}
 
 	publicKey, err := x509.ParsePKCS1PublicKey(publicKey_bytes)
 	if err != nil {
-		return fmt.Errorf("Unable to parse public key : %v", err)
+		return WrapError(ErrParsingPubKey, err, "[Ballot.PubKey]")
 	}
 
 	msgHash := sha512.New()
 	_, err = msgHash.Write([]byte(voterId))
 	if err != nil {
-		return fmt.Errorf("Error in hashing voter id: %v", err)
+		return WrapError(ErrHashingData, err, voterId)
 	}
 
 	msgHashSum := msgHash.Sum(nil)
 
-	errVerify := rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
-	if errVerify != nil {
-		return fmt.Errorf("Unable to verify signature : %v", errVerify)
+	err = rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
+	if err != nil {
+		return WrapError(ErrSignatureValidation, err)
 	}
 
 	//Update the timestamp
@@ -429,28 +429,28 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	for _, optionId := range votableIds {
 		votableOption, err := s.ReadOption(ctx, optionId)
 		if err != nil {
-			return fmt.Errorf("Unable to read option : %v", err)
+			return WrapError(ErrGetOption, err)
 		}
 		votableOption.Count = votableOption.Count + 1 //Vote
 
 		votableOptionJSON, err := json.Marshal(votableOption)
 		if err != nil {
-			return fmt.Errorf("Unable to marshal option : %v", err)
+			return WrapError(ErrJsonMarshalling, err, "[VotableOption]")
 		}
 		updatestate_err := ctx.GetStub().PutState(VOTE_OPTION_REGISTER_PREFIX+optionId, votableOptionJSON)
 		if updatestate_err != nil {
-			return fmt.Errorf("Unable to update option : %v", updatestate_err)
+			return WrapError(ErrSettingState, err, VOTE_OPTION_REGISTER_PREFIX+optionId)
 		}
 	}
 
-	//Updare Ballot
+	//Update Ballot
 	ballotJSON, err := json.Marshal(ballot)
 	if err != nil {
-		return fmt.Errorf("Unable to marshal ballot : %v", err)
+		return WrapError(ErrJsonMarshalling, err, "[Ballot]")
 	}
 	updatestate_err := ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, ballotJSON)
 	if updatestate_err != nil {
-		return fmt.Errorf("Unable to update ballot : %v", updatestate_err)
+		return WrapError(ErrSettingState, err, VOTE_OPTION_REGISTER_PREFIX+voterId)
 	}
 
 	return nil
@@ -467,7 +467,7 @@ func (s *SmartContract) GetAllOptions(ctx contractapi.TransactionContextInterfac
 	}
 
 	if resultsIterator == nil {
-		return nil, fmt.Errorf("No result iterator found!")
+		return nil, Error(ErrNoIterator)
 	}
 
 	defer resultsIterator.Close()
@@ -502,7 +502,7 @@ func (s *SmartContract) GetAllBallots(ctx contractapi.TransactionContextInterfac
 	}
 
 	if resultsIterator == nil {
-		return nil, fmt.Errorf("No result iterator found!")
+		return nil, Error(ErrNoIterator)
 	}
 
 	defer resultsIterator.Close()

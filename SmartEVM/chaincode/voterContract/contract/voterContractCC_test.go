@@ -1,10 +1,8 @@
 package contract_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"crypto"
 	"crypto/rand"
@@ -47,7 +45,7 @@ func TestInitLedger(t *testing.T) {
 
 	//Again init should faile
 	err = voterContract.InitLedger(transactionContext, true, true, true)
-	require.EqualError(t, err, "Chaincode already initialized!")
+	require.ErrorContains(t, err, contract.ErrCCAlreadyInitialized.Error())
 }
 
 func TestInitLedgerStateFailure(t *testing.T) {
@@ -57,9 +55,9 @@ func TestInitLedgerStateFailure(t *testing.T) {
 
 	voterContract := contract.SmartContract{}
 
-	chaincodeStub.PutStateReturns(fmt.Errorf("failed inserting key"))
+	chaincodeStub.PutStateReturns(contract.ErrSettingState)
 	err := voterContract.InitLedger(transactionContext, true, true, true)
-	require.EqualError(t, err, "failed inserting key")
+	require.EqualError(t, err, contract.ErrSettingState.Error())
 }
 
 func TestAddVotableOption(t *testing.T) {
@@ -86,9 +84,9 @@ func TestAddVotableOption(t *testing.T) {
 	require.Error(t, err) //Expect error
 
 	//Test state failure
-	chaincodeStub.GetStateReturns(nil, fmt.Errorf("unable to retrieve asset."))
+	chaincodeStub.GetStateReturns(nil, contract.ErrRetrivingState)
 	err = voterContract.AddVotableOption(transactionContext, "Option1")
-	require.EqualError(t, err, "unable to retrieve asset.")
+	require.EqualError(t, err, contract.ErrRetrivingState.Error())
 }
 
 var states map[string][]byte
@@ -99,13 +97,13 @@ var collections map[string]PrivateData
 
 func GetStateStub(id string) ([]byte, error) {
 	if strings.HasSuffix(id, "_get_state_error_") {
-		return nil, fmt.Errorf("Unable to get value from state")
+		return nil, contract.ErrRetrivingState
 	}
 	return states[id], nil
 }
 func AddStateStub(id string, value []byte) error {
 	if strings.HasSuffix(id, "_set_state_error_") {
-		return fmt.Errorf("Unable to set value from state")
+		return contract.ErrSettingState
 	}
 	states[id] = value
 
@@ -114,7 +112,7 @@ func AddStateStub(id string, value []byte) error {
 
 func PutPrivateDataStub(collection string, key string, value []byte) error {
 	if collection == "_set_state_error_" {
-		return fmt.Errorf("Unable to set value from state")
+		return contract.ErrSettingPrivate
 	}
 	data := PrivateData{}
 	data[key] = value
@@ -125,7 +123,7 @@ func PutPrivateDataStub(collection string, key string, value []byte) error {
 
 func GetPrivateDataStub(collection string, key string) ([]byte, error) {
 	if collection == "_get_state_error_" {
-		return nil, fmt.Errorf("Unable to get value from state")
+		return nil, contract.ErrRetrivingPrivate
 	}
 
 	return collections[collection][key], nil
@@ -145,7 +143,7 @@ func NextStub() (*queryresult.KV, error) {
 		currentIndex++
 		return result, nil
 	}
-	return nil, fmt.Errorf("No result found")
+	return nil, contract.ErrNoStateExists
 }
 
 func CloseStub() error {
@@ -213,19 +211,19 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 func StateErrorsTests(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract) {
 	//Add option - set state error
 	err := voterContract.AddVotableOption(transactionContext, "_set_state_error_")
-	require.EqualError(t, err, "Unable to set value from state")
+	require.EqualError(t, err, contract.ErrSettingState.Error())
 
 	//Add voter - set state error
 	err = voterContract.AddVoter(transactionContext, "_set_state_error_")
-	require.EqualError(t, err, "Unable to set value from state")
+	require.EqualError(t, err, contract.ErrSettingState.Error())
 
 	//Add option - get state error
 	err = voterContract.AddVotableOption(transactionContext, "_get_state_error_")
-	require.EqualError(t, err, "Unable to get value from state")
+	require.EqualError(t, err, contract.ErrRetrivingState.Error())
 
 	//Add voter - get state error
 	err = voterContract.AddVoter(transactionContext, "_get_state_error_")
-	require.EqualError(t, err, "Unable to get value from state")
+	require.EqualError(t, err, contract.ErrRetrivingState.Error())
 }
 
 func CastVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId string) string {
@@ -242,7 +240,7 @@ func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.Transaction
 
 	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId1, optionId2})
 	if voterContract.SingleChoice {
-		require.Error(t, err) //Expect error
+		require.ErrorContains(t, err, contract.ErrNoVoteIsMoreThanOne.Error()) //Expect error
 	} else {
 		require.NoError(t, err)
 	}
@@ -256,7 +254,7 @@ func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext,
 	if voterContract.Abstainable {
 		require.NoError(t, err)
 	} else {
-		require.Error(t, err) //Expect error
+		require.ErrorContains(t, err, contract.ErrNoVoteIsZero.Error()) //Expect error
 	}
 
 	return pubkey
@@ -265,7 +263,7 @@ func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext,
 func CastVoteWithoutAuthTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, voterId string, optionId string) {
 
 	err := voterContract.CastVote(transactionContext, voterId, "", []string{optionId})
-	require.Error(t, err) //Authorization Error
+	require.ErrorContains(t, err, contract.ErrNotAuthorized.Error()) //Authorization Error
 
 }
 
@@ -274,7 +272,18 @@ func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContex
 	pubkey := CastVoteTest(t, transactionContext, voterContract, voterId, optionId)
 
 	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId})
-	require.Error(t, err) //Revote not allowed
+	require.ErrorContains(t, err, contract.ErrAlreadyVoted.Error()) //Revote not allowed
+
+	return pubkey
+
+}
+
+func CastVoteWrongKey(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, key_voterId string, voterId string, optionId string) string {
+
+	pubkey := AuthUser(t, voterContract, transactionContext, key_voterId)
+
+	err := voterContract.CastVote(transactionContext, voterId, pubkey, []string{optionId})
+	require.ErrorContains(t, err, contract.ErrNotAuthorized.Error()) //Revote not allowed
 
 	return pubkey
 
@@ -312,7 +321,6 @@ func ExpectedBallotDetailsTest(t *testing.T, transactionContext *mocks.Transacti
 				require.NotEqual(t, 0, len(ballot.Picks), "The picks for ballot '%d:%s' must not be nil (public voting)", i, ballot.VoterId)
 			}
 			require.NotEqual(t, int64(0), ballot.Timestamp, "The timestamp for ballot '%d:%s' can not be zero", i, ballot.VoterId)
-			fmt.Println(time.Unix(0, ballot.Timestamp))
 		} else {
 			require.Equal(t, false, ballot.Casted, "The casted flag for ballot '%d:%s' must be true", i, ballot.VoterId)
 			require.Equal(t, int64(0), ballot.Timestamp, "The timestamp for ballot '%d:%s' must be zero", i, ballot.VoterId)
@@ -331,7 +339,9 @@ func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
 
 	CastVoteTwiceTest(t, transactionContext, voterContract, "User1", "Option1")
 
-	CastVoteWithoutAuthTest(t, transactionContext, voterContract, "User2", "Option2") //Will not refister
+	CastVoteWithoutAuthTest(t, transactionContext, voterContract, "User2", "Option2") //Will not register
+
+	CastVoteWrongKey(t, transactionContext, voterContract, "User1", "User2", "Option2") //Will not refgister
 
 	AbstainVoteTest(t, transactionContext, voterContract, "User2")
 
@@ -545,7 +555,7 @@ func AuthUser(t *testing.T, voterContract contract.SmartContract, transactionCon
 	signature_base64 := base64.StdEncoding.EncodeToString(signature)
 
 	pub, err := voterContract.AuthVoter(transactionContext, "_get_state_error_", publicKey_base64, signature_base64)
-	require.EqualError(t, err, "Unable to get ballot for voter : Failed to read from world state: Unable to get value from state") //Expect error
+	require.ErrorContains(t, err, contract.ErrRetrivingState.Error()) //Expect error
 
 	pub, err = voterContract.AuthVoter(transactionContext, userId, publicKey_base64, signature_base64)
 	require.NoError(t, err) //Expect No error
