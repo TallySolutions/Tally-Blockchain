@@ -7,8 +7,8 @@ package main
 import (
 	"log"
 
+	"github.com/SmartEVM/chaincode/voterContract/contract"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract"
 )
 
 func main() {

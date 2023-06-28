@@ -13,12 +13,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	"github.com/SmartEVM/chaincode/voterContract/contract"
+	"github.com/SmartEVM/chaincode/voterContract/contract/mocks"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
 	"github.com/stretchr/testify/require"
-	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract"
-	"tallysolutions.com/SmartEVM/chaincode/voterContract/contract/mocks"
 )
 
 //go:generate counterfeiter -o mocks/transaction.go -fake-name TransactionContext . transactionContext

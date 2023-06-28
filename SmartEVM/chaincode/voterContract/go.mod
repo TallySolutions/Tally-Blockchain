@@ -1,4 +1,4 @@
-module tallysolutions.com/SmartEVM/chaincode/voterContract
+module github.com/SmartEVM/chaincode/voterContract
 
 go 1.20
 
