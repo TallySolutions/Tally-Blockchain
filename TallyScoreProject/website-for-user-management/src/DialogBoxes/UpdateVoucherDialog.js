@@ -41,7 +41,7 @@ function UpdateVoucherDialog({ onClose }) {
   };
 
   return (
-    <div className="update-voucher-dialog">
+    <div>
       <button
         className="close-dialog-button"
         onClick={() => handleButtonClick('Back')}
@@ -82,10 +82,11 @@ function UpdateVoucherDialog({ onClose }) {
             name="newValue"
             value={formData.newValue}
             onChange={handleInputChange}
+            required
           />
         </div>
         <div className="update-voucher-form-buttons">
-          <button type="submit">Submit Details</button>
+          <button type="submit">Submit</button>
         </div>
       </form>
       {voucherDetails && (

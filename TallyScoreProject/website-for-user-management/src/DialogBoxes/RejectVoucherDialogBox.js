@@ -44,7 +44,7 @@ function RejectVoucherDialogBox({ onClose }) {
   };
 
   return (
-    <div className="reject-voucher-dialog">
+    <div>
       <button className="close-dialog-button" onClick={() => handleButtonClick('Back')}>
         Back
       </button>
@@ -61,7 +61,7 @@ function RejectVoucherDialogBox({ onClose }) {
           />
         </div>
         <div className="reject-voucher-form-buttons">
-          <button id="verify-voucher-button" type="submit">
+          <button id="reject-verify-voucher-button" type="submit">
             Verify Voucher
           </button>
         </div>

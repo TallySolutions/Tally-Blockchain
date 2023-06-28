@@ -3,9 +3,6 @@ import OwnerVoucherDialog from './DialogBoxes/OwnerVoucherDialog';
 import SupplierVoucherDialog from './DialogBoxes/SupplierVoucherDialog';
 
 function RegistrationTable({ registrations, setRegistrations }) {
-  
-const [openOwnerDialog, setOpenOwnerDialog] = React.useState(false);
-const [openSupplierDialog, setOpenSupplierDialog] = React.useState(false);
 
 const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
 const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
@@ -127,12 +124,12 @@ const handleSupplierDialogClose = () => {
             </td>
             <td>{registration.status}</td>
             <td>
-        <div id="voucher-generator">
+        <div>
           <button id="owner-voucher-button" className='generate-voucher-button' onClick={handleOwnerVoucherButtonClick}>Generate</button>
         </div>
       </td>
       <td>
-        <div id="voucher-generator">
+        <div>
           <button id="supplier-voucher-button" className='generate-voucher-button' onClick={handleSupplierVoucherButtonClick}>Generate</button>
         </div>
       </td>

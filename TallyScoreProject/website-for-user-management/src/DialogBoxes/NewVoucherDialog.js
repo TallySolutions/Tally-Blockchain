@@ -24,7 +24,7 @@ function NewVoucherDialog({ onClose }) {
   };
 
   return (
-    <div className="new-voucher-dialog">
+    <div>
       <button className="close-dialog-button" onClick={onClose}>
         Back
       </button>

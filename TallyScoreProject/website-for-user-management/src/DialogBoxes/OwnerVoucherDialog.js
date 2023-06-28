@@ -16,7 +16,7 @@ function OwnerVoucherDialog({ onClose }) {
   };
 
   return (
-    <div className="voucher-dialog">
+    <div>
       {activeDialog === null ? (
         <>
           <button className="close-dialog-button" onClick={onClose}>

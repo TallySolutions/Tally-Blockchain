@@ -11,7 +11,7 @@ table {
 }
 
 table td {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 #PAN-column {
@@ -44,10 +44,6 @@ table th {
   font-weight: bold;
 }
 
-.form-container {
-  margin-bottom: 20px;
-}
-
 form {
   margin-left: 0px;
   display: flex;
@@ -68,6 +64,7 @@ form input {
   padding: 5px;
   margin-top: 5px;
   margin-bottom: 10px;
+  font-size: 14px;
 }
 
 form select {
@@ -77,21 +74,16 @@ form select {
 }
 
 form button[type='submit'] {
-  width: 60px;
-  height: 40px;
-  padding: 5px 10px;
+  margin-top: 28px;
+  margin-left: 20px;
+  width: 77px;
+  height: 50px;
   background-color: rgb(9, 149, 225);
-  color: #fff;
+  color: #f4f9ff;
   border-radius: 15%;
-}
-
-#voucher-generator-button {
-  width: 90px;
-  height: 30px;
-  font-size: 14px;
-  background-color: #4298e3;
-  color: black;
-  border: none;
+  padding: 10px;
+  align-items: center;
+  font-size: 17px;
 }
 
 .dialog-overlay {
@@ -111,34 +103,37 @@ form button[type='submit'] {
   background-color: #69b0ef;
   padding: 20px;
   border-radius: 4px;
-  width: 600px;
+  width: 700px;
   height: 600px;
 }
 
 .voucher-dialog-buttons {
+  margin-top: 80px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 10px;
+  gap: 20px;
   height: 200px;
   align-items: center;
   justify-items: center;
 }
 
-.voucher-dialog-buttons button {
+.dialog-buttons {
   background-color: #b3daff;
   width: 150px;
   height: 100px;
   border: none;
   border-radius: 10%;
-  font-size: medium;
+  font-size: 17px;
   margin-top: 25px;
   margin-bottom: 25px;
+  padding: 8px;
 }
 
 .close-dialog-button {
   background-color: #ffffff;
   border: none;
+  font-size: 16px;
 }
 
 .generate-voucher-button {
@@ -204,6 +199,30 @@ form button[type='submit'] {
   font-size: 14px;
 }
 
+#reject-verify-voucher-button{
+  margin-left: 50px;
+  margin-top: -5px;
+  height: fit-content;
+  width: fit-content;
+  border-radius: 5%;
+  background-color: #0088ff;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+}
+
+#sendback-verify-voucher-button{
+  margin-left: 50px;
+  margin-top: -5px;
+  height: fit-content;
+  width: fit-content;
+  border-radius: 5%;
+  background-color: #0088ff;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+}
+
 .display-voucher-field{
   display: flex;
   align-items: center;
@@ -219,15 +238,38 @@ form button[type='submit'] {
   font-size: 14px;
 }
 
+.reject-voucher-button{
+  margin-left:425px;
+  height: 60px;
+  width: 160px;
+  border-radius: 5%;
+  background-color:#128cf6;
+  border:none;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.send-back-voucher-button{
+  margin-left:425px;
+  height: 60px;
+  width: 160px;
+  border-radius: 5%;
+  background-color:#128cf6;
+  border:none;
+  color: #ffffff;
+  font-size: 16px;
+}
+
 
 .update-voucher-button{
   margin-left:425px;
-  height: 50px;
-  width: 150px;
+  height: 60px;
+  width: 160px;
   border-radius: 5%;
-  background-color:#128cf6;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 17px;
+  border: none;
+  background-color: #0088ff;
 }
 
 .display-voucher-field-update{
@@ -268,12 +310,12 @@ form button[type='submit'] {
 
 .approve-voucher-button{
   margin-left:425px;
-  height: 50px;
-  width: 150px;
+  height: 60px;
+  width: 160px;
   border-radius: 5%;
   background-color:#128cf6;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 16px;
   border: none;
 }
 

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import ApproveVoucherDialogBox from './ApproveVoucherDialogBox';
 import RejectVoucherDialogBox from './RejectVoucherDialogBox';
+import SendBackVoucherDialogBox from './SendBackVoucherDialogBox';
+import ListSupplierVouchersDialog from './ListSupplierVouchersDialog';
 
 function SupplierVoucherDialog({ onClose }) {
   const [showApproveVoucherDialog, setShowApproveVoucherDialog] = useState(false);
   const [showRejectVoucherDialog, setShowRejectVoucherDialog] = useState(false);
+  const [showSendBackVoucherDialog, setShowSendBackVoucherDialog] = useState(false);
+  const [showListVouchersDialog, setShowListVouchersDialog] = useState(false);
 
   const handleButtonClick = (action) => {
     console.log('Supplier Voucher Button Clicked:', action);
@@ -12,6 +16,10 @@ function SupplierVoucherDialog({ onClose }) {
       setShowApproveVoucherDialog(true);
     } else if (action === 'Reject Voucher') {
       setShowRejectVoucherDialog(true);
+    } else if (action === 'Send Back Voucher') {
+      setShowSendBackVoucherDialog(true);
+    } else if(action === 'List of Vouchers as Supplier'){
+      setShowListVouchersDialog(true);
     } else {
       onClose();
     }
@@ -19,7 +27,7 @@ function SupplierVoucherDialog({ onClose }) {
 
   return (
     <div className="voucher-dialog">
-      {!showApproveVoucherDialog && !showRejectVoucherDialog && (
+      {!showApproveVoucherDialog && !showRejectVoucherDialog && !showSendBackVoucherDialog && !showListVouchersDialog && (
         <>
           <button className="close-dialog-button" onClick={() => handleButtonClick('Close Dialog')}>
             Back
@@ -45,6 +53,12 @@ function SupplierVoucherDialog({ onClose }) {
       )}
       {showRejectVoucherDialog && (
         <RejectVoucherDialogBox onClose={() => setShowRejectVoucherDialog(false)} />
+      )}
+      {showSendBackVoucherDialog && (
+        <SendBackVoucherDialogBox onClose={() => setShowSendBackVoucherDialog(false)} />
+      )}
+      {showListVouchersDialog && (
+        <ListSupplierVouchersDialog onClose={() => setShowListVouchersDialog(false)} />
       )}
     </div>
   );
