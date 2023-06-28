@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "fabric-ca-client": "^2.2.17"
-  }
-}
