@@ -52,6 +52,8 @@ var (
 	ErrAlreadyVoted              = wrapError{msg: "This voter is already casted the vote"}
 	ErrGetOption                 = wrapError{msg: "Error getting option"}
 	ErrNoIterator                = wrapError{msg: "No result iterator found!"}
+	ErrCouldAddAddAllVoters      = wrapError{msg: "Failed to add some the voters"}
+
 	//Crypto Errors
 	ErrDecodingBase64      = wrapError{msg: "Error in decoded base64 encoded value"}
 	ErrParsingPubKey       = wrapError{msg: "Error in parsing public key"}

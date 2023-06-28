@@ -186,9 +186,50 @@ func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, vo
 	}
 
 	s.log.Debug("Creating new asset for this voter %s", voterId)
-	putStateErr := ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, voterJSON) // new state added to the voter ledger
-	return putStateErr
+	err = ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, voterJSON) // new state added to the voter ledger
+	return err
 
+}
+
+func String(n int) string {
+	buf := [11]byte{}
+	pos := len(buf)
+	i := int64(n)
+	signed := i < 0
+	if signed {
+		i = -i
+	}
+	for {
+		pos--
+		buf[pos], i = '0'+byte(i%10), i/10
+		if i == 0 {
+			if signed {
+				pos--
+				buf[pos] = '-'
+			}
+			return string(buf[pos:])
+		}
+	}
+}
+
+// function to add Voter
+func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, voterIds []string) (error, []error) {
+
+	if s.Initialized != true {
+		return Error(ErrLedgerNotInitialized), []error{}
+	}
+	var errors []error
+	for _, voterId := range voterIds {
+		err := s.AddVoter(ctx, voterId)
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+	if len(errors) > 0 {
+		return Error(ErrCouldAddAddAllVoters, (String(len(errors)) + "/" + String(len(voterIds)))), errors
+
+	}
+	return nil, []error{}
 }
 
 // function to authorize Voter, this returns a public key specific to this voter's encryption private key
