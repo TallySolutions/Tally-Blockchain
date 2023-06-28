@@ -1,3 +1,4 @@
 *.swp
-SmartEVM/chaincode/voterContract/contract/c.html
-SmartEVM/chaincode/voterContract/contract/c.out
+c.html
+c.out
+
