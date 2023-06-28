@@ -1,6 +1,7 @@
 package contract_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -41,6 +42,8 @@ type KeyPair struct {
 }
 
 func TestInitLedger(t *testing.T) {
+	fmt.Println("Running Test 'TestInitLedger' ...")
+
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
@@ -55,6 +58,8 @@ func TestInitLedger(t *testing.T) {
 }
 
 func TestInitLedgerStateFailure(t *testing.T) {
+	fmt.Println("Running Test 'TestInitLedgerStateFailure' ...")
+
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
@@ -67,6 +72,8 @@ func TestInitLedgerStateFailure(t *testing.T) {
 }
 
 func TestAddVotableOption(t *testing.T) {
+	fmt.Println("Running Test 'TestAddVotableOption' ...")
+
 	chaincodeStub := &mocks.ChaincodeStub{}
 	transactionContext := &mocks.TransactionContext{}
 	transactionContext.GetStubReturns(chaincodeStub)
@@ -178,7 +185,9 @@ func GetStateByRangeStub(arg1 string, arg2 string) (shim.StateQueryIteratorInter
 }
 
 func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, singlechoice bool, abstainable bool) (*mocks.TransactionContext, contract.SmartContract, map[string]KeyPair, error) {
-
+	fmt.Println("  Setting up ...")
+	var bar contract.Bar
+	bar.NewOption(0, 100, "  ")
 	keys := map[string]KeyPair{}
 
 	states = map[string][]byte{}
@@ -208,18 +217,28 @@ func SetupVote(t *testing.T, options []string, voters []string, anonymous bool, 
 		require.NoError(t, err)
 	}
 
+	bar.Play(1)
+
 	//Set voters
-	for _, voterId := range voters {
-		err = voterContract.AddVoter(transactionContext, voterId)
-		require.NoError(t, err)
+	err, _ = voterContract.AddVoters(transactionContext, voters)
+	require.NoError(t, err)
 
+	bar.Play(10)
+
+	//Authorize Voters
+	len_voters := len(voters)
+	for i, voterId := range voters {
 		keys[voterId] = AuthUser(t, voterContract, transactionContext, voterId)
+		progress := int64((((i + 1) * 90) / len_voters) + 10)
+		bar.Play(progress)
 	}
-
+	bar.Finish()
 	return transactionContext, voterContract, keys, err
 }
 
 func StateErrorsTests(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract) {
+	fmt.Println("      Running Subtest 'StateErrorsTests' ...")
+
 	//Add option - set state error
 	err := voterContract.AddVotableOption(transactionContext, "_set_state_error_")
 	require.EqualError(t, err, contract.ErrSettingState.Error())
@@ -272,12 +291,14 @@ func CastVote(t *testing.T, transactionContext *mocks.TransactionContext, voterC
 }
 
 func CastVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId string) {
+	fmt.Println("      Running Subtest 'CastVoteTest' ...")
 
 	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId})
 	require.NoError(t, err)
 }
 
 func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId1 string, optionId2 string) {
+	fmt.Println("      Running Subtest 'CastVoteTestMultiChoice' ...")
 
 	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId1, optionId2})
 	if voterContract.SingleChoice {
@@ -288,6 +309,7 @@ func CastVoteTestMultiChoice(t *testing.T, transactionContext *mocks.Transaction
 }
 
 func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string) {
+	fmt.Println("      Running Subtest 'AbstainVoteTest' ...")
 
 	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{})
 	if voterContract.Abstainable {
@@ -299,6 +321,7 @@ func AbstainVoteTest(t *testing.T, transactionContext *mocks.TransactionContext,
 }
 
 func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, optionId string) {
+	fmt.Println("      Running Subtest 'CastVoteTwiceTest' ...")
 
 	err := CastVote(t, transactionContext, voterContract, keys, voterId, []string{optionId})
 	require.NoError(t, err)
@@ -308,7 +331,8 @@ func CastVoteTwiceTest(t *testing.T, transactionContext *mocks.TransactionContex
 
 }
 
-func CastVoteWrongKey(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, wrong_id string, optionId string) {
+func CastVoteWrongKeyTest(t *testing.T, transactionContext *mocks.TransactionContext, voterContract contract.SmartContract, keys map[string]KeyPair, voterId string, wrong_id string, optionId string) {
+	fmt.Println("      Running Subtest 'CastVoteWrongKeyTest' ...")
 
 	picks := EncryptOptions(t, keys[wrong_id].publicKey, []string{optionId})
 	signature := SignData(t, keys[voterId].privateKey, voterId+picks)
@@ -364,6 +388,7 @@ func ExpectedBallotDetailsTest(t *testing.T, transactionContext *mocks.Transacti
 
 // Test Anonymous, Single-Choice and Abstainable Election
 func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Anonymous_SingleChoice_Abstainable' ...")
 
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, true, true)
 	require.NoError(t, err)
@@ -372,7 +397,7 @@ func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
 
 	CastVoteTwiceTest(t, transactionContext, voterContract, keys, "User1", "Option1")
 
-	CastVoteWrongKey(t, transactionContext, voterContract, keys, "User2", "User1", "Option2") //Will not refgister
+	CastVoteWrongKeyTest(t, transactionContext, voterContract, keys, "User2", "User1", "Option2") //Will not refgister
 
 	AbstainVoteTest(t, transactionContext, voterContract, keys, "User2")
 
@@ -391,6 +416,8 @@ func TestVote_Anonymous_SingleChoice_Abstainable(t *testing.T) {
 
 // Test Anonymous, Single-Choice and Not-Abstainable Election
 func TestVote_Anonymous_SingleChoice_NonAbstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Anonymous_SingleChoice_NonAbstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, true, false)
 	require.NoError(t, err)
 
@@ -413,6 +440,8 @@ func TestVote_Anonymous_SingleChoice_NonAbstainable(t *testing.T) {
 
 // Test Anonymous, Multi-Choice and Not-Abstainable Election
 func TestVote_Anonymous_MultiChoice_Abstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Anonymous_MultiChoice_Abstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, false, true)
 	require.NoError(t, err)
 
@@ -440,6 +469,8 @@ func TestVote_Anonymous_MultiChoice_Abstainable(t *testing.T) {
 
 // Test Anonymous, Multi-Choice and Not-Abstainable Election
 func TestVote_Anonymous_MultiChoice_NonAbstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Anonymous_MultiChoice_NonAbstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, true, false, false)
 	require.NoError(t, err)
 
@@ -465,6 +496,8 @@ func TestVote_Anonymous_MultiChoice_NonAbstainable(t *testing.T) {
 
 // Test Public, Single-Choice and Abstainable Election
 func TestVote_Public_SingleChoice_Abstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Public_SingleChoice_Abstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, true, true)
 	require.NoError(t, err)
 
@@ -488,6 +521,8 @@ func TestVote_Public_SingleChoice_Abstainable(t *testing.T) {
 
 // Test Public, Single-Choice and Not-Abstainable Election
 func TestVote_Public_SingleChoice_NonAbstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Public_SingleChoice_NonAbstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, true, false)
 	require.NoError(t, err)
 
@@ -510,6 +545,8 @@ func TestVote_Public_SingleChoice_NonAbstainable(t *testing.T) {
 
 // Test Anonymous, Multi-Choice and Not-Abstainable Election
 func TestVote_Public_MultiChoice_Abstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Public_MultiChoice_Abstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, false, true)
 	require.NoError(t, err)
 
@@ -536,6 +573,8 @@ func TestVote_Public_MultiChoice_Abstainable(t *testing.T) {
 
 // Test Public, Multi-Choice and Not-Abstainable Election
 func TestVote_Public_MultiChoice_NonAbstainable(t *testing.T) {
+	fmt.Println("Running Test 'TestVote_Public_MultiChoice_NonAbstainable' ...")
+
 	transactionContext, voterContract, keys, err := SetupVote(t, []string{"Option1", "Option2", "Option3"}, []string{"User1", "User2", "User3"}, false, false, false)
 	require.NoError(t, err)
 
