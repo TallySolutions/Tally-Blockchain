@@ -22,11 +22,6 @@ func (err wrapError) wrap(args string) error {
 	return wrapError{msg: err.msg, args: args}
 }
 
-func (err wrapError) Is(target error) bool {
-	ts := target.Error()
-	return ts == err.msg || strings.HasPrefix(ts, err.msg+": ")
-}
-
 var (
 	//Error related to State Database
 	ErrRetrivingState = wrapError{msg: "Unable to get value from state database"}
@@ -52,7 +47,7 @@ var (
 	ErrAlreadyVoted              = wrapError{msg: "This voter is already casted the vote"}
 	ErrGetOption                 = wrapError{msg: "Error getting option"}
 	ErrNoIterator                = wrapError{msg: "No result iterator found!"}
-	ErrCouldAddAddAllVoters      = wrapError{msg: "Failed to add some the voters"}
+	ErrCouldAddAddAllVoters      = wrapError{msg: "Failed to add some of the voter(s)"}
 
 	//Crypto Errors
 	ErrDecodingBase64      = wrapError{msg: "Error in decoded base64 encoded value"}

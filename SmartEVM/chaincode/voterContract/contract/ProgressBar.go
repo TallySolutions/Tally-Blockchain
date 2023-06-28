@@ -14,16 +14,13 @@ type Bar struct {
 	indent  string //Indentation
 }
 
-func (bar *Bar) NewOption(start, total int64, in string) {
-	bar.cur = start
+func (bar *Bar) NewOption(total int64, in string) {
+	bar.cur = 0
 	bar.total = total
 	if bar.graph == "" {
 		bar.graph = "*"
 	}
 	bar.percent = bar.getPercent()
-	for i := 0; i < int(bar.percent); i += 2 {
-		bar.rate += bar.graph // initial progress position
-	}
 	bar.indent = in
 }
 
