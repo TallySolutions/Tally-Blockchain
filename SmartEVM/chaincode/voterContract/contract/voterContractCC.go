@@ -26,6 +26,8 @@ type SmartContract struct {
 	Initialized  bool
 	Abstainable  bool
 	SingleChoice bool
+	PublicKey    string
+	PrivateKey   string
 	log          CCLog
 }
 
@@ -64,25 +66,17 @@ type VoterPicks struct {
 	VotableIds []string `json:"VotableIds"`
 }
 
-// Utility function
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
 // Init Ledger
-func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, isAnonymous bool, singleChoice bool, abstainable bool, Debug bool) error {
+// Must supply base64 encoded public keys of the admin users
+func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, admin_public_key string, isAnonymous bool, singleChoice bool, abstainable bool, Debug bool) (string, error) {
 	if s.Initialized {
-		return Error(ErrCCAlreadyInitialized)
+		return "", Error(ErrCCAlreadyInitialized)
 	}
 	s.Initialized = true
 	s.IsAnonymous = isAnonymous
 	s.SingleChoice = singleChoice
 	s.Abstainable = abstainable
+	s.PublicKey = admin_public_key
 	s.log = CCLog{}
 	if Debug {
 		s.log.PrintDebug = true
@@ -91,14 +85,27 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, 
 		err := s.AddVotableOption(ctx, Abstained)
 		if err != nil {
 			s.Initialized = false
-			return err
+			return "", err
 		}
 	}
-	return nil
+
+	// provision key pair fo admin
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return "", WrapError(ErrKeyGeneration, err)
+	}
+
+	// Get bytes of privatekey
+	privateKey_bytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	s.PrivateKey = base64.StdEncoding.EncodeToString(privateKey_bytes)
+
+	ppublicKey_bytes := x509.MarshalPKCS1PublicKey(&privateKey.PublicKey)
+
+	return base64.StdEncoding.EncodeToString(ppublicKey_bytes), nil
 }
 
 // Is Votable Option Exists?
-func (s *SmartContract) isVotableOptionExists(ctx contractapi.TransactionContextInterface, votableId string) (bool, error) {
+func (s *SmartContract) IsVotableOptionExists(ctx contractapi.TransactionContextInterface, votableId string) (bool, error) {
 	if s.Initialized != true {
 		return false, Error(ErrLedgerNotInitialized)
 	}
@@ -132,7 +139,7 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 	s.log.Debug("Adding new votable option: %s", votableId)
 
 	//checking if option already added
-	optionExists, err := s.isVotableOptionExists(ctx, votableId)
+	optionExists, err := s.IsVotableOptionExists(ctx, votableId)
 	if err != nil {
 		return err
 	}
@@ -156,38 +163,111 @@ func (s *SmartContract) AddVotableOption(ctx contractapi.TransactionContextInter
 
 }
 
+// Verify Signature
+func VerifySignature(publicKey *rsa.PublicKey, data string, signature []byte) error {
+	msgHash := sha512.New()
+	_, err := msgHash.Write([]byte(data))
+	if err != nil {
+		return WrapError(ErrHashingData, err)
+	}
+
+	msgHashSum := msgHash.Sum(nil)
+
+	err = rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature, nil)
+	if err != nil {
+		return WrapError(ErrSignatureValidation, err)
+	}
+
+	return nil
+}
+
 // function to add Voter
-func (s *SmartContract) AddVoter(ctx contractapi.TransactionContextInterface, voterId string) error {
+func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, voterIds []string, signature_encrypted_base64 string) (error, []error) {
 
 	if s.Initialized != true {
-		return Error(ErrLedgerNotInitialized)
+		return Error(ErrLedgerNotInitialized), []error{}
 	}
-	s.log.Debug("Adding new voter: %s", voterId)
-	//checking if voter already added
-	optionExists, err := s.isVoterExists(ctx, voterId)
+	s.log.Debug("Decrypting signature ...")
+	//Get the ledger's admin private key
+	privateKey_bytes, err := base64.StdEncoding.DecodeString(s.PrivateKey)
 	if err != nil {
-		return err
-	}
-	if optionExists {
-		return Error(ErrVoterAlreadyExists, voterId)
+		return WrapError(ErrDecodingBase64, err, "[SmartContract.PrivateKey]"), []error{}
 	}
 
-	// if the voter does not exist
-	ballot := Ballot{
-		VoterId:   voterId,
-		Signature: "",
-		Casted:    false,
-		PubKey:    "",
-		Timestamp: 0,
-	}
-	voterJSON, err := json.Marshal(ballot)
+	privateKey, err := x509.ParsePKCS1PrivateKey(privateKey_bytes)
 	if err != nil {
-		return err
+		return WrapError(ErrParsingPvtKey, err), []error{}
 	}
 
-	s.log.Debug("Creating new asset for this voter %s", voterId)
-	err = ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, voterJSON) // new state added to the voter ledger
-	return err
+	signature_encrypted, err := base64.StdEncoding.DecodeString(signature_encrypted_base64)
+	if err != nil {
+		return WrapError(ErrDecodingBase64, err, "[signature_encrypted_base64]"), []error{}
+	}
+	signature, err := DecryptOAEP(privateKey, signature_encrypted)
+	if err != nil {
+		return WrapError(ErrDecryption, err, "[signature_encrypted]"), []error{}
+	}
+
+	s.log.Debug("Verifying signature ...")
+
+	//Get bytes from base64 public key from contract
+	publicKey_bytes, err := base64.StdEncoding.DecodeString(s.PublicKey)
+	if err != nil {
+		return WrapError(ErrDecodingBase64, err, "[SmartContract.PublicKey]"), []error{}
+	}
+
+	//Now convert public key bytes into RSA public key
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKey_bytes)
+	if err != nil {
+		return WrapError(ErrParsingPubKey, err, "[SmartContract.PublicKey]"), []error{}
+	}
+
+	//Verify signatur using public key
+	err = VerifySignature(publicKey, strings.Join(voterIds, ","), signature)
+	if err != nil {
+		return WrapError(ErrSignatureValidation, err), []error{}
+	}
+
+	errors := []error{}
+	for _, voterId := range voterIds {
+		s.log.Debug("Adding new voter: %s", voterId)
+		//checking if voter already added
+		exists, err := s.isVoterExists(ctx, voterId)
+		if err != nil {
+			errors = append(errors, err)
+			continue
+		}
+		if exists {
+			errors = append(errors, Error(ErrVoterAlreadyExists, voterId))
+			continue
+		}
+
+		// if the voter does not exist
+		ballot := Ballot{
+			VoterId:   voterId,
+			Signature: "",
+			Casted:    false,
+			PubKey:    "",
+			Timestamp: 0,
+		}
+		voterJSON, err := json.Marshal(ballot)
+		if err != nil {
+			errors = append(errors, WrapError(ErrJsonMarshalling, err))
+			continue
+		}
+
+		s.log.Debug("Creating new asset for this voter %s", voterId)
+		err = ctx.GetStub().PutState(VOTER_REGISTER_PREFIX+voterId, voterJSON) // new state added to the voter ledger
+		if err != nil {
+			errors = append(errors, WrapError(ErrSettingState, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		return Error(ErrCouldAddAddAllVoters, (String(len(errors)) + "/" + String(len(voterIds)))), errors
+
+	}
+	return nil, []error{}
 
 }
 
@@ -210,26 +290,6 @@ func String(n int) string {
 			return string(buf[pos:])
 		}
 	}
-}
-
-// function to add Voter
-func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, voterIds []string) (error, []error) {
-
-	if s.Initialized != true {
-		return Error(ErrLedgerNotInitialized), []error{}
-	}
-	var errors []error
-	for _, voterId := range voterIds {
-		err := s.AddVoter(ctx, voterId)
-		if err != nil {
-			errors = append(errors, err)
-		}
-	}
-	if len(errors) > 0 {
-		return Error(ErrCouldAddAddAllVoters, (String(len(errors)) + "/" + String(len(voterIds)))), errors
-
-	}
-	return nil, []error{}
 }
 
 // function to authorize Voter, this returns a public key specific to this voter's encryption private key
@@ -271,15 +331,7 @@ func (s *SmartContract) AuthVoter(ctx contractapi.TransactionContextInterface, v
 	}
 
 	//4. Verify signatur using public key
-	msgHash := sha512.New()
-	_, err = msgHash.Write([]byte(voterId))
-	if err != nil {
-		return "", WrapError(ErrHashingData, err, voterId)
-	}
-
-	msgHashSum := msgHash.Sum(nil)
-
-	err = rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
+	err = VerifySignature(publicKey, voterId, signature_bytes)
 	if err != nil {
 		return "", WrapError(ErrSignatureValidation, err)
 	}
@@ -422,15 +474,7 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return WrapError(ErrDecodingBase64, err, "[Ballot.Signature]")
 	}
 
-	msgHash := sha512.New()
-	_, err = msgHash.Write([]byte(voterId + votableIds_base64))
-	if err != nil {
-		return WrapError(ErrHashingData, err, voterId)
-	}
-
-	msgHashSum := msgHash.Sum(nil)
-
-	err = rsa.VerifyPSS(publicKey, crypto.SHA512, msgHashSum, signature_bytes, nil)
+	err = VerifySignature(publicKey, voterId+votableIds_base64, signature_bytes)
 	if err != nil {
 		return WrapError(ErrSignatureValidation, err)
 	}
@@ -509,18 +553,6 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	}
 
 	return nil
-}
-
-func Equal(a, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // GetAllOptions returns all voting options found in world state
