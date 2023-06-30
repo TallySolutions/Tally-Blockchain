@@ -4,7 +4,7 @@ import CancelVoucherDialog from './CancelVoucherDialog';
 import UpdateVoucherDialog from './UpdateVoucherDialog';
 import ListOwnerVouchersDialog from './ListOwnerVouchersDialog';
 
-function OwnerVoucherDialog({ onClose }) {
+function OwnerVoucherDialog({ onClose , pan}) {
   const [activeDialog, setActiveDialog] = useState(null);
 
   const handleDialogOpen = (dialogName) => {
@@ -52,10 +52,10 @@ function OwnerVoucherDialog({ onClose }) {
       ) : (
         <>
           {activeDialog === 'NewVoucherDialog' && (
-            <NewVoucherDialog onClose={handleDialogClose} />
+            <NewVoucherDialog onClose={handleDialogClose} pan={pan} />
           )}
           {activeDialog === 'CancelVoucherDialog' && (
-            <CancelVoucherDialog onClose={handleDialogClose} />
+            <CancelVoucherDialog onClose={handleDialogClose} pan={pan} />
           )}
           {activeDialog === 'UpdateVoucherDialog' && (
             <UpdateVoucherDialog onClose={handleDialogClose} />

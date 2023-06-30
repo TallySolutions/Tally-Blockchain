@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function CancelVoucherDialog({ onClose }) {
+function CancelVoucherDialog({ onClose, pan }) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -22,10 +22,30 @@ function CancelVoucherDialog({ onClose }) {
     event.preventDefault();
     setIsFormSubmitted(true);
     setShowVoucherDetails(true);
-                                            // CALL READVOUCHER ENDPOINT HERE
-    console.log('Form submitted:', formData);
-    setVoucherDetails('o/p generated from read voucher');
-    setShowCancelVoucherButton(true);
+  
+    // CALL READVOUCHER ENDPOINT HERE
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in reading voucher.');
+        }
+      })
+      .then((data) => {
+        console.log('Read Voucher Response:', data);
+        setVoucherDetails(JSON.stringify(data));
+        setShowCancelVoucherButton(true);
+      })
+      .catch((error) => {
+        alert('Error while reading voucher');
+        console.error('Error:', error);
+      });
   };
 
   const handleButtonClick = (action) => {

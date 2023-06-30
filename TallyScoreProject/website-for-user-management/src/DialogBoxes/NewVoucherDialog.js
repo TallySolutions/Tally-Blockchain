@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function NewVoucherDialog({ onClose }) {
+function NewVoucherDialog({ onClose , pan}) {
   const [formData, setFormData] = useState({
     voucherId: '',
     supplierId: '',
@@ -17,7 +17,29 @@ function NewVoucherDialog({ onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-                                                        // CALL ENDPOINT TO CREATE NEW VOUCHER
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/voucherCreation/${pan}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in voucher creation.');
+        }
+      })
+      .then((data) => {
+        console.log('New Voucher Response:', data);
+        alert('New voucher creation successful!');
+        onClose();
+      })
+      .catch((error) => {
+        alert("Error while creating voucher")
+        console.error('Error:', error);
+      });
     console.log('New Voucher Submitted:', formData);
     alert('New voucher creation successful!')
     onClose();
