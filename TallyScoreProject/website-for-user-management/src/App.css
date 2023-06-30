@@ -169,17 +169,18 @@ form button[type='submit'] {
   background-color: #0088ff;
 }
 
-.voucher-details-display{
-  width:350px;
-  height: 250px;
-  font-size: 14px;
-  font-weight: lighter ;
+.voucher-details-display {
+  width: 400px;
+  height: 300px;
+  font-size: 12px;
+  font-weight: lighter;
   margin-top: 50px;
   margin-bottom: 50px;
   margin-left: 100px;
   border-style: dotted;
-
+  overflow: auto; 
 }
+
 
 .cancel-voucher-form-group{
   margin-top:50px;
