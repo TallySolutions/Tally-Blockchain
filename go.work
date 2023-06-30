@@ -3,7 +3,5 @@ go 1.20
 use (
 	./TallyScoreProject/chaincode/businessprofile
 	./TallyScoreProject/chaincode/tallyscore
-	./TallyScoreProject/gateway-for-web-app
-	./TallyScoreProject/gateway-businessprofile-for-web-app
-	./TallyScoreProject/gateway-register-enroll
+	./TallyScoreProject/application-gateway-complete
 )
