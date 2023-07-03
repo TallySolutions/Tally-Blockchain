@@ -41,7 +41,6 @@ function NewVoucherDialog({ onClose , pan}) {
         console.error('Error:', error);
       });
     console.log('New Voucher Submitted:', formData);
-    alert('New voucher creation successful!')
     onClose();
   };
 

@@ -546,7 +546,6 @@ func voucherCancellation(c *gin.Context) {
 	PAN := c.Param("PAN")
 
 	fmt.Printf("Initiating cancellation of Voucher %s", VoucherID)
-	//(Display voucher info)(Use ReadVoucher function)
 	client, gw := setConnection(PAN)
 	network := gw.GetNetwork(channelname)
 	contract := network.GetContract(BusinessProfileCCName)
@@ -557,16 +556,17 @@ func voucherCancellation(c *gin.Context) {
 		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 		return
 	}
+	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 
 	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
 		panic(err)
 	}
-	c.Data(http.StatusOK, "application/json", asset)
+	c.Writer.Header().Set("Content-Type","application/json")
+	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(asset)))
 	gw.Close()
 	client.Close()
-
-	c.JSON(http.StatusOK, gin.H{"message": "Voucher cancelled successfully"})
 
 }
 

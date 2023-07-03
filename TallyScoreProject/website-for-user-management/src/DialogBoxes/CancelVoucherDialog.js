@@ -22,9 +22,8 @@ function CancelVoucherDialog({ onClose, pan }) {
     event.preventDefault();
     setIsFormSubmitted(true);
     setShowVoucherDetails(true);
-  
-    // CALL READVOUCHER ENDPOINT HERE
-    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {
+
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {  // calling readvoucher endpoint- in order to verify voucher
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -55,15 +54,39 @@ function CancelVoucherDialog({ onClose, pan }) {
     }
     if (action === 'Cancel Voucher') {
       if (formData.voucherID.trim() !== '') {
-        onClose();
-                                                    // REPLACE THE ABOVE LINE WITH CANCEL VOUCHER API ENDPOINT CALL
-        alert('Voucher set to cancelled.');
-      } else {
-        alert('Please enter a voucher ID.');
+        fetch(`http://43.204.226.103:8080/TallyScoreProject/voucherCancellation/${pan}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          },
+          body: JSON.stringify({
+            VoucherID: formData.voucherID.trim()
+          })
+        })
+        .then(response =>{
+          if(response.ok){
+            return response.json()
+          }
+          else{
+            return {error: "Error while cancelling voucher"}
+          }
+        }).then(data => {
+          if (data.hasOwnProperty('error')){
+            alert('Error' + data.error);
+            console.error("Error:", data.error);
+          }
+          else{
+            console.log(JSON.stringify(data))
+            alert("Voucher has been cancelled successfully!")
+            onClose();
+          }
+        }
+        );
       }
     }
   };
-
   return (
     <div>
       <button className="close-dialog-button" onClick={() => handleButtonClick('Back')}>
