@@ -588,7 +588,6 @@ func voucherUpdation(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.Data(http.StatusOK, "application/json", asset)
 
 	result, err := contract.SubmitTransaction("VoucherUpdated", VoucherID, Parameter, UpdatedValue)
 	if err != nil {
