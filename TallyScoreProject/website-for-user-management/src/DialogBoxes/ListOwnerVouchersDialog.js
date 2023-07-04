@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-                                                    // NOTE: CODE HAS TO BE EDITED TO INCORPORATE ENDPOINTS
+function ListOwnerVouchersDialog({ onClose, pan }) {
+  const [vouchersList, setVouchersList] = useState([]);
 
-function ListOwnerVouchersDialog({ onClose }) {
-  const dummyVouchersList = [
-    { voucherid: 'voucher 1', supplierid: 'DUMMY PANuserCctest2' },
-    { voucherid: 'voucher 2', supplierid: 'DUMMY PANuserCctest3' },
-    { voucherid: 'voucher 3', supplierid: 'DUMMY PANuserCctest2' },
-  ];
+  useEffect(() => {
+    const fetchVouchersList = () => {
+      fetch(`http://43.204.226.103:8080/TallyScoreProject/listOwnerVouchers/${pan}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => setVouchersList(data))
+        .catch((error) => console.error('Error fetching vouchers list:', error));
+    };
+
+    fetchVouchersList();
+  }, [pan]);
 
   return (
     <div className="list-vouchers-dialog">
@@ -17,13 +27,17 @@ function ListOwnerVouchersDialog({ onClose }) {
           <tr>
             <th>Voucher ID</th>
             <th>Supplier ID</th>
+            <th>Type</th>
+            <th>State</th>
           </tr>
         </thead>
         <tbody>
-          {dummyVouchersList.map((voucher) => (
-            <tr key={voucher.voucherid}>
-              <td>{voucher.voucherid}</td>
-              <td>{voucher.supplierid}</td>
+          {vouchersList.map((voucher, index) => (
+            <tr key={index}>
+              <td>{voucher.VoucherID}</td>
+              <td>{voucher.SupplierID}</td>
+              <td>{voucher.VoucherType}</td>
+              <td>{voucher.State}</td>
             </tr>
           ))}
         </tbody>

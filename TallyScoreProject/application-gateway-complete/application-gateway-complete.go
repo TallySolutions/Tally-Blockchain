@@ -118,14 +118,14 @@ func main() {
 		timeoutGroup.PUT("/TallyScoreProject/voucherCreation/:PAN", voucherCreation)
 		timeoutGroup.POST("/TallyScoreProject/voucherCancellation/:PAN", voucherCancellation)
 		timeoutGroup.PUT("/TallyScoreProject/voucherUpdation/:PAN", voucherUpdation)
-		timeoutGroup.GET("/TallyScoreProject/listOwnerVouchers/:PAN", listOwnerVouchers) // above 4 are owner related voucher endpoints
+		timeoutGroup.GET("/TallyScoreProject/listOwnerVouchers/:PAN", listOwnerVouchers) // this and the 3 above are owner related voucher endpoints
 
 		timeoutGroup.GET("/TallyScoreProject/readVoucher/:PAN", readVoucher)
 
 		timeoutGroup.POST("/TallyScoreProject/voucherApproval/:PAN", voucherApproval)
 		timeoutGroup.POST("/TallyScoreProject/voucherReturn/:PAN", voucherReturn)
 		timeoutGroup.POST("/TallyScoreProject/voucherRejection/:PAN", voucherRejection)
-		timeoutGroup.GET("/TallyScoreProject/listSupplierVouchers/:PAN", listSupplierVouchers) // above 4 are supplier related voucher endpoints
+		timeoutGroup.GET("/TallyScoreProject/listSupplierVouchers/:PAN", listSupplierVouchers) // this and the 3 above are supplier related voucher endpoints
 	}
 
 	router.Run("0.0.0.0:8080")
@@ -584,23 +584,18 @@ func voucherUpdation(c *gin.Context) {
 	network := gw.GetNetwork(channelname)
 	contract := network.GetContract(BusinessProfileCCName)
 
-	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
-	if err != nil {
-		panic(err)
-	}
-
 	result, err := contract.SubmitTransaction("VoucherUpdated", VoucherID, Parameter, UpdatedValue)
 	if err != nil {
 		fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 		return
 	}
 
-	asset, err = contract.SubmitTransaction("ReadVoucher", VoucherID)
+	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
 	if err != nil {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	c.JSON(http.StatusOK, gin.H{"message": "Voucher updated successfully"})
+	// c.JSON(http.StatusOK, gin.H{"message": "Voucher updated successfully"})
 
 	gw.Close()
 	client.Close()

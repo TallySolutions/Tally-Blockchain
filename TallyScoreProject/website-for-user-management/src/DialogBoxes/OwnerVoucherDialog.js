@@ -58,10 +58,10 @@ function OwnerVoucherDialog({ onClose , pan}) {
             <CancelVoucherDialog onClose={handleDialogClose} pan={pan} />
           )}
           {activeDialog === 'UpdateVoucherDialog' && (
-            <UpdateVoucherDialog onClose={handleDialogClose} />
+            <UpdateVoucherDialog onClose={handleDialogClose} pan={pan} />
           )}
           {activeDialog === 'ListOwnerVouchersDialog' && (
-            <ListOwnerVouchersDialog onClose={handleDialogClose} />
+            <ListOwnerVouchersDialog onClose={handleDialogClose} pan={pan}/>
           )}
         </>
       )}

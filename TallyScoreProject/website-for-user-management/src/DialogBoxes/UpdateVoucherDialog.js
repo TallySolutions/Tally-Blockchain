@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function UpdateVoucherDialog({ onClose }) {
+function UpdateVoucherDialog({ onClose, pan }) {
   const [formData, setFormData] = useState({
     voucherID: '',
     update: '',
@@ -18,18 +18,62 @@ function UpdateVoucherDialog({ onClose }) {
     }));
   };
 
-  const handleSubmit = (event) => {                           // THIS IS THE VERIFICATION PART (submits the form and displays voucher in box for verification by user)
+  const handleSubmit = (event) => { // to verify voucher existance
     event.preventDefault();
     console.log('Form submitted:', formData);
-                                              // CALL THE READ VOUCHER ENDPOINT HERE AND DISPLAY THAT INSTEAD OF SAMPLE VOUCHER DETAILS
-    setVoucherDetails('Sample voucher details');
-    setShowUpdateButton(true);
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {  // calling readvoucher endpoint- in order to verify voucher
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in reading voucher.');
+        }
+      })
+      .then((data) => {
+        console.log('Read Voucher Response:', data);
+        setVoucherDetails(JSON.stringify(data));
+        setShowUpdateButton(true);
+      })
+      .catch((error) => {
+        alert('Error while reading voucher');
+        console.error('Error:', error);
+      });  
   };
 
   const handleUpdateVoucher = () => {                                              // THIS IS THE FINAL BUTTON THAT UPDATES THE VOUCHER
-                                          // CALL VOUCHER UPDATE ENDPOINT HERE
-    console.log('Voucher updated:', formData);
-    alert('Voucher has been updated.');
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/voucherUpdation/${pan}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body:  JSON.stringify({
+        VoucherID: formData.voucherID.trim(),
+        Parameter: formData.update,
+        UpdatedValue: formData.newValue
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in voucher updation.');
+        }
+      })
+      .then((data) => {
+        console.log('Update Voucher Response:', data);
+        alert('Update of voucher successful!');
+        onClose();
+      })
+      .catch((error) => {
+        alert("Error while updating voucher")
+        console.error('Error:', error);
+      });
+    console.log('Update Voucher Submitted:', formData);
     onClose();
   };
 

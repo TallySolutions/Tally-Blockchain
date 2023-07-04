@@ -276,9 +276,7 @@ form button[type='submit'] {
 .display-voucher-field-update{
   display: flex;
   align-items: center;
-  width:250px;
-  height:250px;
-  margin-top: 50px;
+  margin-top: 60px;
 }
 
 .update-voucher-form-group{
@@ -289,13 +287,13 @@ form button[type='submit'] {
 
 
 .update-voucher-details-display{
-  width:350px;
-  height: 150px;
+  width: 500px;
+  height: 200px;
   font-size: 14px;
   font-weight: lighter ;
   margin-top: 10px;
   margin-bottom: 50px;
-  margin-left: 225px;
+  margin-left: 100px;
   border-style: dotted;
 
 }
