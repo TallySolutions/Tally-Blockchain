@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function CancelVoucherDialog({ onClose, pan }) {
+function CancelVoucherDialogBox({ onClose, pan }) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -132,4 +132,4 @@ function CancelVoucherDialog({ onClose, pan }) {
   );
 }
 
-export default CancelVoucherDialog;
+export default CancelVoucherDialogBox;

@@ -601,23 +601,6 @@ func voucherUpdation(c *gin.Context) {
 	client.Close()
 }
 
-func listOwnerVouchers(c *gin.Context) {
-
-	PAN := c.Param("PAN")
-	client, gw := setConnection(PAN)
-	network := gw.GetNetwork(channelname)
-	contract := network.GetContract(BusinessProfileCCName)
-	assetsList, err := contract.SubmitTransaction("GetOwnerVouchers")
-	if err != nil {
-		panic(err)
-	}
-	c.Data(http.StatusOK, "application/json", assetsList)
-
-	gw.Close()
-	client.Close()
-
-}
-
 func voucherApproval(c *gin.Context) {
 
 	var request voucherIDRequest
@@ -697,6 +680,23 @@ func voucherReturn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Voucher sent back successfully"})
 	gw.Close()
 	client.Close()
+}
+
+func listOwnerVouchers(c *gin.Context) {
+
+	PAN := c.Param("PAN")
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(BusinessProfileCCName)
+	assetsList, err := contract.SubmitTransaction("GetOwnerVouchers")
+	if err != nil {
+		panic(err)
+	}
+	c.Data(http.StatusOK, "application/json", assetsList)
+
+	gw.Close()
+	client.Close()
+
 }
 
 func listSupplierVouchers(c *gin.Context) {

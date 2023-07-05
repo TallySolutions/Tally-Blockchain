@@ -2,63 +2,68 @@ import React, { useState } from 'react';
 import ApproveVoucherDialogBox from './ApproveVoucherDialogBox';
 import RejectVoucherDialogBox from './RejectVoucherDialogBox';
 import SendBackVoucherDialogBox from './SendBackVoucherDialogBox';
-import ListSupplierVouchersDialog from './ListSupplierVouchersDialog';
+import ListSupplierVouchersDialogBox from './ListSupplierVouchersDialogBox';
 
-function SupplierVoucherDialog({ onClose }) {
-  const [showApproveVoucherDialog, setShowApproveVoucherDialog] = useState(false);
-  const [showRejectVoucherDialog, setShowRejectVoucherDialog] = useState(false);
-  const [showSendBackVoucherDialog, setShowSendBackVoucherDialog] = useState(false);
-  const [showListVouchersDialog, setShowListVouchersDialog] = useState(false);
+function SupplierVoucherDialog({ onClose , pan}) {
+  const [activeDialog, setActiveDialog] = useState(null);
 
-  const handleButtonClick = (action) => {
-    console.log('Supplier Voucher Button Clicked:', action);
-    if (action === 'Approve Voucher') {
-      setShowApproveVoucherDialog(true);
-    } else if (action === 'Reject Voucher') {
-      setShowRejectVoucherDialog(true);
-    } else if (action === 'Send Back Voucher') {
-      setShowSendBackVoucherDialog(true);
-    } else if(action === 'List of Vouchers as Supplier'){
-      setShowListVouchersDialog(true);
-    } else {
-      onClose();
-    }
+  const handleDialogOpen = (dialogName) => {
+    setActiveDialog(dialogName);
+  };
+
+  const handleDialogClose = () => {
+    setActiveDialog(null);
   };
 
   return (
-    <div className="voucher-dialog">
-      {!showApproveVoucherDialog && !showRejectVoucherDialog && !showSendBackVoucherDialog && !showListVouchersDialog && (
+    <div>
+      {activeDialog === null ? (
         <>
-          <button className="close-dialog-button" onClick={() => handleButtonClick('Close Dialog')}>
+          <button className="close-dialog-button" onClick={onClose}>
             Back
           </button>
           <div className="voucher-dialog-buttons">
-            <button className="dialog-buttons" onClick={() => handleButtonClick('Approve Voucher')}>
+            <button
+              className="dialog-buttons"
+              onClick={() => handleDialogOpen('ApproveVoucherDialogBox')}
+            >
               Approve Voucher
             </button>
-            <button className="dialog-buttons" onClick={() => handleButtonClick('Reject Voucher')}>
+            <button
+              className="dialog-buttons"
+              onClick={() => handleDialogOpen('RejectVoucherDialogBox')}
+            >
               Reject Voucher
             </button>
-            <button className="dialog-buttons" onClick={() => handleButtonClick('Send Back Voucher')}>
+            <button
+              className="dialog-buttons"
+              onClick={() => handleDialogOpen('SendBackVoucherDialogBox')}
+            >
               Send Back Voucher
             </button>
-            <button className="dialog-buttons" onClick={() => handleButtonClick('List of Vouchers as Supplier')}>
-              List of Vouchers as Supplier
+            <button
+              className="dialog-buttons"
+              onClick={() => handleDialogOpen('ListSupplierVouchersDialogBox')}
+            >
+              List of all Vouchers as Supplier
             </button>
           </div>
         </>
-      )}
-      {showApproveVoucherDialog && (
-        <ApproveVoucherDialogBox onClose={() => setShowApproveVoucherDialog(false)} />
-      )}
-      {showRejectVoucherDialog && (
-        <RejectVoucherDialogBox onClose={() => setShowRejectVoucherDialog(false)} />
-      )}
-      {showSendBackVoucherDialog && (
-        <SendBackVoucherDialogBox onClose={() => setShowSendBackVoucherDialog(false)} />
-      )}
-      {showListVouchersDialog && (
-        <ListSupplierVouchersDialog onClose={() => setShowListVouchersDialog(false)} />
+      ) : (
+        <>
+          {activeDialog === 'ApproveVoucherDialogBox' && (
+            <ApproveVoucherDialogBox onClose={handleDialogClose} pan={pan} />
+          )}
+          {activeDialog === 'RejectVoucherDialogBox' && (
+            <RejectVoucherDialogBox onClose={handleDialogClose} pan={pan} />
+          )}
+          {activeDialog === 'SendBackVoucherDialogBox' && (
+            <SendBackVoucherDialogBox onClose={handleDialogClose} pan={pan} />
+          )}
+          {activeDialog === 'ListSupplierVouchersDialogBox' && (
+            <ListSupplierVouchersDialogBox onClose={handleDialogClose} pan={pan}/>
+          )}
+        </>
       )}
     </div>
   );

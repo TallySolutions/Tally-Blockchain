@@ -36,7 +36,7 @@ type VoucherAsset struct {
 
 // func (s *SmartContract) RegisterBusiness()
 
-func (s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) (*VoucherAsset, error ){
+func (s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) (*VoucherAsset, error) {
 
 	// retrieving id of asset owner (creator)
 	OwnerID, err := getClientIdentity(ctx)
@@ -65,9 +65,9 @@ func (s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterfa
 		State:       "Created",
 	}
 	assetJSON, err := json.Marshal(asset)
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
+	}
 	state_err := ctx.GetStub().PutState(VoucherID, assetJSON) // new state added
 
 	fmt.Printf("Asset creation returned : %s\n", state_err)
@@ -454,7 +454,7 @@ func (s *SmartContract) GetOwnerVouchers(ctx contractapi.TransactionContextInter
 		return nil, err
 	}
 
-	// Now we have to extract all the vouchers with the supplier supplierName
+	// Now we have to extract all the vouchers with the owner
 	iteratorVar, err := ctx.GetStub().GetStateByRange("", "") // TRY RANGE PARAMETERS , other getstateby.... (rows etc.)
 	if err != nil {
 		return nil, err

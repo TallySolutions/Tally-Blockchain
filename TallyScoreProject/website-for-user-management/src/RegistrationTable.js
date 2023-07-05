@@ -7,14 +7,16 @@ function RegistrationTable({ registrations, setRegistrations }) {
   const [ownerDialogOpen, setOwnerDialogOpen] = useState(false);
   const [ownerDialogPAN, setOwnerDialogPAN] = useState('');  
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
+  const [supplierDialogPAN, setSupplierDialogPAN] = useState('');  
 
 const handleOwnerVoucherButtonClick = (pan) => {
   setOwnerDialogOpen(true);
   setOwnerDialogPAN(pan);
 };
 
-const handleSupplierVoucherButtonClick = () => {
+const handleSupplierVoucherButtonClick = (pan) => {
   setSupplierDialogOpen(true);
+  setSupplierDialogPAN(pan);
 };
 
 const handleOwnerDialogClose = () => {
@@ -93,8 +95,6 @@ const handleSupplierDialogClose = () => {
       });
   };
 
-
-
   return (
     <table>
       <thead>
@@ -134,7 +134,9 @@ const handleSupplierDialogClose = () => {
       </td>
       <td>
         <div>
-          <button id="supplier-voucher-button" className='generate-voucher-button' onClick={handleSupplierVoucherButtonClick}>Generate</button>
+          <button id="supplier-voucher-button" 
+          className='generate-voucher-button' 
+          onClick={() => handleSupplierVoucherButtonClick(registration.PAN)}>Generate</button>
         </div>
       </td>
 
@@ -149,7 +151,7 @@ const handleSupplierDialogClose = () => {
       {supplierDialogOpen && (
         <div className="dialog-overlay">
           <div className="dialog-container">
-            <SupplierVoucherDialog onClose={handleSupplierDialogClose} />
+            <SupplierVoucherDialog onClose={handleSupplierDialogClose} pan={supplierDialogPAN}/>
           </div>
         </div>
       )}

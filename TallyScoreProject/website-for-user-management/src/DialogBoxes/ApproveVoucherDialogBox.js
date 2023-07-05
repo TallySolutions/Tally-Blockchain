@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function ApproveVoucherDialog({ onClose }) {
+function ApproveVoucherDialogBox({ onClose }) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -89,4 +89,4 @@ function ApproveVoucherDialog({ onClose }) {
   );
 }
 
-export default ApproveVoucherDialog;
+export default ApproveVoucherDialogBox;
