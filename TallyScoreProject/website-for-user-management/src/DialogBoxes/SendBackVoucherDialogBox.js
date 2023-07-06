@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function SendBackVoucherDialogBox({ onClose }) {
+function SendBackVoucherDialogBox({ onClose, pan}) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -22,10 +22,30 @@ function SendBackVoucherDialogBox({ onClose }) {
     event.preventDefault();
     setIsFormSubmitted(true);
     setShowVoucherDetails(true);
-    // CALL READ VOUCHER ENDPOINT HERE
-    console.log('Form submitted:', formData);
-    setVoucherDetails('o/p generated from read voucher');
-    setShowSendBackVoucherButton(true);
+   
+
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {  // calling readvoucher endpoint- in order to verify voucher
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in reading voucher.');
+        }
+      })
+      .then((data) => {
+        console.log('Read Voucher Response:', data);
+        setVoucherDetails(JSON.stringify(data));
+        setShowSendBackVoucherButton(true);
+      })
+      .catch((error) => {
+        alert('Error while reading voucher');
+        console.error('Error:', error);
+      });
   };
 
   const handleButtonClick = (action) => {
@@ -35,9 +55,36 @@ function SendBackVoucherDialogBox({ onClose }) {
     }
     if (action === 'Send Back Voucher') {
       if (formData.voucherID.trim() !== '') {
-        onClose();
-        // REPLACE THE ABOVE LINE WITH SEND BACK VOUCHER API ENDPOINT CALL
-        alert('Voucher sent back successfully.');
+        fetch(`http://43.204.226.103:8080/TallyScoreProject/voucherReturn/${pan}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          },
+          body: JSON.stringify({
+            VoucherID: formData.voucherID.trim()
+          })
+        })
+        .then(response =>{
+          if(response.ok){
+            return response.json()
+          }
+          else{
+            return {error: "Error while sending back the voucher"}
+          }
+        }).then(data => {
+          if (data.hasOwnProperty('error')){
+            alert('Error' + data.error);
+            console.error("Error:", data.error);
+          }
+          else{
+            console.log(JSON.stringify(data))
+            alert("Voucher has been sent back successfully!")
+            onClose();
+          }
+        }
+        );
       } else {
         alert('Please enter a voucher ID.');
       }

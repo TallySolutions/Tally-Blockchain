@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function RejectVoucherDialogBox({ onClose }) {
+function RejectVoucherDialogBox({ onClose, pan }) {
   const [formData, setFormData] = useState({
     voucherID: '',
   });
@@ -19,24 +19,72 @@ function RejectVoucherDialogBox({ onClose }) {
   };
 
   const handleSubmit = (event) => {
+    console.log('Form submitted:', formData);
     event.preventDefault();
     setIsFormSubmitted(true);
     setShowVoucherDetails(true);
-    // CALL READ VOUCHER ENDPOINT HERE
-    console.log('Form submitted:', formData);
-    setVoucherDetails('o/p generated from read voucher');
-    setShowRejectVoucherButton(true);
+   
+    fetch(`http://43.204.226.103:8080/TallyScoreProject/readVoucher/${pan}?voucherID=${formData.voucherID}`, {  // calling readvoucher endpoint- in order to verify voucher
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Error in reading voucher.');
+        }
+      })
+      .then((data) => {
+        console.log('Read Voucher Response:', data);
+        setVoucherDetails(JSON.stringify(data));
+        setShowRejectVoucherButton(true);
+      })
+      .catch((error) => {
+        alert('Error while reading voucher');
+        console.error('Error:', error);
+      });
   };
 
   const handleButtonClick = (action) => {
     console.log('Reject Voucher Button Clicked:', action);
     if (action === 'Back') {
       onClose();
-    } else if (action === 'Reject Voucher') {
+    }
+    if (action === 'Reject Voucher') {
       if (formData.voucherID.trim() !== '') {
-        onClose();
-        // REPLACE THE ABOVE LINE WITH REJECT VOUCHER API ENDPOINT CALL
-        alert('Voucher rejected.');
+        fetch(`http://43.204.226.103:8080/TallyScoreProject/voucherRejection/${pan}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          },
+          body: JSON.stringify({
+            VoucherID: formData.voucherID.trim()
+          })
+        })
+        .then(response =>{
+          if(response.ok){
+            return response.json()
+          }
+          else{
+            return {error: "Error while rejecting voucher"}
+          }
+        }).then(data => {
+          if (data.hasOwnProperty('error')){
+            alert('Error' + data.error);
+            console.error("Error:", data.error);
+          }
+          else{
+            console.log(JSON.stringify(data))
+            alert("Voucher has been rejected successfully!")
+            onClose();
+          }
+        }
+        );
       } else {
         alert('Please enter a voucher ID.');
       }
@@ -44,7 +92,7 @@ function RejectVoucherDialogBox({ onClose }) {
   };
 
   return (
-    <div>
+    <div className="reject-voucher-dialog">
       <button className="close-dialog-button" onClick={() => handleButtonClick('Back')}>
         Back
       </button>
@@ -61,7 +109,7 @@ function RejectVoucherDialogBox({ onClose }) {
           />
         </div>
         <div className="reject-voucher-form-buttons">
-          <button id="reject-verify-voucher-button" type="submit">
+          <button id="verify-voucher-button" type="submit">
             Verify Voucher
           </button>
         </div>
@@ -77,7 +125,7 @@ function RejectVoucherDialogBox({ onClose }) {
             className="reject-voucher-button"
             onClick={() => handleButtonClick('Reject Voucher')}
           >
-            Confirm Rejection
+            Reject Voucher
           </button>
         </div>
       )}

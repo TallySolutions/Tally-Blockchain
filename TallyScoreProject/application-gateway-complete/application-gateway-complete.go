@@ -560,10 +560,10 @@ func voucherCancellation(c *gin.Context) {
 
 	asset, err := contract.SubmitTransaction("ReadVoucher", VoucherID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error":err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		panic(err)
 	}
-	c.Writer.Header().Set("Content-Type","application/json")
+	c.Writer.Header().Set("Content-Type", "application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(asset)))
 	gw.Close()
 	client.Close()
@@ -650,7 +650,7 @@ func voucherRejection(c *gin.Context) {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	c.JSON(http.StatusOK, gin.H{"message": "Voucher rejected successfully"})
+	// c.JSON(http.StatusOK, gin.H{"message": "Voucher rejected successfully"})
 	gw.Close()
 	client.Close()
 }
@@ -677,7 +677,7 @@ func voucherReturn(c *gin.Context) {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	c.JSON(http.StatusOK, gin.H{"message": "Voucher sent back successfully"})
+	// c.JSON(http.StatusOK, gin.H{"message": "Voucher sent back successfully"})
 	gw.Close()
 	client.Close()
 }
