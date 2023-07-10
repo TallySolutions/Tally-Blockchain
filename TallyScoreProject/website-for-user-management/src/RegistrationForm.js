@@ -9,8 +9,12 @@ function RegistrationForm({ onNewRegistration }) {
   const[Score, setScore]= useState('');
   const [status, setStatus] = useState('');
   const [businessCertDetails,setbusinessCertDetails] = useState('');    // change to details structure
+
+
   const handleFormSubmit = (e) => {
     e.preventDefault();
+
+
     const registration = {
       PAN: PAN,
       Name: Name,

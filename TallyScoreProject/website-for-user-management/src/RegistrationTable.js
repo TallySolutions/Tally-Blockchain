@@ -51,7 +51,7 @@ const handleSupplierDialogClose = () => {
       })
       .then(data => {
         const updatedRegistrations = registrations.map(reg =>
-          reg.PAN === registration.PAN ? { ...reg, Score: reg.Score + parseInt(updateStruct.ChangeVal) } : reg
+          reg.PAN === registration.PAN ? { ...reg, Score: data.Score } : reg
         );
         setRegistrations(updatedRegistrations);
         console.log("businessCertDetails:", JSON.stringify(data));
@@ -85,7 +85,7 @@ const handleSupplierDialogClose = () => {
       })
       .then(data => {
         const updatedRegistrations = registrations.map(reg =>
-          reg.PAN === registration.PAN ? { ...reg, Score: reg.Score - parseInt(updateStruct.ChangeVal) } : reg
+          reg.PAN === registration.PAN ? { ...reg, Score: data.Score } : reg
         );
         setRegistrations(updatedRegistrations);
         console.log("businessCertDetails:", JSON.stringify(data));

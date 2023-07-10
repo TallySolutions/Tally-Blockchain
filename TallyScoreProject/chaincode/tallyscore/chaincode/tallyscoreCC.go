@@ -114,7 +114,7 @@ func (s *SmartContract) IncreaseScore(ctx contractapi.TransactionContextInterfac
     if err !=nil {
     	fmt.Println(err)
     }
-	newScore:= uint(companyAssetRead.Score) + ((1000- companyAssetRead.Score) * uint(intermediateUpdateval))/100
+	newScore:= uint(companyAssetRead.Score) + uint(intermediateUpdateval)
     if newScore > 1000 {
     	return nil, fmt.Errorf("You cannot have a value more than 1000.")
     }
@@ -146,11 +146,12 @@ func (s *SmartContract) DecreaseScore(ctx contractapi.TransactionContextInterfac
     	fmt.Println(err)
     }
 
-	updateVal:= ((1000- companyAssetRead.Score) * uint(intermediateUpdateval))/100
+	updateVal:= uint(intermediateUpdateval)
 	if updateVal>uint(companyAssetRead.Score){
 		return nil, fmt.Errorf("You cannot have a value lesser than 0.")
 	}
 	newScore:= uint(companyAssetRead.Score) - updateVal
+
 
 
     // overwriting original asset with new value
