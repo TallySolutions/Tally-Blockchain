@@ -7,9 +7,6 @@ import(
 	"strings"
 )
 
-// make sure to start the fabric ca servers- before running this
-
-
 var tallyHome string
 var caServerHome string
 var tallyCAHome string

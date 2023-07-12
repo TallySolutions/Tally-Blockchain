@@ -1,14 +1,21 @@
 package main
 
-// todo before running this code: start the CA servers
-
-// contains gateway code for defining API endpoints for business(user) registration, scoring mechanism for businesses, all voucher related mechanisms
+// This program contains gateway code for defining API endpoints for business(user) registration, scoring mechanism for businesses, all voucher related mechanisms
 
 import (
 	"context"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
+	cors "github.com/itsjamie/gin-cors"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,13 +25,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/hyperledger/fabric-gateway/pkg/client"
-	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	cors "github.com/itsjamie/gin-cors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -164,14 +164,13 @@ func performRegistration(c *gin.Context) {
 	fmt.Printf("Password: %s\n", password)
 
 	fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
-	// write code to call enrollUser() function
-	detailsAsset, mspPath, err := enrollUser(PAN, password)
+
+	detailsAsset, mspPath, err := enrollUser(PAN, password) // call the enrollUser() function
 	if err != nil {
-		// fmt.Errorf("Error in enrollment stage\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	// the mspPath obtained as the second return value of enrollUser() function call can be used in creating a user asset using the tallyscore chaincode
+	// the mspPath obtained as the second return value of enrollUser() function call is used in creating a user asset using the tallyscore chaincode
 	certPath := mspPath + "/signcerts/cert.pem"
 	keyPath := mspPath + "/keystore"
 	peer := "tbchlfdevpeer01"
@@ -184,15 +183,12 @@ func performRegistration(c *gin.Context) {
 	// creating company asset
 	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 	contract := getContract(gw, TallyScoreCCName)
-	createCompanyAsset(contract, PAN) // PAN will be the licenseId(i.e. unique id of the business)
+	createCompanyAsset(contract, PAN) // PAN will be the licenseId (i.e. unique id of the business)
 	gw.Close()
 	client.Close()
 
-	fmt.Printf("mspPath: %s", mspPath)
-
 	detailsAssetJSON, err := json.Marshal(detailsAsset)
 	if err != nil {
-		// fmt.Errorf("Error in enrollment stage- error in conversion to JSON format\n")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -231,7 +227,7 @@ func increaseTallyScore(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseScore", PAN, incVal)
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
 	gw.Close()
-	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
+	client.Close()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -266,7 +262,7 @@ func decreaseTallyScore(c *gin.Context) {
 	evaluatedAsset, err := contract.SubmitTransaction("DecreaseScore", PAN, decVal)
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
 	gw.Close()
-	client.Close() // IMPLEMENT THIS IN A TRY-CATCH-FINALLY BLOCK  , OR USE DEFER(preferred)
+	client.Close()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -278,7 +274,7 @@ func decreaseTallyScore(c *gin.Context) {
 
 func createCompanyAsset(contract *client.Contract, businessPAN string) {
 	fmt.Printf("After registration and enrollment, the score of the business will now be initialized.\n")
-	result, err := contract.SubmitTransaction("RegisterCompany", businessPAN) // don't pass the PAN.
+	result, err := contract.SubmitTransaction("RegisterCompany", businessPAN)
 	fmt.Printf("\n Submit Transaction returned: O/p= %s , Error= %s \n", string(result), err)
 }
 
@@ -375,7 +371,7 @@ func newSign(keyPath string) identity.Sign {
 	return sign
 }
 
-func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error) { // this function should take in PAN and return the password
+func registerUser(PAN string, Name string, PhoneNo string, Address string, LicenseType string) (string, error) {
 
 	cmdVariable := exec.Command("fabric-ca-client", "register",
 		"--id.name", PAN,
@@ -387,14 +383,6 @@ func registerUser(PAN string, Name string, PhoneNo string, Address string, Licen
 
 	cmdVariable.Env = append(cmdVariable.Env, fmt.Sprintf("FABRIC_CA_CLIENT_HOME=%s", fabric_ca_client_home))
 
-	fmt.Printf("cmd Env: %s\n", cmdVariable.Env)
-
-	fmt.Printf("FABRIC CA CLIENT HOME PATH: %s \n", fabric_ca_client_home)
-
-	fmt.Printf("The command executed while registering:%s\n", cmdVariable.String())
-	fmt.Print("Value of tallyCAHome:", tallyCAHome, "\n")
-	fmt.Printf("Path to ca-certs:%s \n", fmt.Sprintf("%s/ca-cert.pem", tallyCAHome))
-
 	output, err := cmdVariable.CombinedOutput()
 	if err != nil {
 		return "", err
@@ -405,7 +393,7 @@ func registerUser(PAN string, Name string, PhoneNo string, Address string, Licen
 
 }
 
-func enrollUser(PAN string, password string) (*detailsStructure, string, error) { // this function takes in PAN and password, then it should returns the public+private key msp as a structure
+func enrollUser(PAN string, password string) (*detailsStructure, string, error) { // this function takes in PAN and password, then it returns the public+private key msp as a structure
 
 	// urlmid would be like-> <PAN>:<password>
 
@@ -418,14 +406,13 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 	if err != nil {
 		return nil, "", err
 	}
-	// return content of mspPath- with the signcert content(public key) as a param, private key as a param
 	// mspPath will have the path till the folder "msp"- which contains keystore(PRIVATE KEY location) and signcerts(containing cert.pem- from which the public key is to be extracted)
 	// Extracting the private key
 	pathKeystore := mspPath + "/keystore"               // for private key
 	pathSigncertFile := mspPath + "/signcerts/cert.pem" // for public key
 	fmt.Printf("sign cert path: %s \n", pathSigncertFile)
 
-	// below will be the default values
+	// below will be the default value
 	privatekey := "private_key"
 
 	files, err := ioutil.ReadDir(pathKeystore)
@@ -474,6 +461,7 @@ func getPassword(outputString string) string { // function to extract password f
 	password := outputString[PasswordTextIndex+len("Password: "):]
 	return strings.TrimSpace(password)
 }
+
 
 // Below are all the voucher related functions
 
@@ -535,7 +523,6 @@ func voucherCreation(c *gin.Context) {
 	gw.Close()
 	client.Close()
 
-	// c.JSON(http.StatusOK, gin.H{"message": "Voucher created successfully"})
 }
 
 func voucherCancellation(c *gin.Context) {
@@ -595,7 +582,6 @@ func voucherUpdation(c *gin.Context) {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	// c.JSON(http.StatusOK, gin.H{"message": "Voucher updated successfully"})
 
 	gw.Close()
 	client.Close()
@@ -650,7 +636,6 @@ func voucherRejection(c *gin.Context) {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	// c.JSON(http.StatusOK, gin.H{"message": "Voucher rejected successfully"})
 	gw.Close()
 	client.Close()
 }
@@ -677,7 +662,6 @@ func voucherReturn(c *gin.Context) {
 		panic(err)
 	}
 	c.Data(http.StatusOK, "application/json", asset)
-	// c.JSON(http.StatusOK, gin.H{"message": "Voucher sent back successfully"})
 	gw.Close()
 	client.Close()
 }

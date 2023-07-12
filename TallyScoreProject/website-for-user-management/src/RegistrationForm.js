@@ -8,7 +8,7 @@ function RegistrationForm({ onNewRegistration }) {
   const [LicenseType, setLicense] = useState('');
   const[Score, setScore]= useState('');
   const [status, setStatus] = useState('');
-  const [businessCertDetails,setbusinessCertDetails] = useState('');    // change to details structure
+  const [businessCertDetails,setbusinessCertDetails] = useState('');
 
 
   const handleFormSubmit = (e) => {

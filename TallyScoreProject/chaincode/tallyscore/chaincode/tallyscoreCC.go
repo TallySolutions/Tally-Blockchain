@@ -32,8 +32,6 @@ func (s *SmartContract) companyAssetExists(ctx contractapi.TransactionContextInt
 // function to register company and initialize it's Score to 500 
 func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
 
-	// ------------------------- use client.Context to retrieve the PAN value of the business ------------------------
-
 	//checking if licenseID is valid
 	companyAssetExists,err:= s.companyAssetExists(ctx, LicenseId)
 	if err!=nil{
@@ -61,15 +59,6 @@ func (s *SmartContract) RegisterCompany(ctx contractapi.TransactionContextInterf
 
 // function to unregister a company (deleting it's Score asset)
 func (s *SmartContract) UnregisterCompany(ctx contractapi.TransactionContextInterface, LicenseId string) error{
-	//checking if licenseID is valid
-	// var sumOfDigits int
-	// for _, charDigit:= range LicenseId{
-	// 	digit:= int(charDigit- '0')
-	// 	sumOfDigits+= digit
-	// }
-	// if sumOfDigits%9 !=0{
-	// 	return fmt.Errorf("Invalid license ID")
-	// }
 
 	exists, err := s.companyAssetExists(ctx, LicenseId)
 	if err != nil {
@@ -114,11 +103,13 @@ func (s *SmartContract) IncreaseScore(ctx contractapi.TransactionContextInterfac
     if err !=nil {
     	fmt.Println(err)
     }
+
 	newScore:= uint(companyAssetRead.Score) + uint(intermediateUpdateval)
     if newScore > 1000 {
     	return nil, fmt.Errorf("You cannot have a value more than 1000.")
     }
 
+	
     // overwriting original asset with new value
     companyAsset := TallyScoreAsset {
         LicenseId: licenseID,
@@ -151,7 +142,6 @@ func (s *SmartContract) DecreaseScore(ctx contractapi.TransactionContextInterfac
 		return nil, fmt.Errorf("You cannot have a value lesser than 0.")
 	}
 	newScore:= uint(companyAssetRead.Score) - updateVal
-
 
 
     // overwriting original asset with new value

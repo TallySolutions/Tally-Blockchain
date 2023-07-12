@@ -4,11 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
 type SmartContract struct {
@@ -28,13 +27,7 @@ type VoucherAsset struct {
 	State       string `json:"State"`
 }
 
-// should hashcode be [64]byte?
-
-// user= msps (client id passed in context)
-
 //---------------------------FUNCTIONS---------------------------
-
-// func (s *SmartContract) RegisterBusiness()
 
 func (s *SmartContract) VoucherCreated(ctx contractapi.TransactionContextInterface, VoucherID string, SupplierID string, VoucherType string, Hashcode string, TotalValue string, Currency string) (*VoucherAsset, error) {
 
@@ -140,7 +133,7 @@ func (s *SmartContract) VoucherApproved(ctx contractapi.TransactionContextInterf
 
 	approvingUserID := getUserid(approvingUserIDFullStr, "x509::CN=", ",OU=")
 	fmt.Printf("approvingUserID %s\n", approvingUserID)
-	// EXTRACT "CN" FROM THE APPROVINGUSERID-- in a separate function (try to create a struct-- if the other values are needed in the future)
+
 	VoucherAssetRead, err := s.ReadVoucher(ctx, VoucherID) // voucher asset is read
 	if err != nil {
 		return err
@@ -251,7 +244,6 @@ func (s *SmartContract) VoucherRejected(ctx contractapi.TransactionContextInterf
 
 func (s *SmartContract) VoucherUpdated(ctx contractapi.TransactionContextInterface, VoucherID string, toChange string, newValue string) error {
 	// changes in hash or total amount
-	// NOTE: Cover both hash and total value updation
 
 	//ensuring that only the owner of the asset can update
 	updatingUserID, err := getClientIdentity(ctx)
@@ -385,8 +377,6 @@ func (s *SmartContract) VoucherSentBack(ctx contractapi.TransactionContextInterf
 	return fmt.Errorf("You can't send back when the state is %s . Requesting User is: %s . Supplier is: %s", State, requestingUser, VoucherAssetRead.SupplierID)
 }
 
-// func(s *SmartContract) UnregisterBusiness()
-
 func (s *SmartContract) ReadVoucher(ctx contractapi.TransactionContextInterface, VoucherID string) (*VoucherAsset, error) {
 
 	VoucherAssetJSON, err := ctx.GetStub().GetState(VoucherID)
@@ -407,8 +397,7 @@ func (s *SmartContract) ReadVoucher(ctx contractapi.TransactionContextInterface,
 
 }
 
-// LOOKUP FUNCTION---- gives list of vouchers with a particular supplier
-func (s *SmartContract) GetSupplierVouchers(ctx contractapi.TransactionContextInterface) ([]*VoucherAsset, error) {
+func (s *SmartContract) GetSupplierVouchers(ctx contractapi.TransactionContextInterface) ([]*VoucherAsset, error) { // LOOKUP FUNCTION---- gives list of vouchers with a particular supplier
 
 	supplierID, err := getClientIdentity(ctx)
 	if err != nil {
@@ -446,8 +435,7 @@ func (s *SmartContract) GetSupplierVouchers(ctx contractapi.TransactionContextIn
 
 }
 
-// LIST OF VOUCHERS THAT A PARTICULAR OWNER OWNS
-func (s *SmartContract) GetOwnerVouchers(ctx contractapi.TransactionContextInterface) ([]*VoucherAsset, error) {
+func (s *SmartContract) GetOwnerVouchers(ctx contractapi.TransactionContextInterface) ([]*VoucherAsset, error) { // LIST OF VOUCHERS THAT A PARTICULAR OWNER OWNS
 
 	ownerID, err := getClientIdentity(ctx)
 	if err != nil {
