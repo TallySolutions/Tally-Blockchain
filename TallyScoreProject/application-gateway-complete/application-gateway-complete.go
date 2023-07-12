@@ -193,8 +193,23 @@ func performRegistration(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Priv Key: %s \n", detailsAsset.PrivateKey)
-	fmt.Printf("Public Key: %s \n", detailsAsset.PublicKey)
+	// We will now append the PAN of the registered user to the registered users file
+	registeredusersfile, err := os.OpenFile("registeredusers.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Could not open registeredusers.txt")
+		return
+	}
+
+	defer registeredusersfile.Close()
+	to_write := ", " + PAN
+
+	_, appenderr := registeredusersfile.WriteString(to_write)
+
+	if appenderr != nil {
+		fmt.Println("Could not write this user to registeredusers.txt")
+
+	}
+
 	fmt.Printf("REGISTRATION OF USER SUCCESSFUL!\n")
 	c.Data(http.StatusOK, "application/json", detailsAssetJSON)
 
@@ -462,7 +477,6 @@ func getPassword(outputString string) string { // function to extract password f
 	return strings.TrimSpace(password)
 }
 
-
 // Below are all the voucher related functions
 
 func readVoucher(c *gin.Context) {
@@ -711,4 +725,22 @@ func setConnection(PAN string) (*grpc.ClientConn, *client.Gateway) { // connect(
 	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
 
 	return connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
+}
+
+func getAllUsers(c *gin.Context) error { // function that returns all existing users that have been created
+
+	// read contents of registeredusers.txt and extract all names one by one- append to an array
+	userfilecontent, err := ioutil.ReadFile("registeredusers.txt")
+	if err != nil {
+		return err
+	}
+	userfiletext := string(userfilecontent)
+	userfiletext = strings.TrimSpace(userfiletext)
+	userfiletext = strings.Trim(userfiletext, ",")
+	userIdArray := strings.Split(userfiletext, ", ")
+	fmt.Printf("%s",userIdArray[0])
+
+	// loop through the array and call UserDetailsExtractor() function by passing the array element- which would be the user's ID
+
+	return nil  //return list of user assets so use UsersList []*registrationRequest
 }
