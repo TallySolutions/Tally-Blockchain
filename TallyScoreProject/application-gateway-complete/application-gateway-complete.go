@@ -169,7 +169,7 @@ func performRegistration(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	fmt.Printf("Password: %s\n", password)
+	// fmt.Printf("Password: %s\n", password)
 
 	fmt.Printf("Initial stage of registration successful! Initiating enrollment of user now.\n")
 
@@ -245,8 +245,8 @@ func increaseTallyScore(c *gin.Context) {
 	contract := getContract(gw, TallyScoreCCName)
 
 	fmt.Printf("PAN: %s, IncreaseValue: %s\n", PAN, incVal)
-	fmt.Printf("CertPath: %s \n", certPath)
-	fmt.Printf("KeyPath: %s \n \n \n", keyPath)
+	// fmt.Printf("CertPath: %s \n", certPath)
+	// fmt.Printf("KeyPath: %s \n \n \n", keyPath)
 	evaluatedAsset, err := contract.SubmitTransaction("IncreaseScore", PAN, incVal)
 	fmt.Printf("\n-------------> After SubmitTransaction: O/p= %s \n Error= %s \n", string(evaluatedAsset), err)
 	gw.Close()
@@ -460,7 +460,7 @@ func enrollUser(PAN string, password string) (*detailsStructure, string, error) 
 	// Extracting the private key
 	pathKeystore := mspPath + "/keystore"               // for private key
 	pathSigncertFile := mspPath + "/signcerts/cert.pem" // for public key
-	fmt.Printf("sign cert path: %s \n", pathSigncertFile)
+	// fmt.Printf("sign cert path: %s \n", pathSigncertFile)
 
 	// below will be the default value
 	privatekey := "private_key"
@@ -791,8 +791,8 @@ func getAllUsers(c *gin.Context) { // function that returns all existing users t
 		fmt.Println("Error marshaling usersList:", err)
 		return
 	}
-	fmt.Printf("USERS LIST: %s \n", usersJSON)  
-	
+	fmt.Printf("USERS LIST: %s \n", usersJSON)
+
 	c.Data(http.StatusOK, "application/json", usersJSON)
 }
 

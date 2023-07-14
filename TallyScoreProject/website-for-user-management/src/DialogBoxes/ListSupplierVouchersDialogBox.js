@@ -26,7 +26,8 @@ function ListSupplierVouchersDialogBox({ onClose, pan }) {
         <thead>
           <tr>
             <th>Voucher ID</th>
-            <th>Supplier ID</th>
+            <th>Total Value</th>
+            <th>Currency</th>
             <th>Type</th>
             <th>State</th>
           </tr>
@@ -35,7 +36,8 @@ function ListSupplierVouchersDialogBox({ onClose, pan }) {
           {vouchersList.map((voucher, index) => (
             <tr key={index}>
               <td>{voucher.VoucherID}</td>
-              <td>{voucher.SupplierID}</td>
+              <td>{voucher.TotalValue}</td>
+              <td>{voucher.Currency}</td>
               <td>{voucher.VoucherType}</td>
               <td>{voucher.State}</td>
             </tr>

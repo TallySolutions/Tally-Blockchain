@@ -22,7 +22,7 @@ type VoucherAsset struct {
 	VoucherID   string `json:"VoucherID"`
 	VoucherType string `json:"VoucherType"`
 	Hashcode    string `json:"Hashcode"`
-	TotalValue  uint   `json"TotalValue"`
+	TotalValue  uint   `json:"TotalValue"`
 	Currency    string `json:"Currency"`
 	State       string `json:"State"`
 }
