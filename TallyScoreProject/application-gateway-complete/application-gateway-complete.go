@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,11 @@ type registrationRequest struct {
 	Address     string `json:"Address" binding:"required"`
 	LicenseType string `json:"LicenseType" binding:"required"`
 	Score       string `json:"Score" binding:"required"`
+}
+
+type companyScoreAsset struct {
+	LicenseId string `json:"PAN" binding:"required"`
+	Score     string `json:"Score" binding:"required"`
 }
 
 type detailsStructure struct {
@@ -121,6 +127,7 @@ func main() {
 		timeoutGroup.GET("/TallyScoreProject/listOwnerVouchers/:PAN", listOwnerVouchers) // this and the 3 above are owner related voucher endpoints
 
 		timeoutGroup.GET("/TallyScoreProject/readVoucher/:PAN", readVoucher)
+		timeoutGroup.GET("/TallyScoreProject/getAllUsers", getAllUsers)
 
 		timeoutGroup.POST("/TallyScoreProject/voucherApproval/:PAN", voucherApproval)
 		timeoutGroup.POST("/TallyScoreProject/voucherReturn/:PAN", voucherReturn)
@@ -284,6 +291,33 @@ func decreaseTallyScore(c *gin.Context) {
 	}
 	c.Writer.Header().Set("Content-Type", "application/json")
 	c.String(http.StatusOK, fmt.Sprintf("%s\n", string(evaluatedAsset)))
+
+}
+
+func readCompanyScore(PAN string) (string, error) {
+
+	client, gw := setConnection(PAN)
+	network := gw.GetNetwork(channelname)
+	contract := network.GetContract(TallyScoreCCName)
+
+	var readScoreAsset companyScoreAsset
+
+	scoreAsset, err := contract.EvaluateTransaction("ReadCompanyAsset", PAN)
+	if err != nil {
+		fmt.Printf("%s \n", "error in read company asset transaction")
+		return " ", err
+	}
+
+	err1 := json.Unmarshal(scoreAsset, &readScoreAsset)
+	if err1 != nil {
+		fmt.Printf("Score asset: %s \n", string(scoreAsset))
+		fmt.Printf("%s \n", "error in unmarshalling the read company score asset")
+		return "", err
+	}
+	client.Close()
+	gw.Close()
+
+	return readScoreAsset.Score, nil
 
 }
 
@@ -727,20 +761,89 @@ func setConnection(PAN string) (*grpc.ClientConn, *client.Gateway) { // connect(
 	return connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 }
 
-func getAllUsers(c *gin.Context) error { // function that returns all existing users that have been created
+func getAllUsers(c *gin.Context) { // function that returns all existing users that have been created
 
 	// read contents of registeredusers.txt and extract all names one by one- append to an array
 	userfilecontent, err := ioutil.ReadFile("registeredusers.txt")
 	if err != nil {
-		return err
+		return
 	}
 	userfiletext := string(userfilecontent)
 	userfiletext = strings.TrimSpace(userfiletext)
 	userfiletext = strings.Trim(userfiletext, ",")
 	userIdArray := strings.Split(userfiletext, ", ")
-	fmt.Printf("%s",userIdArray[0])
 
 	// loop through the array and call UserDetailsExtractor() function by passing the array element- which would be the user's ID
+	var usersList []*registrationRequest
+	for _, userPAN := range userIdArray {
+		fmt.Printf("Current user PAN: %s \n", userPAN)
+		userAsset, err := UserDetailsExtractor(userPAN)
+		if err != nil {
+			fmt.Printf("%s \n", "error in details extractor function")
+			return
+		}
+		usersList = append(usersList, userAsset)
+	}
 
-	return nil  //return list of user assets so use UsersList []*registrationRequest
+	usersJSON, err := json.Marshal(usersList)
+	if err != nil {
+		fmt.Println("Error marshaling usersList:", err)
+		return
+	}
+	fmt.Printf("USERS LIST: %s \n", usersJSON)
+
+	c.Data(http.StatusOK, "application/json", usersJSON)
+}
+
+func UserDetailsExtractor(PAN string) (*registrationRequest, error) {
+
+	// use PAN to extract values from certfiles and assign the extracted values to user asset
+	mspPath := users_common_path + PAN + "/msp"
+	certPath := mspPath + "/signcerts/cert.pem"
+	fmt.Printf("Cert path: %s \n", certPath)
+
+	certBytes, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		fmt.Printf("%s \n", "error in reading certfile")
+		return nil, err
+	}
+
+	pemBlock, _ := pem.Decode(certBytes)
+	if pemBlock == nil {
+		fmt.Printf("%s \n", "error in decoding PEM")
+		return nil, fmt.Errorf("failed to decode PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(pemBlock.Bytes)
+	if err != nil {
+		fmt.Printf("%s \n", "error in parsing cert")
+		return nil, err
+	}
+
+	readScore, err := readCompanyScore(PAN)
+	if err != nil {
+		fmt.Printf("%s \n", "error in reading company score")
+		return nil, err
+	}
+
+	UserAsset := registrationRequest{
+		PAN:         getAttribute(cert, "pan"),
+		Name:        getAttribute(cert, "name"),
+		PhoneNo:     getAttribute(cert, "phone"),
+		Address:     getAttribute(cert, "address"),
+		LicenseType: getAttribute(cert, "license"),
+		Score:       readScore,
+	}
+
+	return &UserAsset, nil
+
+}
+
+func getAttribute(cert *x509.Certificate, attrName string) string {
+	for _, attr := range cert.Subject.Names {
+		if attr.Type.Equal([]int{2, 5, 4, 41}) && attr.Value.(string) == attrName {
+			return attr.Value.(string)
+		}
+	}
+	return ""
 }
