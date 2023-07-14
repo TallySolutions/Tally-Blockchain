@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -62,8 +63,8 @@ type registrationRequest struct {
 }
 
 type companyScoreAsset struct {
-	LicenseId string `json:"PAN" binding:"required"`
-	Score     string `json:"Score" binding:"required"`
+	LicenseId string `json:"LicenseId" binding:"required"`
+	Score     uint   `json:"Score" binding:"required"`
 }
 
 type detailsStructure struct {
@@ -317,7 +318,7 @@ func readCompanyScore(PAN string) (string, error) {
 	client.Close()
 	gw.Close()
 
-	return readScoreAsset.Score, nil
+	return strconv.Itoa(int(readScoreAsset.Score)), nil
 
 }
 
@@ -790,8 +791,8 @@ func getAllUsers(c *gin.Context) { // function that returns all existing users t
 		fmt.Println("Error marshaling usersList:", err)
 		return
 	}
-	fmt.Printf("USERS LIST: %s \n", usersJSON)
-
+	fmt.Printf("USERS LIST: %s \n", usersJSON)  
+	
 	c.Data(http.StatusOK, "application/json", usersJSON)
 }
 
@@ -825,6 +826,7 @@ func UserDetailsExtractor(PAN string) (*registrationRequest, error) {
 		fmt.Printf("%s \n", "error in reading company score")
 		return nil, err
 	}
+	fmt.Printf("Score of %s = %s \n", PAN, readScore)
 
 	UserAsset := registrationRequest{
 		PAN:         getAttribute(cert, "pan"),
