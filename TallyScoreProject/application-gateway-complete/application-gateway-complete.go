@@ -119,7 +119,7 @@ func main() {
 	timeoutGroup := router.Group("/", TimeoutMiddleware(timeout))
 	{
 		timeoutGroup.PUT("/TallyScoreProject/performRegistration", performRegistration) // to register + enroll the business
-		timeoutGroup.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore)  // to increae tallyscore
+		timeoutGroup.POST("/TallyScoreProject/increaseTallyScore", increaseTallyScore)  // to increase tallyscore
 		timeoutGroup.POST("/TallyScoreProject/decreaseTallyScore", decreaseTallyScore)  // to decrease tallyscore
 
 		timeoutGroup.PUT("/TallyScoreProject/voucherCreation/:PAN", voucherCreation)
@@ -188,6 +188,7 @@ func performRegistration(c *gin.Context) {
 	gatewayPeer := peer + "." + domain
 	tlsCertPath := "/home/ubuntu/fabric/tally-network/organizations/peerOrganizations/" + domain + "/peers/" + peer + "/tls/ca.crt"
 
+	fmt.Printf("Cert path: %s \n \n", certPath)
 	// creating company asset
 	client, gw := connect(peerEndpoint, certPath, keyPath, tlsCertPath, gatewayPeer)
 	contract := getContract(gw, TallyScoreCCName)
