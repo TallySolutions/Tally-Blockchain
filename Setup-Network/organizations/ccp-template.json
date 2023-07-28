@@ -1,0 +1,49 @@
+{
+    "name": "tally",
+    "version": "1.0.0",
+    "client": {
+        "organization": "tally",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                }
+            }
+        }
+    },
+    "organizations": {
+        "Tally": {
+            "mspid": "Tally",
+            "peers": [
+                "tbchlfdevpeer01.tally.tallysolutions.com"
+            ],
+            "certificateAuthorities": [
+                "ca.tally.tallysolutions.com"
+            ]
+        }
+    },
+    "peers": {
+        "tbchlfdevpeer01.tally.tallysolutions.com": {
+            "url": "grpcs://localhost:${P0PORT}",
+            "tlsCACerts": {
+                "pem": "${PEERPEM}"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "tbchlfdevpeer01.tally.tallysolutions.com",
+                "hostnameOverride": "tbchlfdevpeer01.tally.tallysolutions.com"
+            }
+        }
+    },
+    "certificateAuthorities": {
+        "ca.tally.tallysolutions.com": {
+            "url": "https://localhost:${CAPORT}",
+            "caName": "tally",
+            "tlsCACerts": {
+                "pem": ["${CAPEM}"]
+            },
+            "httpOptions": {
+                "verify": false
+            }
+        }
+    }
+}

@@ -269,7 +269,7 @@ function deployCC()
    infoln "Packaging chaincode on ${PEER_HOST}"
    packageChaincode
    
-   ## Install chaincode on ${PEER_HOST}.org1 and ${PEER_HOST}.org2
+   ## Install chaincode on ${PEER_HOST}.tally and ${PEER_HOST}.org2
    infoln "Installing chaincode on ${PEER_HOST}"
    installChaincode 
 

@@ -1,0 +1,19 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.7'
+
+services:
+  tbchlfdevpeer01:
+    volumes:
+      - ./podman/peercfg:/etc/hyperledger/peercfg
+
+  tbchlfdevpeer01.org2.tallysolutions.com:
+    volumes:
+      - ./podman/peercfg:/etc/hyperledger/peercfg
+
+  cli:
+    volumes:
+      - ./podman/peercfg:/etc/hyperledger/peercfg
