@@ -6,4 +6,6 @@ use (
 	./TallyScoreProject/gateway-for-web-app
 	./TallyScoreProject/gateway-businessprofile-for-web-app
 	./TallyScoreProject/gateway-register-enroll
+	./Smart_EVM
+	
 )

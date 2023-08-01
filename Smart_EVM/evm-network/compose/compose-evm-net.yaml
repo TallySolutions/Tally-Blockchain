@@ -1,0 +1,162 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.7'
+
+volumes:
+  orderer.boatinthesea.com:
+  peer0.electorial.boatinthesea.com:
+  peer0.voter.boatinthesea.com:
+
+networks:
+  test:
+    name: ${NETWORK_NAME}
+
+services:
+
+  orderer.boatinthesea.com:
+    container_name: orderer.boatinthesea.com
+    image: hyperledger/fabric-orderer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=orderer.boatinthesea.com:9443
+      - ORDERER_METRICS_PROVIDER=prometheus
+    working_dir: /root
+    command: orderer
+    volumes:
+        - ${ROOTDIR}/organizations/ordererOrganizations/boatinthesea.com/orderers/orderer.boatinthesea.com/msp:/var/hyperledger/orderer/msp
+        - ${ROOTDIR}/organizations/ordererOrganizations/boatinthesea.com/orderers/orderer.boatinthesea.com/tls/:/var/hyperledger/orderer/tls
+        - orderer.boatinthesea.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+      - 7053:7053
+      - 9443:9443
+    networks:
+      - test
+
+  peer0.electorial.boatinthesea.com:
+    container_name: peer0.electorial.boatinthesea.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.electorial.boatinthesea.com
+      - CORE_PEER_ADDRESS=peer0.electorial.boatinthesea.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.electorial.boatinthesea.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.electorial.boatinthesea.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.electorial.boatinthesea.com:7051
+      - CORE_PEER_LOCALMSPID=ElectorialMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.electorial.boatinthesea.com:9444
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0electorial"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+    volumes:
+        - ${ROOTDIR}/organizations/peerOrganizations/electorial.boatinthesea.com/peers/peer0.electorial.boatinthesea.com:/etc/hyperledger/fabric
+        - ${ROOTDIR}/organizations/peerOrganizations/electorial.boatinthesea.com/users:/etc/hyperledger/fabric/users
+        - peer0.electorial.boatinthesea.com:/var/hyperledger/production
+    working_dir: /root
+    command: /etc/hyperledger/fabric/bin/start.sh
+    ports:
+      - 8080:8080
+      - 7051:7051
+    networks:
+      - test
+
+  peer0.voter.boatinthesea.com:
+    container_name: peer0.voter.boatinthesea.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.voter.boatinthesea.com
+      - CORE_PEER_ADDRESS=peer0.voter.boatinthesea.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.voter.boatinthesea.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.voter.boatinthesea.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.voter.boatinthesea.com:9051
+      - CORE_PEER_LOCALMSPID=VoterMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp      
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.voter.boatinthesea.com:9445
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0voter"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+    volumes:
+        - ${ROOTDIR}/organizations/peerOrganizations/voter.boatinthesea.com/peers/peer0.voter.boatinthesea.com:/etc/hyperledger/fabric
+        - ${ROOTDIR}/organizations/peerOrganizations/voter.boatinthesea.com/users:/etc/hyperledger/fabric/users
+        - peer0.voter.boatinthesea.com:/var/hyperledger/production
+    working_dir: /root
+    command: /etc/hyperledger/fabric/bin/start.sh
+    ports:
+      - 9080:8080
+      - 9051:9051
+    networks:
+      - test
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:latest
+    labels:
+      service: hyperledger-fabric
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - FABRIC_LOGGING_SPEC=INFO
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      #- FABRIC_LOGGING_SPEC=DEBUG
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - ${ROOTDIR}/organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+        - ${SCRIPTDIR}/scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+    depends_on:
+      - peer0.electorial.boatinthesea.com
+      - peer0.voter.boatinthesea.com
+    networks:
+      - test
