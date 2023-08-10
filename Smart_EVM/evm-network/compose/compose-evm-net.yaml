@@ -91,7 +91,7 @@ services:
         - ${ROOTDIR}/organizations/peerOrganizations/electorial.boatinthesea.com/users:/etc/hyperledger/fabric/users
         - peer0.electorial.boatinthesea.com:/var/hyperledger/production
     working_dir: /root
-    command: /etc/hyperledger/fabric/bin/start.sh
+    command: peer node start
     ports:
       - 8080:8080
       - 7051:7051
@@ -131,7 +131,7 @@ services:
         - ${ROOTDIR}/organizations/peerOrganizations/voter.boatinthesea.com/users:/etc/hyperledger/fabric/users
         - peer0.voter.boatinthesea.com:/var/hyperledger/production
     working_dir: /root
-    command: /etc/hyperledger/fabric/bin/start.sh
+    command: peer node start
     ports:
       - 9080:8080
       - 9051:9051
