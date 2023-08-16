@@ -172,6 +172,8 @@ func (s *SmartContract) RegisteredOptions(ctx contractapi.TransactionContextInte
 	return registeredOptions, nil
 }
 
+
+
 func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterID string, optionIDs []string) error {
 	// Read the election configuration
 	electionConfigBytes, err := ctx.GetStub().GetState("electionConfig")

@@ -1,11 +1,12 @@
 go 1.20
 
 use (
+	./Smart_EVM
+	./Smart_EVM/console_app
 	./TallyScoreProject/chaincode/businessprofile
 	./TallyScoreProject/chaincode/tallyscore
-	./TallyScoreProject/gateway-for-web-app
 	./TallyScoreProject/gateway-businessprofile-for-web-app
+	./TallyScoreProject/gateway-for-web-app
 	./TallyScoreProject/gateway-register-enroll
-	./Smart_EVM
-	
+
 )

@@ -1,5 +1,6 @@
 #!/bin/bash
 ./network.sh down
 ./network.sh up
-./network.sh createChannel -c election1
-./network.sh deployCC -c election1 -ccn evm -ccl go -ccp /home/ubuntu/src/SmartEVM/SmartEVM/chaincode
+./network.sh createChannel -c tally
+./network.sh deployCC -c tally -ccn evm -ccl go -ccp /home/ubuntu/Tally-Blockchain/Smart_EVM
+ 

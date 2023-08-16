@@ -3,10 +3,12 @@ package chaincode_test
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"smart_evm/chaincode"
 	"smart_evm/chaincode/mocks"
+	"strings"
 	"testing"
+	"time"
+
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
@@ -282,7 +284,12 @@ func TestRegisteredOptions(t *testing.T) {
 }
 
 
-
+type Ballot struct {
+	VoterID   string    `json:"voterID"`
+	OptionIDs []string  `json:"optionIDs"`
+	HasVoted  bool      `json:"hasVoted"`
+	Timestamp time.Time `json:"timestamp"`
+}
 
 
 func TestCastVotefalsefalsefalse(t* testing.T){
@@ -332,10 +339,7 @@ func TestCastVotefalsefalsefalse(t* testing.T){
 
 	// Expect error: voter already cast their vote
 	err = smartevm.CastVote(transactionContext, voterID, optionIDs)
-	require.EqualError(t, err, fmt.Sprintf("voter with ID %s has already cast their vote", voterID))
-
-	ClearStates()
-
+	require.EqualError(t, err, fmt.Sprintf("voter with ID %s has already cast their vote", voterID)) 
 }
 
 
@@ -360,6 +364,7 @@ func TestCastVotefalsetruetrue(t* testing.T){
 	err := smartevm.InitLedger(transactionContext, false, true, true)
 	require.NoError(t, err)
 
+
 	// Register options
 	smartevm.RegisterOptions(transactionContext, optionIDs)
 	require.NoError(t, err)
@@ -379,6 +384,10 @@ func TestCastVotefalsetruetrue(t* testing.T){
 	// Cast vote with a single option for single-choice election
 	err = smartevm.CastVote(transactionContext, voterID, []string{"option1"})
 	require.NoError(t, err)
+
+	// Attempt to cast vote for a voter with no ballot state
+	err=smartevm.CastVote(transactionContext,"voter3",[]string{})
+	require.EqualError(t,err,"voter with ID voter3 does not exist")
 }
 
 
@@ -624,6 +633,46 @@ func TestCastVotetruetruetrue(t *testing.T) {
 	require.NoError(t, err)
 
 }
+
+func TestCastVoteFailedToUpdateBallotState(t *testing.T) {
+	chaincodeStub := &mocks.ChaincodeStub{}
+	transactionContext := &mocks.TransactionContext{}
+	transactionContext.GetStubReturns(chaincodeStub)
+	chaincodeStub.PutStateStub = AddStateStub
+	chaincodeStub.GetStateStub = GetStateStub
+
+	// Clear any existing states
+	ClearStates()
+
+	smartevm := chaincode.SmartContract{}
+
+	// Set up the election configuration
+	err := smartevm.InitLedger(transactionContext, false, false, false)
+	require.NoError(t, err)
+
+	// Add a voter
+	voterID := "voter1"
+	err = smartevm.AddVoters(transactionContext, []string{voterID})
+	require.NoError(t, err)
+
+	// Register an option
+	optionID := "option1"
+	err = smartevm.RegisterOptions(transactionContext, []string{optionID})
+	require.NoError(t, err)
+
+	// Mock the error while updating the ballot state
+	chaincodeStub.PutStateStub = func(key string, value []byte) error {
+		return fmt.Errorf("failed to update ballot state")
+	}
+
+	// Attempt to cast a vote
+	err = smartevm.CastVote(transactionContext, voterID, []string{optionID})
+	require.EqualError(t, err, "failed to update the ballot state: failed to update ballot state")
+
+	// Clear any remaining states
+	ClearStates()
+}
+
 
 
 

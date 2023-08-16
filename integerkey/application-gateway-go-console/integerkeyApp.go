@@ -23,7 +23,7 @@ const (
 	domain       = "tally.tallysolutions.com"
 	user         = "Admin"
 	peer_port    = "7051"
-	cryptoPath   = peer_home + domain 
+	cryptoPath   = peer_home + domain
 	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
 	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
 	ccName       = "integerkey"
@@ -34,7 +34,7 @@ const (
 var peer string
 var peerEndpoint string
 var gatewayPeer string
-var tlsCertPath string 
+var tlsCertPath string
 
 
 func printUsage()  {
@@ -130,7 +130,7 @@ func main() {
 		getAllAssets(contract)
 		gw.Close()
 		client.Close()
- 
+
 	}else{
 		printUsage()
 	}
@@ -161,7 +161,7 @@ func connect() (*grpc.ClientConn, *client.Gateway) {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	return clientConnection, gw
 
 
@@ -288,7 +288,7 @@ func getAllAssets(contract *client.Contract ) {
 func deleteAsset(contract *client.Contract , name string){
 
 
-	_, err := contract.SubmitTransaction("DeleteAsset", name) 
+	_, err := contract.SubmitTransaction("DeleteAsset", name)
 	fmt.Printf("\n------> After SubmitTransaction: %s \n",  err)
 }
 
