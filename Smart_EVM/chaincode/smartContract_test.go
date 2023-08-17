@@ -129,6 +129,9 @@ type Voter struct {
 }
 
 
+type VoteOptions struct {
+	Options []string `json:"options" binding:"required"`
+}
 
 func TestAddVoters(t *testing.T) {
 	chaincodeStub := &mocks.ChaincodeStub{}
@@ -142,39 +145,44 @@ func TestAddVoters(t *testing.T) {
 
 	//Test Case1: Successful addition of voters
 	voterIDs := []string{"voter1", "voter2", "voter3"}
+	voterIDsJSON, _ := json.Marshal(voterIDs)
 
 	chaincodeStub.GetStateReturns(nil, nil)
 	chaincodeStub.PutStateReturns(nil)
 
-	err := smartevm.AddVoters(transactionContext, voterIDs)
+	err := smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	// Test case 2: Error when registering a voter that already exists
 	existingVoterID := "existingVoter"
+	existingVoterIDJSON, _ := json.Marshal([]string{existingVoterID})
+
 
 	// Set up the mock GetState function to return a non-nil value for an existing voter
 	chaincodeStub.GetStateReturns([]byte("dummyData"), nil)
 
-	err = smartevm.AddVoters(transactionContext, []string{existingVoterID})
+	err = smartevm.AddVoters(transactionContext, string(existingVoterIDJSON))
 	require.EqualError(t, err, fmt.Sprintf("voter with ID %s already exists", existingVoterID))
 
 	//Test Case 3: Error when writing to the ledger (PutState fails)
 	voterIDsWithError := []string{"voter4", "voter5"}
+	voterIDsWithErrorJSON, _ := json.Marshal(voterIDsWithError)
 	chaincodeStub.GetStateReturns(nil, nil)
 
 	chaincodeStub.PutStateReturns(fmt.Errorf("failed to insert voter"))
 
-	err = smartevm.AddVoters(transactionContext, voterIDsWithError)
+	err = smartevm.AddVoters(transactionContext, string(voterIDsWithErrorJSON))
 	require.EqualError(t, err, "failed to insert voter: failed to insert voter")
 
 	// Test case 4: Error when reading from the ledger (GetState fails)
 	voterIDsWithReadError := []string{"voter6", "voter7"}
+	voterIDsWithReadErrorJSON, _ := json.Marshal(voterIDsWithReadError)
 
 	// Set up the mock GetState function to return an error when reading voters from the ledger
 
 	chaincodeStub.GetStateReturns(nil, fmt.Errorf("failed to read voter state from the ledger"))
 
-	err = smartevm.AddVoters(transactionContext, voterIDsWithReadError)
+	err = smartevm.AddVoters(transactionContext, string(voterIDsWithReadErrorJSON))
 	require.EqualError(t, err, "failed to read voter state from the ledger:failed to read voter state from the ledger")
 
 }
@@ -193,8 +201,9 @@ func TestRegisterOptions(t *testing.T) {
 
 	// Test case 1: Register multiple options successfully
 	optionIDs := []string{"option1", "option2", "option3"}
+	optionsJSON, _ := json.Marshal(optionIDs)
 
-	err := smartevm.RegisterOptions(transactionContext, optionIDs)
+	err := smartevm.RegisterOptions(transactionContext, string(optionsJSON))
 	require.NoError(t, err)
 
 	// Verify that each option is saved to the ledger with an initial vote count of 0
@@ -223,15 +232,19 @@ func TestRegisterOptions(t *testing.T) {
 
 	// Test case 2: Error when registering an option that already exists
 	existingOptionID := "existingOption"
+	existingOptionsJSON, _ := json.Marshal([]string{existingOptionID})
+	require.NoError(t, err)
 
 	// Set up the mock GetState function to return a non-nil value for an existing option
 	chaincodeStub.GetStateReturns([]byte("dummyData"), nil)
 
-	err = smartevm.RegisterOptions(transactionContext, []string{existingOptionID})
+	err = smartevm.RegisterOptions(transactionContext, string(existingOptionsJSON))
 	require.EqualError(t, err, fmt.Sprintf("option with ID %s already exists", existingOptionID))
 
 	// Test case 3: Error when writing to the ledger (PutState fails)
 	optionIDsWithError := []string{"option4", "option5"}
+	optionsWithErrorJSON, _ := json.Marshal(optionIDsWithError)
+
 
 	// Set up the mock GetState function to return nil for options that don't exist in the ledger
 	chaincodeStub.GetStateReturns(nil, nil)
@@ -240,48 +253,23 @@ func TestRegisterOptions(t *testing.T) {
 
 	chaincodeStub.PutStateReturns(fmt.Errorf("failed to insert option"))
 
-	err = smartevm.RegisterOptions(transactionContext, optionIDsWithError)
+	err = smartevm.RegisterOptions(transactionContext, string(optionsWithErrorJSON))
 	require.EqualError(t, err, "failed to put state: failed to insert option")
 
 	// Test case 4: Error when reading from the ledger (GetState fails)
 	optionIDWithError := []string{"option6"}
 
+	optionsWithErrorReadJSON, _ := json.Marshal(optionIDWithError)
+
+
 	chaincodeStub.GetStateReturns(nil, fmt.Errorf("failed to read from world state"))
 
-	err = smartevm.RegisterOptions(transactionContext, optionIDWithError)
+	err = smartevm.RegisterOptions(transactionContext, string(optionsWithErrorReadJSON))
 	require.EqualError(t, err, "failed to read from world state: failed to read from world state")
 
 }
 
 
-
-func TestRegisteredOptions(t *testing.T) {
-	chaincodeStub := &mocks.ChaincodeStub{}
-	transactionContext := &mocks.TransactionContext{}
-	transactionContext.GetStubReturns(chaincodeStub)
-	chaincodeStub.PutStateStub = AddStateStub
-	chaincodeStub.GetStateStub = GetStateStub
-	ClearStates()
-
-	smartevm := chaincode.SmartContract{}
-	//Test Case 1: Fetch registered options successfully
-	optionIDs := []string{"opt1", "opt2", "opt3"}
-
-	registeredOptionsJSON, err := json.Marshal(optionIDs)
-	require.NoError(t, err)
-
-	chaincodeStub.GetStateReturns(registeredOptionsJSON, nil)
-	registeredOptions, err := smartevm.RegisteredOptions(transactionContext)
-	require.NoError(t, err)
-	//check if the registered option match the expected optionsIDs
-	require.ElementsMatch(t, optionIDs, registeredOptions)
-
-	//Test Case 2: failed to fetch registered options
-	chaincodeStub.GetStateReturns(nil, fmt.Errorf("failed to fetch registered options"))
-	_, err = smartevm.RegisteredOptions(transactionContext)
-	require.EqualError(t, err, "failed to fetch registered options: failed to fetch registered options")
-
-}
 
 
 type Ballot struct {
@@ -305,41 +293,48 @@ func TestCastVotefalsefalsefalse(t* testing.T){
 	//Testcase: false false false(non-anonymous , non-single,non-abstainable)
 	voterID:="voter1"
 	optionIDs:=[]string{"option1","option2"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
 
 	//set up the election configuration
 	err:=smartevm.InitLedger(transactionContext,false,false,false)
 	require.NoError(t,err)
 
 	//add voter
-	err=smartevm.AddVoters(transactionContext,[]string{voterID})
+	voterIDsJSON, _ := json.Marshal([]string{voterID})
+	require.NoError(t, err)
+	err=smartevm.AddVoters(transactionContext,string(voterIDsJSON))
 	require.NoError(t,err)
 
 	//register options
-	err=smartevm.RegisterOptions(transactionContext,optionIDs)
+	err=smartevm.RegisterOptions(transactionContext,string(optionIDsJSON))
 	require.NoError(t,err)
 
 	// Cast vote with a non-existing option ID
-	err = smartevm.CastVote(transactionContext, voterID, []string{"noSuchOption"})
+	nonExistingOptionID := []string{"noSuchOption"}
+
+	nonExistingOptionIDJSON, _ := json.Marshal(nonExistingOptionID)
+	require.NoError(t, err)
+	err = smartevm.CastVote(transactionContext, voterID, string(nonExistingOptionIDJSON))
 	require.EqualError(t, err, "option with ID noSuchOption does not exist")
 
 
 	//Cast Vote Successfully
-	err=smartevm.CastVote(transactionContext,voterID,optionIDs)
+	err=smartevm.CastVote(transactionContext,voterID,string(optionIDsJSON))
 	require.NoError(t,err)
 
 	//Expect error:voter already exist
-	err=smartevm.AddVoters(transactionContext,[]string{voterID})
+	err=smartevm.AddVoters(transactionContext,string(voterIDsJSON))
 	require.EqualError(t,err,fmt.Sprintf("voter with ID %s already exists",voterID))
 
 	//Expect error:option already exist
-	err=smartevm.RegisterOptions(transactionContext,optionIDs)
+	err=smartevm.RegisterOptions(transactionContext,string(optionIDsJSON))
 	require.EqualError(t,err,fmt.Sprintf("option with ID %s already exists",optionIDs[0]))
 
 
 
 	// Expect error: voter already cast their vote
-	err = smartevm.CastVote(transactionContext, voterID, optionIDs)
-	require.EqualError(t, err, fmt.Sprintf("voter with ID %s has already cast their vote", voterID)) 
+	err = smartevm.CastVote(transactionContext, voterID, string(optionIDsJSON))
+	require.EqualError(t, err, fmt.Sprintf("voter with ID %s has already cast their vote", voterID))
 }
 
 
@@ -359,6 +354,8 @@ func TestCastVotefalsetruetrue(t* testing.T){
 	voterID1:="voter2"
 	optionIDs:=[]string{"option1","option2","option3"}
 
+	optionIDsJSON, _ := json.Marshal(optionIDs)
+
 
 	// Set up the election configuration to be single-choice, abstainable, and non-anonymous
 	err := smartevm.InitLedger(transactionContext, false, true, true)
@@ -366,27 +363,28 @@ func TestCastVotefalsetruetrue(t* testing.T){
 
 
 	// Register options
-	smartevm.RegisterOptions(transactionContext, optionIDs)
+	smartevm.RegisterOptions(transactionContext, string(optionIDsJSON))
 	require.NoError(t, err)
 
 	// Register a voter
-	err = smartevm.AddVoters(transactionContext, []string{voterID,voterID1})
+	voterIDsJSON, _ := json.Marshal([]string{voterID, voterID1})
+	err = smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	// Cast vote with multiple options for single-choice election
-	err = smartevm.CastVote(transactionContext, voterID, optionIDs)
+	err = smartevm.CastVote(transactionContext, voterID, string(optionIDsJSON))
 	require.Error(t, err, "voting is single choice only, one option can be selected")
 
 	// Cast vote without selecting any options (abstainable voting)
-	err = smartevm.CastVote(transactionContext, voterID1, []string{})
+	err = smartevm.CastVote(transactionContext, voterID1, "[]")
 	require.NoError(t,err)
 
 	// Cast vote with a single option for single-choice election
-	err = smartevm.CastVote(transactionContext, voterID, []string{"option1"})
+	err = smartevm.CastVote(transactionContext, voterID, `["option1"]`)
 	require.NoError(t, err)
 
 	// Attempt to cast vote for a voter with no ballot state
-	err=smartevm.CastVote(transactionContext,"voter3",[]string{})
+	err=smartevm.CastVote(transactionContext,"voter3","[]")
 	require.EqualError(t,err,"voter with ID voter3 does not exist")
 }
 
@@ -402,30 +400,34 @@ func TestCastVotefalsetruefalse(t* testing.T){
 
 	smartevm := chaincode.SmartContract{}
 
-	optionsIds := []string{"option1","option2","options3"}
+	optionIDs := []string{"option1","option2","options3"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
+
 
 	//set up the election configuration to be non-anonymous,single,non-abstainable
 	err:=smartevm.InitLedger(transactionContext,false,true,false)
 	require.NoError(t,err)
 
-	err=smartevm.RegisterOptions(transactionContext,optionsIds)
+	err=smartevm.RegisterOptions(transactionContext,string(optionIDsJSON))
 	require.NoError(t,err)
 
 	//register a voter
-	voterID:="voter1"
-	err=smartevm.AddVoters(transactionContext,[]string{voterID})
+	voterID:=[]string{"voter1"}
+
+	voterIDsJSON, _ := json.Marshal(voterID)
+	err=smartevm.AddVoters(transactionContext,string(voterIDsJSON))
 	require.NoError(t,err)
 
 	//Cast with multiple options for single choice voting
-	err=smartevm.CastVote(transactionContext,voterID,optionsIds)
+	err=smartevm.CastVote(transactionContext,voterID[0],string(optionIDsJSON))
 	require.Error(t,err,"voting is single choice only, one option can be selected")
 
 	//Cast with a single option for single choice voting
-	err=smartevm.CastVote(transactionContext,voterID,[]string{"option1"})
+	err=smartevm.CastVote(transactionContext,voterID[0],`["option1"]`)
 	require.NoError(t,err)
 
 	//Cast vote without selecting any options(non-abstainable)
-	err=smartevm.CastVote(transactionContext,voterID,[]string{})
+	err=smartevm.CastVote(transactionContext,voterID[0],"[]")
 	require.Error(t,err,"not abstainable, at least one option must be selected")
 
 }
@@ -442,30 +444,35 @@ func TestCastVotefalsefalsetrue(t* testing.T){
 
 	smartevm := chaincode.SmartContract{}
 
+	//Register options
+  optionIDs:= []string{"option1","option2","options3"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
+
 	//set up the election configuration to be non-anonymous,multi,abstainable
 	err:=smartevm.InitLedger(transactionContext,false,false,true)
 	require.NoError(t,err)
 
-	//Register options
-  optionIDs:= []string{"option1","option2","options3"}
-	err=smartevm.RegisterOptions(transactionContext,optionIDs)
+
+	err=smartevm.RegisterOptions(transactionContext,string(optionIDsJSON))
 	require.NoError(t,err)
 
 	//Register voter
 	voterID:=[]string{"voter1","voter2","voter3"}
-	err=smartevm.AddVoters(transactionContext,voterID)
+	voterIDsJSON, _ := json.Marshal(voterID)
+
+	err=smartevm.AddVoters(transactionContext,string(voterIDsJSON))
 	require.NoError(t,err)
 
 	// Cast vote with multiple options for multi-choice election
-	err=smartevm.CastVote(transactionContext,"voter1",optionIDs)
+	err=smartevm.CastVote(transactionContext,"voter1",string(optionIDsJSON))
 	require.NoError(t,err)
 
   //Cast vote without selecting any options(abstainable)
-	err=smartevm.CastVote(transactionContext,"voter2",[]string{})
+	err=smartevm.CastVote(transactionContext,"voter2","[]")
 	require.NoError(t,err)
 
 	//Cast with a single option in multi choice voting
-	err=smartevm.CastVote(transactionContext,"voter3",[]string{"option1"})
+	err=smartevm.CastVote(transactionContext,"voter3",`["option1"]`)
 	require.NoError(t,err)
 }
 
@@ -481,34 +488,39 @@ func TestCastVotetruefalsefalse(t* testing.T){
 
 	smartevm := chaincode.SmartContract{}
 
-	//set up the election configuration to be anonymous,multi,non-abstainable
+	//Register options
+  optionIDs:= []string{"option1","option2","option3"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
+
+	//set up the election configuration to be non-anonymous,multi,abstainable
 	err:=smartevm.InitLedger(transactionContext,true,false,false)
 	require.NoError(t,err)
 
-	//Register options
-  optionIDs:= []string{"option1","option2","option3"}
-	err=smartevm.RegisterOptions(transactionContext,optionIDs)
+
+	err=smartevm.RegisterOptions(transactionContext,string(optionIDsJSON))
 	require.NoError(t,err)
 
 	//Register voter
 	voterID:=[]string{"voter1","voter2","voter3"}
-	err=smartevm.AddVoters(transactionContext,voterID)
+	voterIDsJSON, _ := json.Marshal(voterID)
+
+	err=smartevm.AddVoters(transactionContext,string(voterIDsJSON))
 	require.NoError(t,err)
 
 	// Cast vote with multiple options for multi-choice election
-	err=smartevm.CastVote(transactionContext,"voter1",optionIDs)
+	err=smartevm.CastVote(transactionContext,"voter1",string(optionIDsJSON))
 	require.NoError(t,err)
 
 	//Cast vote without selecting any options(non-abstainable)
-	err=smartevm.CastVote(transactionContext,"voter2",[]string{})
+	err=smartevm.CastVote(transactionContext,"voter2", "[]")
 	require.Error(t,err,"not abstainable, at least one option must be selected")
 
 	//Cast for single choice in multi choice voting
-	err = smartevm.CastVote(transactionContext, "voter2", []string{"option1"})
+	err = smartevm.CastVote(transactionContext, "voter2",`["option1"]`)
 	require.NoError(t, err)
 
 	// Cast vote with a different set of options
-	err = smartevm.CastVote(transactionContext, "voter3", []string{"option2", "option3"})
+	err = smartevm.CastVote(transactionContext, "voter3", `["option2", "option3"]`)
 	require.NoError(t, err)
 
 }
@@ -526,30 +538,33 @@ func TestCastVotetruefalsetrue(t* testing.T){
 	smartevm := chaincode.SmartContract{}
 
 	optionIDs := []string{"option1", "option2", "option3"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
 
 	// Set up the election configuration to be multi-choice, abstainable, and anonymous
 	err := smartevm.InitLedger(transactionContext, true, false, true)
 	require.NoError(t, err)
 
 	// Register options
-	smartevm.RegisterOptions(transactionContext, optionIDs)
+	err = smartevm.RegisterOptions(transactionContext, string(optionIDsJSON))
 	require.NoError(t, err)
 
 	// Add voters
 	voterIDs := []string{"voter1", "voter2", "voter3"}
-	err = smartevm.AddVoters(transactionContext, voterIDs)
+	voterIDsJSON, _ := json.Marshal(voterIDs)
+
+	err = smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	// Cast vote with multiple options for multi-choice election
-	err = smartevm.CastVote(transactionContext, "voter1", optionIDs)
+	err = smartevm.CastVote(transactionContext, "voter1", string(optionIDsJSON))
 	require.NoError(t, err)
 
 	// Cast vote without selecting any options (abstainable voting)
-	err = smartevm.CastVote(transactionContext, "voter2", []string{})
+	err = smartevm.CastVote(transactionContext, "voter2", "[]")
 	require.NoError(t, err)
 
 	// Cast vote with a single option in multi-choice voting
-	err = smartevm.CastVote(transactionContext, "voter3", []string{"option1"})
+	err = smartevm.CastVote(transactionContext, "voter3", `["option1"]`)
 	require.NoError(t, err)
 }
 
@@ -566,30 +581,34 @@ func TestCastVotetruetruefalse(t *testing.T){
 	smartevm := chaincode.SmartContract{}
 
 	optionIDs := []string{"option1", "option2", "option3"}
+	optionIDsJSON, _ := json.Marshal(optionIDs)
 
 	// Set up the election configuration to be single-choice, non-abstainable, and anonymous
 	err := smartevm.InitLedger(transactionContext, true, true, false)
 	require.NoError(t, err)
 
 	// Register options
-	smartevm.RegisterOptions(transactionContext, optionIDs)
+	smartevm.RegisterOptions(transactionContext, string(optionIDsJSON))
 	require.NoError(t, err)
 
 	// Add voters
 	voterIDs := []string{"voter1", "voter2", "voter3"}
-	err = smartevm.AddVoters(transactionContext, voterIDs)
+	voterIDsJSON, _ := json.Marshal(voterIDs)
+
+
+	err = smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	//multi choice voting in single choice type
-	err=smartevm.CastVote(transactionContext,"voter1",optionIDs)
+	err=smartevm.CastVote(transactionContext,"voter1",string(optionIDsJSON))
 	require.Error(t,err,"voting is single choice only, one option can be selected")
 
 	//no option selected in non-abtainable voting
-	err=smartevm.CastVote(transactionContext,"voter2",[]string{})
+	err=smartevm.CastVote(transactionContext,"voter2","[]")
 	require.Error(t,err,"not abstainable, at least one option must be selected")
 
 	//single option selected in single choice voting
-	err=smartevm.CastVote(transactionContext,"voter3",[]string{"option1"})
+	err=smartevm.CastVote(transactionContext,"voter3",`["option1"]`)
 	require.NoError(t,err)
 
 }
@@ -612,24 +631,28 @@ func TestCastVotetruetruetrue(t *testing.T) {
 
 	//register options
 	optionIDs := []string{"option1", "option2", "option3"}
-	smartevm.RegisterOptions(transactionContext, optionIDs)
+	optionIDsJSON, _ := json.Marshal(optionIDs)
+
+	smartevm.RegisterOptions(transactionContext, string(optionIDsJSON))
 	require.NoError(t, err)
 
 	//register voter
 	voterIDs := []string{"voter1", "voter2", "voter3"}
-	err = smartevm.AddVoters(transactionContext, voterIDs)
+	voterIDsJSON, _ := json.Marshal(voterIDs)
+
+	err = smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	// Cast vote with multiple options for single-choice election
-	err = smartevm.CastVote(transactionContext, "voter1", optionIDs)
+	err = smartevm.CastVote(transactionContext, "voter1", string(optionIDsJSON))
 	require.Error(t, err, "voting is single choice only, one option can be selected")
 
 	// Cast vote without selecting any options (abstainable voting)
-	err = smartevm.CastVote(transactionContext, "voter2", []string{})
+	err = smartevm.CastVote(transactionContext, "voter2", "[]")
 	require.NoError(t, err)
 
 	// Cast vote with a single option for single-choice election
-	err = smartevm.CastVote(transactionContext, "voter3", []string{"option1"})
+	err = smartevm.CastVote(transactionContext, "voter3", `["option1"]`)
 	require.NoError(t, err)
 
 }
@@ -651,13 +674,15 @@ func TestCastVoteFailedToUpdateBallotState(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a voter
-	voterID := "voter1"
-	err = smartevm.AddVoters(transactionContext, []string{voterID})
+	voterIDs := []string{"voter1"}
+	voterIDsJSON, _ := json.Marshal(voterIDs)
+	err = smartevm.AddVoters(transactionContext, string(voterIDsJSON))
 	require.NoError(t, err)
 
 	// Register an option
-	optionID := "option1"
-	err = smartevm.RegisterOptions(transactionContext, []string{optionID})
+	optionID := []string{"option1"}
+	optionIDJSON, _ := json.Marshal(optionID)
+	err = smartevm.RegisterOptions(transactionContext, string(optionIDJSON))
 	require.NoError(t, err)
 
 	// Mock the error while updating the ballot state
@@ -666,12 +691,14 @@ func TestCastVoteFailedToUpdateBallotState(t *testing.T) {
 	}
 
 	// Attempt to cast a vote
-	err = smartevm.CastVote(transactionContext, voterID, []string{optionID})
+	err = smartevm.CastVote(transactionContext,  "voter1", `["option1"]`)
 	require.EqualError(t, err, "failed to update the ballot state: failed to update ballot state")
 
 	// Clear any remaining states
 	ClearStates()
 }
+
+
 
 
 

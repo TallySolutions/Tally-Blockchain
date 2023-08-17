@@ -75,7 +75,19 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, 
 	return nil
 }
 
-func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, voterIDs []string) error {
+type VoteOptions struct {
+	Options []string `json:"options" binding:"required"`
+}
+
+func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, voterIDsJSON string) error {
+
+	//unmarshal voterIDsJSON into array of strings
+	var voterIDs []string
+	err:=json.Unmarshal([]byte(voterIDsJSON),&voterIDs)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal voter IDs JSON: %w", err)
+	}
+
 	for _, voterID := range voterIDs {
 		existingVoterJSON, err := ctx.GetStub().GetState(voterID)
 		if err != nil {
@@ -119,7 +131,16 @@ func (s *SmartContract) AddVoters(ctx contractapi.TransactionContextInterface, v
 	return nil
 }
 
-func (s *SmartContract) RegisterOptions(ctx contractapi.TransactionContextInterface, optionIDs []string) error {
+
+
+func (s *SmartContract) RegisterOptions(ctx contractapi.TransactionContextInterface, optionIDsJSON string) error {
+	// Unmarshal the optionIDsJSON into an array of strings
+	var optionIDs []string
+	err := json.Unmarshal([]byte(optionIDsJSON), &optionIDs)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal option IDs JSON: %w", err)
+	}
+
 	for _, optionID := range optionIDs {
 		// Check if the option with the given ID already exists in the ledger
 		optionJSON, err := ctx.GetStub().GetState(optionID)
@@ -156,25 +177,11 @@ func (s *SmartContract) RegisterOptions(ctx contractapi.TransactionContextInterf
 	return nil
 }
 
-// RegisteredOptions returns the list of registered option IDs from the ledger
-func (s *SmartContract) RegisteredOptions(ctx contractapi.TransactionContextInterface) ([]string, error) {
-	registeredOptionsJSON, err := ctx.GetStub().GetState("registeredOptions")
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch registered options: %v", err)
-	}
-
-	var registeredOptions []string
-	err = json.Unmarshal(registeredOptionsJSON, &registeredOptions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal registeredCandidates: %v", err)
-	}
-
-	return registeredOptions, nil
-}
 
 
 
-func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterID string, optionIDs []string) error {
+
+func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, voterID string, optionIDsJSON string) error {
 	// Read the election configuration
 	electionConfigBytes, err := ctx.GetStub().GetState("electionConfig")
 	if err != nil {
@@ -187,6 +194,13 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return fmt.Errorf("failed to unmarshal election configuration: %v", err)
 	}
 
+	// Unmarshal the optionIDsJSON into an array of strings
+	var optionIDs []string
+	err = json.Unmarshal([]byte(optionIDsJSON), &optionIDs)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal option IDs JSON: %v", err)
+	}
+
 	//Check if it is single option but option sent are more than one
 	if electionConfig.IsSingle && len(optionIDs) > 1 {
 		return fmt.Errorf("voting is single choice only, one option can be selected")
@@ -196,6 +210,7 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 	if len(optionIDs) == 0 && !electionConfig.IsAbstainable {
 		return fmt.Errorf("not abstainable, at least one option must be selected")
 	}
+
 
 	//Get the voter (fails if voter does not exist)
 

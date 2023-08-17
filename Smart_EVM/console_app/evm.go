@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/x509"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -13,31 +15,28 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
-
 
 const (
-	mspID        = "VoterMSP"
-	peer_home    = "/home/ubuntu/fabric/evm-network/organizations/peerOrganizations/"
-	domain       = "voter.boatinthesea.com"
-	user         = "Admin"
-	peer_port    = "9051"
-	cryptoPath   = peer_home + domain
-	certPath     = cryptoPath + "/users/" + user +  "@" + domain + "/msp/signcerts/cert.pem"
-	keyPath      = cryptoPath + "/users/" + user +  "@" + domain + "/msp/keystore/"
-	ccName       = "evm"
-	channelName  = "tally"
-
+	mspID       = "VoterMSP"
+	peer_home   = "/home/ubuntu/fabric/evm-network/organizations/peerOrganizations/"
+	domain      = "voter.boatinthesea.com"
+	user        = "Admin"
+	peer_port   = "9051"
+	cryptoPath  = peer_home + domain
+	certPath    = cryptoPath + "/users/" + user + "@" + domain + "/msp/signcerts/" + user + "@" + domain + "-cert.pem"
+	keyPath     = cryptoPath + "/users/" + user + "@" + domain + "/msp/keystore/"
+	ccName      = "evm"
+	channelName = "tally"
 )
-
 
 var (
 	peer         = "peer0"
 	peerEndpoint = "localhost:" + peer_port
 	gatewayPeer  = peer + "." + domain
-	tlsCertPath  = cryptoPath + "/peers/" + peer + "." + domain + "/tls"
+	tlsCertPath  = cryptoPath + "/peers/" + peer + "." + domain + "/tls/ca.crt"
 )
-
 
 func printUsage() {
 	fmt.Fprintf(os.Stderr, "Usage: %s <Command> [OPTIONS]\n", os.Args[0])
@@ -62,6 +61,60 @@ func (f *stringSliceFlag) String() string {
 func (f *stringSliceFlag) Set(value string) error {
 	*f = append(*f, value)
 	return nil
+}
+
+type GRPCError struct {
+	Msg     string        `json:"message"`
+	Type    string        `json:"type"`
+	TxnId   string        `json:"txn_id"`
+	Code    string        `json:"code"`
+	Details []interface{} `json:"details"`
+}
+
+func (err GRPCError) Error() string {
+	return fmt.Sprintf("%s for transaction %s with gRPC status %v: %s : %s\n", err.Type, err.TxnId, err.Code, err.Msg, err.Details)
+}
+
+func createError(err error) GRPCError {
+
+	var grpc_err GRPCError
+
+	grpc_err.Msg = err.Error()
+
+	switch err := err.(type) {
+	case *client.EndorseError:
+		grpc_err.Type = "Endorse Error"
+		grpc_err.Code = status.Code(err).String()
+		grpc_err.TxnId = err.TransactionID
+		grpc_err.Details = err.GRPCStatus().Details()
+	case *client.SubmitError:
+		grpc_err.Type = "Submit Error"
+		grpc_err.Code = status.Code(err).String()
+		grpc_err.TxnId = err.TransactionID
+		grpc_err.Details = err.GRPCStatus().Details()
+	case *client.CommitStatusError:
+		if errors.Is(err, context.DeadlineExceeded) {
+			grpc_err.Type = "Timeout Error"
+			grpc_err.Code = status.Code(err).String()
+			grpc_err.TxnId = err.TransactionID
+			grpc_err.Details = err.GRPCStatus().Details()
+		} else {
+			grpc_err.Type = "Commit Status Error"
+			grpc_err.Code = status.Code(err).String()
+			grpc_err.TxnId = err.TransactionID
+			grpc_err.Details = err.GRPCStatus().Details()
+		}
+	case *client.CommitError:
+		grpc_err.Type = "Commit Error"
+		grpc_err.Code = err.Code.String()
+		grpc_err.TxnId = err.TransactionID
+		grpc_err.Msg = fmt.Sprintf("Transaction %s failed to commit with status %d: %s\n", err.TransactionID, int32(err.Code), err)
+	default:
+		grpc_err.Msg = err.Error()
+	}
+
+	return grpc_err
+
 }
 
 func main() {
@@ -91,8 +144,6 @@ func main() {
 
 	peer = os.Args[1]
 
-
-
 	if os.Args[1] == "init" {
 		initCommand(*isAnonymous, *isAbstainable, *isSingle)
 	} else if os.Args[1] == "options" {
@@ -109,8 +160,6 @@ func main() {
 		flag.Usage()
 	}
 }
-
-
 
 func connect() (*grpc.ClientConn, *client.Gateway) {
 	fmt.Printf("\nConnecting to : %s \n", peerEndpoint)
@@ -139,12 +188,11 @@ func connect() (*grpc.ClientConn, *client.Gateway) {
 
 	return clientConnection, gw
 
-
 }
 
-func getContract(gw *client.Gateway ) *client.Contract {
+func getContract(gw *client.Gateway) *client.Contract {
 	network := gw.GetNetwork(channelName)
-	return  network.GetContract(ccName)
+	return network.GetContract(ccName)
 }
 
 func newGrpcConnection() *grpc.ClientConn {
@@ -213,45 +261,42 @@ func newSign() identity.Sign {
 	return sign
 }
 
-
 // define function for each command
 func initCommand(isAnonymous bool, isAbstainable bool, isSingle bool) {
 	fmt.Println("Initializing the ledger")
 	//Call the init ledger blockchain function with the parameters
 
 	//1. Connect to the blockchain
-	clientConnection ,gw := connect()
+	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
 	//2. Init function
-	contract :=getContract(gw)
+	contract := getContract(gw)
 
 	//Submit the transaction to initialize the ledger
-	_, err := contract.SubmitTransaction("Initledger", strconv.FormatBool(isAnonymous) , strconv.FormatBool(isAbstainable) , strconv.FormatBool(isSingle))
+	_, err := contract.SubmitTransaction("InitLedger", strconv.FormatBool(isAnonymous), strconv.FormatBool(isAbstainable), strconv.FormatBool(isSingle))
 	if err != nil {
-		fmt.Println("Error initializing ledger:", err)
+		fmt.Println("Error initializing ledger:", createError(err))
 	} else {
 		fmt.Println("Ledger initialization successful")
 	}
 
 }
 
-
-
 func optionsCommand(options []string) {
 	fmt.Println("Setting options")
 
 	// Connect to the blockchain
-	clientConnection ,gw := connect()
+	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
 	//set options function with the parameters
-	contract:=getContract(gw)
+	contract := getContract(gw)
 
-	_, err:= contract.SubmitTransaction("SetOptions" , options...)
-	if err!=nil{
-		fmt.Println("Error setting options:",err)
-	} else{
+	_, err := contract.SubmitTransaction("RegisterOptions", options...)
+	if err != nil {
+		fmt.Println("Error setting options:", createError(err))
+	} else {
 		fmt.Println("Options set successfully")
 	}
 }
@@ -260,16 +305,16 @@ func votersCommand(voters []string) {
 	fmt.Println("Setting voters")
 
 	//1. Connect to the blockchain
-	clientConnection ,gw := connect()
+	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
 	//set voters function with the parameters
-	contract:=getContract(gw)
+	contract := getContract(gw)
 
-	_,err :=contract.SubmitTransaction("SetVoters" , voters...)
-	if err!=nil{
-		fmt.Println("Error setting voters:",err)
-	} else{
+	_, err := contract.SubmitTransaction("SetVoters", voters...)
+	if err != nil {
+		fmt.Println("Error setting voters:", err)
+	} else {
 		fmt.Println("Voters set successfully")
 	}
 
@@ -278,19 +323,19 @@ func votersCommand(voters []string) {
 func castCommand(voter string, options []string) {
 	fmt.Println("Casting vote")
 
-  //1. Connect to the blockchain
-	clientConnection ,gw := connect()
+	//1. Connect to the blockchain
+	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
 	//cast vote function with the parameters
-	contract:= getContract(gw)
+	contract := getContract(gw)
 
 	args := append([]string{voter}, options...)
 
-	_,err:=contract.SubmitTransaction("CastVote", args...)
-	if err!=nil{
-		fmt.Println("Error casting vote:",err)
-	} else{
+	_, err := contract.SubmitTransaction("CastVote", args...)
+	if err != nil {
+		fmt.Println("Error casting vote:", err)
+	} else {
 		fmt.Println("Vote cast successfully")
 	}
 }
