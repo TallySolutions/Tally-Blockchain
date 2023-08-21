@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -45,8 +47,8 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "\toptions : Voting options command, use flag -o to set the options")
 	fmt.Fprintln(os.Stderr, "\tvoters : Voters command, use flag -v to set the voters")
 	fmt.Fprintln(os.Stderr, "\tcast : Cast vote, usage: cast <voter> -o=<comma-separated-options>")
+	fmt.Fprintln(os.Stderr, "\tcast : Get Vote Count, usage: getcount -o=<option>")
 	fmt.Fprintln(os.Stderr, "Options:")
-	flag.PrintDefaults()
 }
 
 // Define a custom flag type that stores multiple values
@@ -59,7 +61,9 @@ func (f *stringSliceFlag) String() string {
 
 // Implement the Set method for the custom flag type
 func (f *stringSliceFlag) Set(value string) error {
-	*f = append(*f, value)
+	for _, v := range strings.Split(value, ",") {
+		*f = append(*f, v)
+	}
 	return nil
 }
 
@@ -122,25 +126,32 @@ func main() {
 	// Define flags for each option
 
 	//Init flags
-	isAnonymous := flag.Bool("anon", false, "Anonymous Voting")
-	isAbstainable := flag.Bool("abs", false, "Abstainable Voting")
-	isSingle := flag.Bool("single", false, "Single Choice Voting")
+	fs := flag.NewFlagSet("EVMFlags", flag.ContinueOnError)
+
+	isAnonymous := fs.Bool("anon", false, "Anonymous Voting")
+	isAbstainable := fs.Bool("abs", false, "Abstainable Voting")
+	isSingle := fs.Bool("single", false, "Single Choice Voting")
 
 	var options stringSliceFlag
-	flag.Var(&options, "o", "List of options (comma-separated)")
+	fs.Var(&options, "o", "List of options (comma-separated)")
 
 	var voters stringSliceFlag
-	flag.Var(&voters, "v", "List of voters (comma-separated)")
+	fs.Var(&voters, "v", "List of voters (comma-separated)")
 
 	// Set the custom usage function
-	flag.Usage = printUsage
+	fs.Usage = printUsage
 
-	flag.Parse()
+	fs.Parse(os.Args[2:])
 
 	if len(os.Args) < 2 {
-		flag.Usage()
+		fs.Usage()
+		fs.PrintDefaults()
 		os.Exit(1)
 	}
+
+	fmt.Println(voters)
+
+	fmt.Println(options)
 
 	peer = os.Args[1]
 
@@ -152,12 +163,21 @@ func main() {
 		votersCommand(voters)
 	} else if os.Args[1] == "cast" {
 		if len(os.Args) < 3 {
-			flag.Usage()
+			fs.Usage()
+			fs.PrintDefaults()
 			os.Exit(1)
 		}
-		castCommand(os.Args[2], options)
+		castCommand(voters[0], options)
+	}else if os.Args[1] == "getcount" {
+		if len(os.Args) <3{
+			fs.Usage()
+      fs.PrintDefaults()
+      os.Exit(1)
+		}
+		getCountCommand(options)
 	} else {
-		flag.Usage()
+		fs.Usage()
+		fs.PrintDefaults()
 	}
 }
 
@@ -262,7 +282,7 @@ func newSign() identity.Sign {
 }
 
 // define function for each command
-func initCommand(isAnonymous bool, isAbstainable bool, isSingle bool) {
+func initCommand(isAnonymous bool, isSingle bool, isAbstainable bool) {
 	fmt.Println("Initializing the ledger")
 	//Call the init ledger blockchain function with the parameters
 
@@ -274,7 +294,7 @@ func initCommand(isAnonymous bool, isAbstainable bool, isSingle bool) {
 	contract := getContract(gw)
 
 	//Submit the transaction to initialize the ledger
-	_, err := contract.SubmitTransaction("InitLedger", strconv.FormatBool(isAnonymous), strconv.FormatBool(isAbstainable), strconv.FormatBool(isSingle))
+	_, err := contract.SubmitTransaction("InitLedger", strconv.FormatBool(isAnonymous), strconv.FormatBool(isSingle), strconv.FormatBool(isAbstainable))
 	if err != nil {
 		fmt.Println("Error initializing ledger:", createError(err))
 	} else {
@@ -290,10 +310,17 @@ func optionsCommand(options []string) {
 	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
+	// Marshal the options array into JSON
+	optionsJSON, err := json.Marshal(options)
+	if err != nil {
+		fmt.Println("Error marshaling options JSON:", err)
+		return
+	}
+
 	//set options function with the parameters
 	contract := getContract(gw)
-
-	_, err := contract.SubmitTransaction("RegisterOptions", options...)
+	fmt.Println("optionsJSON:", string(optionsJSON))
+	_, err = contract.SubmitTransaction("RegisterOptions", string(optionsJSON))
 	if err != nil {
 		fmt.Println("Error setting options:", createError(err))
 	} else {
@@ -308,12 +335,19 @@ func votersCommand(voters []string) {
 	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
-	//set voters function with the parameters
-	contract := getContract(gw)
-
-	_, err := contract.SubmitTransaction("SetVoters", voters...)
+	// Marshal the voters array into JSON
+	votersJSON, err := json.Marshal(voters)
 	if err != nil {
-		fmt.Println("Error setting voters:", err)
+		fmt.Println("Error marshaling voters JSON:", err)
+		return
+	}
+
+	// Set voters function with the parameters
+	contract := getContract(gw)
+	fmt.Println("votersJSON:", string(votersJSON))
+	_, err = contract.SubmitTransaction("AddVoters", string(votersJSON), fmt.Sprintf("%d", time.Now().UnixMilli()))
+	if err != nil {
+		fmt.Println("Error setting voters:", createError(err))
 	} else {
 		fmt.Println("Voters set successfully")
 	}
@@ -327,15 +361,57 @@ func castCommand(voter string, options []string) {
 	clientConnection, gw := connect()
 	defer clientConnection.Close()
 
+	// Marshal the options array into JSON
+	optionsJSON, err := json.Marshal(options)
+	if err != nil {
+		fmt.Println("Error marshaling options JSON:", err)
+		return
+	}
+
 	//cast vote function with the parameters
 	contract := getContract(gw)
 
-	args := append([]string{voter}, options...)
+	fmt.Println("optionsJSON:", options)
 
-	_, err := contract.SubmitTransaction("CastVote", args...)
+	fmt.Println("optionsJSON:", string(optionsJSON))
+	_, err = contract.SubmitTransaction("CastVote", voter, string(optionsJSON), fmt.Sprintf("%d", time.Now().UnixMilli()))
 	if err != nil {
-		fmt.Println("Error casting vote:", err)
+		fmt.Println("Error casting vote:", createError(err))
 	} else {
 		fmt.Println("Vote cast successfully")
 	}
+}
+
+func getCountCommand(optionIDs stringSliceFlag){
+	fmt.Println("Getting vote count")
+
+	//1. Connect to the blockchain
+	clientConnection, gw := connect()
+	defer clientConnection.Close()
+
+	// Marshal the option IDs array into JSON
+	optionIDJSON, err := json.Marshal(optionIDs)
+	if err != nil {
+		fmt.Println("Error marshaling option IDs JSON:", err)
+		return
+	}
+
+	//get vote count function with the parameters
+	contract := getContract(gw)
+
+	// Call the GetVoteCount function with the option ID JSON as an argument
+	result, err := contract.EvaluateTransaction("GetVoteCount", string(optionIDJSON))
+	if err != nil {
+		fmt.Println("Error getting vote count:", createError(err))
+		return
+	}
+
+	// Parse the result to an integer (vote count)
+	voteCount, err := strconv.Atoi(string(result))
+	if err != nil {
+		fmt.Println("Error converting vote count:", err)
+		return
+	}
+
+	fmt.Printf("Vote count for option ID %s: %d\n", optionIDs[0], voteCount)
 }
