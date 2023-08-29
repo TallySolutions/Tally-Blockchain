@@ -11,7 +11,6 @@ import (
 
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	//"github.com/hyperledger/fabric-protos-go/ledger/queryresult"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,45 +47,55 @@ func TestInitLedger(t *testing.T) {
 	isSingle := true
 	isAbstainable := true
 
-	// Set up the mock GetState function to return the election configuration data
-	electionConfig := ElectionConfig{
-		IsAnonymous:   isAnonymous,
-		IsSingle:      isSingle,
-		IsAbstainable: isAbstainable,
-	}
-
-	electionConfigBytes, err := json.Marshal(electionConfig)
-	require.NoError(t, err)
-
-	chaincodeStub.GetStateReturns(electionConfigBytes, nil)
+	// Mock the GetState function to return nil, indicating the election configuration doesn't exist yet
+	chaincodeStub.GetStateReturns(nil, nil)
 
 	// Call the InitLedger function
+	err := smartevm.InitLedger(transactionContext, isAnonymous, isSingle, isAbstainable)
+	require.NoError(t, err)
+
+	// Verify that PutState was called with the correct arguments
+	expectedConfig := ElectionConfig{
+			IsAnonymous:   isAnonymous,
+			IsSingle:      isSingle,
+			IsAbstainable: isAbstainable,
+	}
+	expectedConfigBytes, err := json.Marshal(expectedConfig)
+	require.NoError(t, err)
+
+	// Define variables to store the arguments
+	var actualKey string
+	var actualValue []byte
+	chaincodeStub.PutStateStub = func(key string, value []byte) error {
+			actualKey = key
+			actualValue = value
+			return nil
+	}
+
+	// Call the InitLedger function again to trigger PutStateStub
 	err = smartevm.InitLedger(transactionContext, isAnonymous, isSingle, isAbstainable)
 	require.NoError(t, err)
 
-	// Verify that the election configuration is saved to the ledger
-	electionConfigBytes, err = chaincodeStub.GetState("electionConfig")
-	require.NoError(t, err)
-	require.NotNil(t, electionConfigBytes)
+	// Compare the stored arguments with the expected values
+	require.Equal(t, "electionConfig", actualKey)
+	require.Equal(t, expectedConfigBytes, actualValue)
 
-	var actualElectionConfig ElectionConfig
-	err = json.Unmarshal(electionConfigBytes, &actualElectionConfig)
-	require.NoError(t, err)
-
-	require.Equal(t, electionConfig, actualElectionConfig)
-
-	err = smartevm.InitLedger(transactionContext, true, false, true)
-	require.NoError(t, err)
 
 	// Test case 2: Error when putting the election configuration to the ledger
 	chaincodeStub.PutStateReturns(fmt.Errorf("failed inserting key"))
 	err = smartevm.InitLedger(transactionContext, false, false, false)
 	require.EqualError(t, err, "failed to put state: failed inserting key")
 
-	// Test case 3: Error when fetching election configuration
-	chaincodeStub.GetStateReturns(nil, fmt.Errorf("failed to fetch election configuration"))
-	err = smartevm.InitLedger(transactionContext, true, true, false)
-	require.EqualError(t, err, "failed to put state: failed inserting key")
+	// Test case 3: Error when putting state
+  chaincodeStub.GetStateReturns(nil, nil)
+  chaincodeStub.PutStateReturns(fmt.Errorf("error putting state"))
+  err = smartevm.InitLedger(transactionContext, isAnonymous, isSingle, isAbstainable)
+  require.EqualError(t, err, "failed to put state: error putting state")
+
+  // Test case 4: Election configuration already initialized
+  chaincodeStub.GetStateReturns([]byte("dummyConfig"), nil)
+  err = smartevm.InitLedger(transactionContext, isAnonymous, isSingle, isAbstainable)
+  require.EqualError(t, err, "election is already initialised")
 
 }
 

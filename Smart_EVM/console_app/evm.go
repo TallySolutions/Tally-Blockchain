@@ -129,8 +129,8 @@ func main() {
 	fs := flag.NewFlagSet("EVMFlags", flag.ContinueOnError)
 
 	isAnonymous := fs.Bool("anon", false, "Anonymous Voting")
-	isAbstainable := fs.Bool("abs", false, "Abstainable Voting")
 	isSingle := fs.Bool("single", false, "Single Choice Voting")
+	isAbstainable := fs.Bool("abs", false, "Abstainable Voting")
 
 	var options stringSliceFlag
 	fs.Var(&options, "o", "List of options (comma-separated)")
@@ -156,7 +156,7 @@ func main() {
 	peer = os.Args[1]
 
 	if os.Args[1] == "init" {
-		initCommand(*isAnonymous, *isAbstainable, *isSingle)
+		initCommand(*isAnonymous, *isSingle , *isAbstainable)
 	} else if os.Args[1] == "options" {
 		optionsCommand(options)
 	} else if os.Args[1] == "voters" {
@@ -284,6 +284,8 @@ func newSign() identity.Sign {
 // define function for each command
 func initCommand(isAnonymous bool, isSingle bool, isAbstainable bool) {
 	fmt.Println("Initializing the ledger")
+	fmt.Println(isAnonymous , isSingle , isAbstainable )
+
 	//Call the init ledger blockchain function with the parameters
 
 	//1. Connect to the blockchain

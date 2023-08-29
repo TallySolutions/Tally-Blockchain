@@ -35,14 +35,27 @@ type Ballot struct {
 }
 
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, isAnonymous bool, isSingle bool, isAbstainable bool) error {
+
+	// Read the election configuration
+	electionConfigBytes, err := ctx.GetStub().GetState("electionConfig")
+	if err != nil {
+		return fmt.Errorf("failed to read election configuration from the ledger: %v", err)
+	}
+	if electionConfigBytes!= nil {
+		return fmt.Errorf("election is already initialised")
+	}
+
 	//create the election configuration
 	electionConfig := ElectionConfig{
 		IsAnonymous:   isAnonymous,
 		IsSingle:      isSingle,
 		IsAbstainable: isAbstainable,
 	}
+
+
+
 	//marshal and save the election configuration in the ledger
-	electionConfigBytes, err := json.Marshal(electionConfig)
+	electionConfigBytes, err = json.Marshal(electionConfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal election config: %v", err)
 	}
@@ -51,27 +64,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface, 
 	if err != nil {
 		return fmt.Errorf("failed to put state: %v", err)
 	}
-
-	// initial options to be registered in the ledger
-	options := []Option{
-		{ID: "1", Votes: 0},
-		{ID: "2", Votes: 0},
-		{ID: "3", Votes: 0},
-	}
-
-	// Loop through the options and register each one in the ledger
-	for _, option := range options {
-		optionBytes, err := json.Marshal(option)
-		if err != nil {
-			return fmt.Errorf("failed to marshal option: %v", err)
-		}
-
-		err = ctx.GetStub().PutState(option.ID, optionBytes)
-		if err != nil {
-			return fmt.Errorf("failed to put state: %v", err)
-		}
-	}
-
 	return nil
 }
 
@@ -230,7 +222,7 @@ func (s *SmartContract) CastVote(ctx contractapi.TransactionContextInterface, vo
 		return fmt.Errorf("failed to unmarshal ballot: %v", err)
 	}
 
-	//check if voter already voted
+	//check if voter has already voted
 	if ballot.HasVoted {
 		return fmt.Errorf("voter with ID %s has already cast their vote", voterID)
 	}
